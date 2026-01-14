@@ -1,18 +1,12 @@
-from collections import namedtuple
-import MetaTrader5 as mt5
-from typing import Dict
-from datetime import datetime
 from strategytester5 import *
 
 class TradeValidators:
     def __init__(self, 
-                symbol_info: namedtuple, 
-                ticks_info: any, 
+                symbol_info: SymbolInfo, 
                 logger: any,
-                mt5_instance: mt5=mt5):
+                mt5_instance: MetaTrader5):
         
         self.symbol_info = symbol_info
-        self.ticks_info = ticks_info
         self.logger = logger
         self.mt5_instance = mt5_instance
         
@@ -36,7 +30,7 @@ class TradeValidators:
 
         return True
     
-    def is_valid_freeze_level(self, entry: float, stop_price: float, order_type: int) -> bool:
+    def is_valid_freeze_level(self, tick_info: Tick, entry: float, stop_price: float, order_type: int) -> bool:
         """
         Check SYMBOL_TRADE_FREEZE_LEVEL for pending orders and open positions.
         """
@@ -48,8 +42,8 @@ class TradeValidators:
         point = self.symbol_info.point
         freeze_distance = freeze_level * point
 
-        bid = self.ticks_info.bid
-        ask = self.ticks_info.ask
+        bid = tick_info.bid
+        ask = tick_info.ask
 
         def log_fail(msg: str, dist: float):
             self.logger.info(
@@ -223,17 +217,17 @@ class TradeValidators:
     def price_equal(a: float, b: float, eps: float = 1e-8) -> bool:
         return abs(a - b) <= eps
 
-    def is_valid_entry(self, price: float, order_type: int) -> bool:
+    def is_valid_entry_price(self, tick_info: Tick, price: float, order_type: int) -> bool:
         
         eps = pow(10, -self.symbol_info.digits)
         if order_type == self.mt5_instance.ORDER_TYPE_BUY:  # BUY
-            if not self.price_equal(a=price, b=self.ticks_info.ask, eps=eps):
-                self.logger.info(f"Trade validation failed: Buy price {price} != ask {self.ticks_info.ask}")
+            if not self.price_equal(a=price, b=tick_info.ask, eps=eps):
+                self.logger.info(f"Trade validation failed: Buy price {price} != ask {tick_info.ask}")
                 return False
 
         elif order_type == self.mt5_instance.ORDER_TYPE_SELL:  # SELL
-            if not self.price_equal(a=price, b=self.ticks_info.bid, eps=eps):
-                self.logger.info(f"Trade validation failed: Sell price {price} != bid {self.ticks_info.bid}")
+            if not self.price_equal(a=price, b=tick_info.bid, eps=eps):
+                self.logger.info(f"Trade validation failed: Sell price {price} != bid {tick_info.bid}")
                 return False
         else:
             self.logger.error("Unknown MetaTrader 5 position type")
