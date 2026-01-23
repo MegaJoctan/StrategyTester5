@@ -15,7 +15,6 @@ def bars_to_polars(bars):
         "spread": bars["spread"],
         "real_volume": bars["real_volume"],
     })
-        
 
 def fetch_historical_bars(
                         which_mt5: MetaTrader5,
@@ -23,17 +22,9 @@ def fetch_historical_bars(
                         timeframe: int,
                         start_datetime: datetime,
                         end_datetime: datetime,
+                        hist_dir: str="History",
                         return_df: bool = False
                         ) -> pl.DataFrame:
-    """
-        if not ensure_symbol(symbol=symbol):
-            
-            if LOGGER is None:
-                print(f"Symbol {symbol} not available")
-            else:
-                LOGGER.warning(f"Symbol {symbol} not available")
-            return pl.DataFrame()
-    """
     
     start_datetime = ensure_utc(start_datetime)
     end_datetime   = ensure_utc(end_datetime)
@@ -54,10 +45,14 @@ def fetch_historical_bars(
             month_end = end_datetime
 
         if month_start > end_datetime:
+            # if LOGGER is None:
+            #     print("start > end")
+            # else:
+            #     LOGGER.debug("start > end")
             break
 
         if LOGGER is None:
-            print(f"Processing bars for {symbol} ({tf_name}): {month_start:%Y-%m-%d} -> {month_end:%Y-%m-%d}")
+            print(f"\nProcessing bars for {symbol} ({tf_name}): {month_start:%Y-%m-%d} -> {month_end:%Y-%m-%d}")
         else:
             LOGGER.info(f"Processing bars for {symbol} ({tf_name}): {month_start:%Y-%m-%d} -> {month_end:%Y-%m-%d}")
         
@@ -72,7 +67,7 @@ def fetch_historical_bars(
         if rates is None:
             
             if LOGGER is None:
-                print(f"No bars for {symbol} {tf_name} {month_start:%Y-%m}")
+                print(f"\nNo bars for {symbol} {tf_name} {month_start:%Y-%m}")
             else:
                 LOGGER.warning(f"No bars for {symbol} {tf_name} {month_start:%Y-%m}")
                 
@@ -93,13 +88,13 @@ def fetch_historical_bars(
         ])
 
         df.write_parquet(
-            os.path.join("History","Bars", symbol, tf_name),
+            os.path.join(hist_dir, "Bars", symbol, tf_name),
             partition_by=["year", "month"],
             mkdir=True
         )
         
-        # if is_debug: 
-        #     print(df.head(-10))
+        # if IS_DEBUG:
+        #    print(df.head(-10))
         
         if return_df:    
             dfs.append(df)

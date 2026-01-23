@@ -20,7 +20,8 @@ def fetch_historical_ticks(which_mt5: MetaTrader5,
                         start_datetime: datetime, 
                         end_datetime: datetime,
                         symbol: str,
-                        return_df: bool = False
+                        return_df: bool = False,
+                        hist_dir: str = "History"
                         ) -> pl.DataFrame:
     
     
@@ -80,7 +81,7 @@ def fetch_historical_ticks(which_mt5: MetaTrader5,
 
         # Save monthly partitions
         df.write_parquet(
-            os.path.join("Ticks", symbol),
+            os.path.join(hist_dir, "Ticks", symbol),
             partition_by=["year", "month"],
             mkdir=True
         )
@@ -176,7 +177,7 @@ class TicksGen:
         bars: pl.DataFrame,
         symbol: str,
         symbol_point: float,
-        out_dir: str,
+        hist_dir: str="History",
         return_df: bool = False,
     ) -> pl.DataFrame:
 
@@ -230,7 +231,7 @@ class TicksGen:
 
             # Write monthly partition
             df.write_parquet(
-                os.path.join(out_dir, symbol),
+                os.path.join(hist_dir, "Simulated Ticks", symbol),
                 partition_by=["year", "month"],
                 mkdir=True,
             )
