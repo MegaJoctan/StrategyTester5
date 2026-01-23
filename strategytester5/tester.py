@@ -95,7 +95,7 @@ class StrategyTester:
                                       history_dir=self.history_dir
                                       )
 
-        self.TESTER_ALL_BARS_INFO, self.TESTER_ALL_TICKS_INFO = hist_manager.fetch_history(self.tester_config["modelling"])
+        self.TESTER_ALL_BARS_INFO, self.TESTER_ALL_TICKS_INFO = hist_manager.fetch_history(self.tester_config["modelling"], symbol_info_func=self.symbol_info)
         hist_manager.synchronize_timeframes()
 
         self.logger.info("Initialized")

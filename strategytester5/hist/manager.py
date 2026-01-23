@@ -13,6 +13,7 @@ class HistoryManager:
                 start_dt: datetime,
                 end_dt: datetime,
                 timeframe: int,
+
                 max_fetch_workers: int=None,
                 max_cpu_workers: int=None,
                 history_dir: str = "History"
@@ -108,7 +109,7 @@ class HistoryManager:
 
         return ticks_info if return_df else {}
     
-    def _gen_ticks_worker(self, symbol: str, return_df: bool=False) -> dict:
+    def _gen_ticks_worker(self, symbol: str, symbol_points: float, return_df: bool=False) -> dict:
         """Generate synthetic ticks from M1 bars for a symbol and saves data.
 
         Args:
@@ -128,7 +129,7 @@ class HistoryManager:
         ticks_df = ticks.TicksGen.generate_ticks_from_bars(
             bars=one_minute_bars, 
             symbol=symbol,
-            symbol_point=0.01, #TODO:
+            symbol_point=symbol_points,
             hist_dir=self.history_dir,
             return_df=True
         )
@@ -142,7 +143,7 @@ class HistoryManager:
         
         return ticks_info if return_df else {}
 
-    def fetch_history(self, modelling: str):
+    def fetch_history(self, modelling: str, symbol_info_func: any):
         """Fetch bars or ticks for all symbols according to the modelling mode.
 
         Args:
@@ -178,7 +179,7 @@ class HistoryManager:
             start_time = time.time()
             
             with ProcessPoolExecutor(max_workers=self.max_cpu_workers) as executor:
-                futs = {executor.submit(self._gen_ticks_worker, s, True): s for s in self.symbols}
+                futs = {executor.submit(self._gen_ticks_worker,s, symbol_info_func(s).point, True): s for s in self.symbols}
 
                 for fut in as_completed(futs):
                     sym = futs[fut]
