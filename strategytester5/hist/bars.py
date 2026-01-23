@@ -1,8 +1,7 @@
-import MetaTrader5 as mt5
 from datetime import datetime, timezone, timedelta
-import os
 import polars as pl
 from strategytester5 import *
+import os
 
 def bars_to_polars(bars):
     
@@ -18,7 +17,9 @@ def bars_to_polars(bars):
     })
         
 
-def fetch_historical_bars(symbol: str,
+def fetch_historical_bars(
+                        which_mt5: MetaTrader5,
+                        symbol: str,
                         timeframe: int,
                         start_datetime: datetime,
                         end_datetime: datetime) -> pl.DataFrame:
@@ -59,7 +60,7 @@ def fetch_historical_bars(symbol: str,
             LOGGER.info(f"Processing bars for {symbol} ({tf_name}): {month_start:%Y-%m-%d} -> {month_end:%Y-%m-%d}")
         
 
-        rates = mt5.copy_rates_range(
+        rates = which_mt5.copy_rates_range(
             symbol,
             timeframe,
             month_start,
