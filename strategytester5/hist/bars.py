@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 import polars as pl
-from strategytester5 import *
+from strategytester5 import LOGGER, MetaTrader5, ensure_utc, TIMEFRAMES_MAP_REVERSE, month_bounds
 import os
 
 def bars_to_polars(bars):

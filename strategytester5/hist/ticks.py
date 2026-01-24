@@ -1,8 +1,8 @@
-from datetime import datetime, timezone, timedelta
-import os
+from datetime import datetime, timedelta
 import polars as pl
-from strategytester5 import *
+from strategytester5 import MetaTrader5, ensure_utc, LOGGER, month_bounds, make_tick
 import numpy as np
+import os
 
 def ticks_to_polars(ticks):
     return pl.DataFrame({
@@ -195,7 +195,7 @@ class TicksGen:
         for (year, month), bars_chunk in bars.group_by(["year", "month"], maintain_order=True):
 
             if LOGGER is None:
-                print(f"Generating ticks for {symbol}: {year}-{month:02d}")
+                print(f"\nGenerating ticks for {symbol}: {year}-{month:02d}")
             else:
                 LOGGER.info(f"Generating ticks for {symbol}: {year}-{month:02d}")
 
