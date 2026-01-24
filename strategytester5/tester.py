@@ -2,9 +2,8 @@ from fontTools.misc.bezierTools import epsilon
 
 from strategytester5 import *
 from . import error_description
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import secrets
-import time
 import os
 import numpy as np
 import fnmatch
@@ -94,7 +93,8 @@ class StrategyTester:
                                       start_dt=self.tester_config["start_date"],
                                       end_dt=self.tester_config["end_date"],
                                       timeframe=self.tester_config["timeframe"],
-                                      history_dir=self.history_dir
+                                      history_dir=self.history_dir,
+                                      LOGGER=self.logger
                                       )
 
         for symbol in self.tester_config["symbols"]:
@@ -105,7 +105,9 @@ class StrategyTester:
             symbol_info_func=self.symbol_info,
         )
 
-        hist_manager.synchronize_timeframes()
+        if self.IS_TESTER:
+            hist_manager.synchronize_timeframes()
+
         self.logger.info("Initialized")
         
         # ----------------- initialize internal containers -----------------
@@ -1843,9 +1845,6 @@ class StrategyTester:
         Args:
             ontick_func (_type_): A function to be called on every tick
         """
-        
-        if not self.IS_TESTER:
-            return
 
         self.__TesterInit()
         
