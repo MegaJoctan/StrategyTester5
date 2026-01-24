@@ -490,7 +490,7 @@ SELL_ACTIONS = {
     MetaTrader5.ORDER_TYPE_SELL_STOP_LIMIT,
 }
 
-TIMEFRAMES_MAP = {
+STRING2TIMEFRAME_MAP = {
     "M1": MetaTrader5.TIMEFRAME_M1,
     "M2": MetaTrader5.TIMEFRAME_M2,
     "M3": MetaTrader5.TIMEFRAME_M3,
@@ -515,7 +515,7 @@ TIMEFRAMES_MAP = {
 }
 
 # Reverse map
-TIMEFRAMES_MAP_REVERSE = {v: k for k, v in TIMEFRAMES_MAP.items()}
+TIMEFRAME2STRING_MAP = {v: k for k, v in STRING2TIMEFRAME_MAP.items()}
 
 def log_date_suffix():
     return datetime.now(timezone.utc).strftime("%Y%m%d")
