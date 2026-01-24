@@ -178,7 +178,7 @@ class HistoryManager:
             
             start_time = time.time()
             
-            with ProcessPoolExecutor(max_workers=self.max_cpu_workers) as executor:
+            with ThreadPoolExecutor(max_workers=self.max_cpu_workers) as executor:
                 futs = {executor.submit(self._gen_ticks_worker,s, symbol_info_func(s).point, True): s for s in self.symbols}
 
                 for fut in as_completed(futs):
