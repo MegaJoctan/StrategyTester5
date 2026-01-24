@@ -285,118 +285,6 @@ class StrategyTester:
             ]
 
         raise TypeError(f"Unsupported rates format: {type(rates)}, dtype={rates.dtype}")
-
-    def copy_rates_from(self, symbol: str, timeframe: int, date_from: datetime, count: int) -> np.array:
-        
-        """Get bars from the MetaTrader 5 terminal starting from the specified date.
-
-        Args:
-            symbol: Financial instrument name, for example, "EURUSD". Required unnamed parameter.
-            timeframe: Timeframe the bars are requested for. Set by a value from the TIMEFRAME enumeration. Required unnamed parameter.
-            date_from: Date of opening of the first bar from the requested sample. Set by the 'datetime' object or as a number of seconds elapsed since 1970.01.01. Required unnamed parameter.
-
-            count: Number of bars to receive. Required unnamed parameter.
-
-        Returns:
-            Returns bars as the numpy array with the named time, open, high, low, close, tick_volume, spread and real_volume columns. Return None in case of an error. The info on the error can be obtained using last_error().
-        """
-        
-        date_from = ensure_utc(date_from)
-        
-        if self.IS_TESTER:    
-            
-            # instead of getting data from MetaTrader 5, get data stored in our custom directories
-            
-            path = os.path.join(self.history_dir, "Bars", symbol, TIMEFRAMES_MAP_REVERSE[timeframe])
-            os.makedirs(path, exist_ok=True)
-            
-            lf = pl.scan_parquet(path)
-
-            try:
-                rates = (
-                    lf
-                    .filter(pl.col("time") <= date_from) # get data starting at the given date
-                    .sort("time", descending=True) 
-                    .limit(count) # limit the request to some bars
-                    .select([
-                        pl.col("time").dt.epoch("s").cast(pl.Int64).alias("time"),
-
-                        pl.col("open"),
-                        pl.col("high"),
-                        pl.col("low"),
-                        pl.col("close"),
-                        pl.col("tick_volume"),
-                        pl.col("spread"),
-                        pl.col("real_volume"),
-                    ]) # return only what's required 
-                    .collect(engine="streaming") # the streming engine, doesn't store data in memory
-                ).to_dicts()
-
-                rates = np.array(rates)[::-1] # reverse an array so it becomes oldest -> newest
-            
-            except Exception as e:
-                self.logger.warning(f"Failed to copy rates {e}")
-                return np.array(dict())
-        else:
-            
-            rates = self.mt5_instance.copy_rates_from(symbol, timeframe, date_from, count)
-            rates = np.array(self.__mt5_data_to_dicts(rates))
-            
-            if rates is None:
-                self.logger.warning(f"Failed to copy rates. MetaTrader 5 error = {self.mt5_instance.last_error()}")
-                return np.array(dict())
-            
-        return rates
-    
-    
-    def copy_rates_from_pos(self, symbol: str, timeframe: int, start_pos: int, count: int) -> np.array:
-        
-        """
-        Get bars from the MetaTrader 5 terminal starting from the specified index.
-        
-        Parameters:
-            symbol (str): Financial instrument name, for example, "EURUSD". Required unnamed parameter.
-            timeframe (int): MT5 timeframe the bars are requested for.
-            start_pos (int): Initial index of the bar the data are requested from. The numbering of bars goes from present to past. Thus, the zero bar means the current one. Required unnamed parameter.
-            count (int): Number of bars to receive. Required unnamed parameter.
-
-        Returns:
-            Returns bars as the numpy array with the named time, open, high, low, close, tick_volume, spread and real_volume columns. Returns None in case of an error. The info on the error can be obtained using last_error().
-        """
-        
-        tick = self.tick_cache[symbol]
-        
-        if tick is None or tick.time is None:
-            self.logger.critical("Time information not found in the ticker, call the function 'TickUpdate' giving it the latest tick information")
-            now = datetime.now(tz=timezone.utc)
-        else:
-            now = tick.time
-        
-        if self.IS_TESTER:
-
-            date_from = now
-            if isinstance(now, int) or isinstance(now, float):
-                date_from = datetime.fromtimestamp(now)
-
-            date_from += timedelta(seconds=PeriodSeconds(timeframe) * start_pos)
-
-            rates = self.copy_rates_from(symbol=symbol, 
-                                        timeframe=timeframe,
-                                        date_from=date_from,
-                                        count=count)
-
-            if len(rates) == 0:
-                self.logger.warning(f"no rates found from {date_from} bars: count")
-        else:
-            
-            rates = self.mt5_instance.copy_rates_from_pos(symbol, timeframe, start_pos, count)
-            rates = np.array(self.__mt5_data_to_dicts(rates))
-            
-            if rates is None:
-                self.logger.warning(f"Failed to copy rates. MetaTrader 5 error = {self.mt5_instance.last_error()}")
-                return np.array(dict())
-            
-        return rates
     
     def copy_rates_range(self, symbol: str, timeframe: int, date_from: datetime, date_to: datetime):
         """Get bars in the specified date range from the MetaTrader 5 terminal.
@@ -418,7 +306,7 @@ class StrategyTester:
             
             # instead of getting data from MetaTrader 5, get data stored in our custom directories
             
-            path = os.path.join(self.history_dir, "Bars", symbol, TIMEFRAMES_MAP_REVERSE[timeframe])
+            path = os.path.join(self.history_dir, "Bars", symbol, TIMEFRAME2STRING_MAP[timeframe])
             os.makedirs(path, exist_ok=True)
             
             lf = pl.scan_parquet(path)
@@ -448,7 +336,7 @@ class StrategyTester:
                 rates = np.array(rates)[::-1] # reverse an array so it becomes oldest -> newest
             
             except Exception as e:
-                self.logger.warning(f"Failed to copy rates {e}")
+                self.logger.warning(f"Failed to copy rates from {date_from} to {date_to} {e}")
                 return np.array(dict())
         else:
             
@@ -459,6 +347,97 @@ class StrategyTester:
                 self.logger.warning(f"Failed to copy rates. MetaTrader 5 error = {self.mt5_instance.last_error()}")
                 return np.array(dict())
             
+        return rates
+
+    def copy_rates_from(self, symbol: str, timeframe: int, date_from: datetime, count: int) -> np.array:
+
+        """Get bars from the MetaTrader 5 terminal starting from the specified date.
+
+        Args:
+            symbol: Financial instrument name, for example, "EURUSD". Required unnamed parameter.
+            timeframe: Timeframe the bars are requested for. Set by a value from the TIMEFRAME enumeration. Required unnamed parameter.
+            date_from: Date of opening of the first bar from the requested sample. Set by the 'datetime' object or as a number of seconds elapsed since 1970.01.01. Required unnamed parameter.
+
+            count: Number of bars to receive. Required unnamed parameter.
+
+        Returns:
+            Returns bars as the numpy array with the named time, open, high, low, close, tick_volume, spread and real_volume columns. Return None in case of an error. The info on the error can be obtained using last_error().
+        """
+
+        date_from = ensure_utc(date_from)
+        rates = np.array(dict())
+
+        if self.IS_TESTER:
+
+            # instead of getting data from MetaTrader 5, get data stored in our custom directories
+
+            date_to = date_from + timedelta(seconds=PeriodSeconds(timeframe) * count)
+            rates = self.copy_rates_range(symbol=symbol, timeframe=timeframe, date_from=date_from, date_to=date_to)
+
+            if len(rates) == 0:
+                self.logger.warning(f"Failed to to copy {count} bars from {date_from}")
+
+        else:
+
+            rates = self.mt5_instance.copy_rates_from(symbol, timeframe, date_from, count)
+            rates = np.array(self.__mt5_data_to_dicts(rates))
+
+            if rates is None:
+                self.logger.warning(f"Failed to copy rates. MetaTrader 5 error = {self.mt5_instance.last_error()}")
+                return np.array(dict())
+
+        return rates
+
+    def copy_rates_from_pos(self, symbol: str, timeframe: int, start_pos: int, count: int) -> np.array:
+
+        """
+        Get bars from the MetaTrader 5 terminal starting from the specified index.
+
+        Parameters:
+            symbol (str): Financial instrument name, for example, "EURUSD". Required unnamed parameter.
+            timeframe (int): MT5 timeframe the bars are requested for.
+            start_pos (int): Initial index of the bar the data are requested from. The numbering of bars goes from present to past. Thus, the zero bar means the current one. Required unnamed parameter.
+            count (int): Number of bars to receive. Required unnamed parameter.
+
+        Returns:
+            Returns bars as the numpy array with the named time, open, high, low, close, tick_volume, spread and real_volume columns. Returns None in case of an error. The info on the error can be obtained using last_error().
+        """
+
+        tick = self.symbol_info_tick(symbol=symbol)
+
+        if tick is None:
+            self.logger.critical(
+                "Time information not found in the ticker, call the function 'TickUpdate' giving it the latest tick information"
+            )
+
+            return None
+
+        if self.IS_TESTER:
+
+            now = tick.time
+
+            date_from = now
+            if isinstance(now, int) or isinstance(now, float):
+                date_from = datetime.fromtimestamp(now)
+
+            date_from += timedelta(seconds=PeriodSeconds(timeframe) * start_pos)
+
+            rates = self.copy_rates_from(symbol=symbol,
+                                         timeframe=timeframe,
+                                         date_from=date_from,
+                                         count=count)
+
+            if len(rates) == 0:
+                self.logger.warning(f"no rates found from {date_from} bars: count")
+        else:
+
+            rates = self.mt5_instance.copy_rates_from_pos(symbol, timeframe, start_pos, count)
+            rates = np.array(self.__mt5_data_to_dicts(rates))
+
+            if rates is None:
+                self.logger.warning(f"Failed to copy rates. MetaTrader 5 error = {self.mt5_instance.last_error()}")
+                return None
+
         return rates
 
     def __tick_flag_mask(self, flags: int) -> int:
@@ -533,7 +512,7 @@ class StrategyTester:
             
             except Exception as e:
                 self.logger.warning(f"Failed to copy ticks {e}")
-                return np.array(dict())
+                return None
         else:
             
             ticks = self.mt5_instance.copy_ticks_from(symbol, date_from, count, flags)
@@ -541,7 +520,7 @@ class StrategyTester:
             
             if ticks is None:
                 self.logger.warning(f"Failed to copy ticks. MetaTrader 5 error = {self.mt5_instance.last_error()}")
-                return np.array(dict())
+                return None
             
         return ticks
     
@@ -603,7 +582,7 @@ class StrategyTester:
             
             except Exception as e:
                 self.logger.warning(f"Failed to copy ticks {e}")
-                return np.array(dict())
+                return None
         else:
             
             ticks = self.mt5_instance.copy_ticks_range(symbol, date_from, date_to, flags)
@@ -611,7 +590,7 @@ class StrategyTester:
             
             if ticks is None:
                 self.logger.warning(f"Failed to copy ticks. MetaTrader 5 error = {self.mt5_instance.last_error()}")
-                return np.array(dict())
+                return None
             
         return ticks
     
@@ -980,18 +959,20 @@ class StrategyTester:
     def __generate_deal_ticket(self) -> int:
         return len(self.__deals_history_container__)+1
 
-    @staticmethod
-    def __generate_order_ticket(ts: int) -> int:
-        rand = secrets.randbits(6)
-        return (ts << 6) | rand
-
     def __generate_order_history_ticket(self) -> int:
         return len(self.__orders_history_container__)+1
 
     @staticmethod
-    def __generate_position_ticket(ts: int) -> int:
+    def __generate_order_ticket(ts: float) -> int:
+        ts_i = int(ts * 1000)  # convert seconds -> ms integer
         rand = secrets.randbits(6)
-        return (ts << 6) | rand
+        return (ts_i << 6) | rand
+
+    @staticmethod
+    def __generate_position_ticket(ts: float) -> int:
+        ts_i = int(ts * 1000)
+        rand = secrets.randbits(6)
+        return (ts_i << 6) | rand
 
     def __calc_commission(self) -> float:
         """
@@ -1935,7 +1916,6 @@ class StrategyTester:
                             continue
 
                         current_tick = self._bar_to_tick(symbol=symbol, bar=bars_info["bars"].row(counter))
-                        # print(f"{symbol} current tick: {current_tick}")
 
                         self.__curves_update(current_tick["time"])
                         
@@ -2383,6 +2363,6 @@ class StrategyTester:
         with open(output_file, "w", encoding="utf-8") as f:
             f.write(html)
 
-        print(f"Deals report saved to: {output_file}")
+        self.logger.info(f"Deals report saved to: {output_file}")
         
     
