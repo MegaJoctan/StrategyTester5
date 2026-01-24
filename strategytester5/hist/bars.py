@@ -1,7 +1,9 @@
 from datetime import datetime, timezone, timedelta
 import polars as pl
-from strategytester5 import LOGGER, MetaTrader5, ensure_utc, TIMEFRAME2STRING_MAP, month_bounds
+from strategytester5 import MetaTrader5, ensure_utc, TIMEFRAME2STRING_MAP, month_bounds
 import os
+from typing import Optional
+import logging
 
 def bars_to_polars(bars):
     
@@ -22,6 +24,7 @@ def fetch_historical_bars(
                         timeframe: int,
                         start_datetime: datetime,
                         end_datetime: datetime,
+                        LOGGER: Optional[logging.Logger] = None,
                         hist_dir: str="History",
                         return_df: bool = False
                         ) -> pl.DataFrame:
@@ -45,10 +48,6 @@ def fetch_historical_bars(
             month_end = end_datetime
 
         if month_start > end_datetime:
-            # if LOGGER is None:
-            #     print("start > end")
-            # else:
-            #     LOGGER.debug("start > end")
             break
 
         if LOGGER is None:

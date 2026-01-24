@@ -3,6 +3,8 @@ import polars as pl
 from strategytester5 import MetaTrader5, ensure_utc, LOGGER, month_bounds, make_tick
 import numpy as np
 import os
+from typing import Optional
+import logging
 
 def ticks_to_polars(ticks):
     return pl.DataFrame({
@@ -20,6 +22,7 @@ def fetch_historical_ticks(which_mt5: MetaTrader5,
                         start_datetime: datetime, 
                         end_datetime: datetime,
                         symbol: str,
+                        LOGGER: Optional[logging.Logger] = None,
                         return_df: bool = False,
                         hist_dir: str = "History"
                         ) -> pl.DataFrame:
@@ -177,6 +180,7 @@ class TicksGen:
         bars: pl.DataFrame,
         symbol: str,
         symbol_point: float,
+        LOGGER: Optional[logging.Logger] = None,
         hist_dir: str="History",
         return_df: bool = False,
     ) -> pl.DataFrame:

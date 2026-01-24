@@ -1,10 +1,12 @@
-from strategytester5 import LOGGER, STRING2TIMEFRAME_MAP, TIMEFRAME2STRING_MAP
+from strategytester5 import STRING2TIMEFRAME_MAP, TIMEFRAME2STRING_MAP
 from strategytester5.hist import ticks, bars
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 from datetime import datetime
 import time
 import os
-from typing import Any
+from typing import Any, Self
+from typing import Optional
+import logging
 
 class HistoryManager:
     def __init__(self,
@@ -13,7 +15,7 @@ class HistoryManager:
                 start_dt: datetime,
                 end_dt: datetime,
                 timeframe: int,
-
+                LOGGER: Optional[logging.Logger] = None,
                 max_fetch_workers: int=None,
                 max_cpu_workers: int=None,
                 history_dir: str = "History"
@@ -38,6 +40,7 @@ class HistoryManager:
         self.end_dt = end_dt
         self.max_fetch_workers = max_fetch_workers
         self.max_cpu_workers = max_cpu_workers
+        self.LOGGER = LOGGER
         self.history_dir = history_dir
         self.timeframe = timeframe
         
@@ -48,15 +51,15 @@ class HistoryManager:
     
     def __critical_log(self, msg: str):
         """Log a critical message via LOGGER or print as fallback."""
-        if LOGGER is not None:
-            LOGGER.critical(msg)
+        if self.LOGGER is not None:
+            self.LOGGER.critical(msg)
         else:
             print(msg)
     
     def __info_log(self, msg: str):
         """Log an info message via LOGGER or print as fallback."""
-        if LOGGER is not None:
-            LOGGER.info(msg)
+        if self.LOGGER is not None:
+            self.LOGGER.info(msg)
         else:
             print(msg)
             
@@ -76,6 +79,7 @@ class HistoryManager:
             start_datetime=self.start_dt,
             end_datetime=self.end_dt,
             return_df=return_df,
+            LOGGER=self.LOGGER,
             hist_dir=self.history_dir
         )
         
@@ -102,6 +106,7 @@ class HistoryManager:
             end_datetime=self.end_dt,
             symbol=symbol,
             return_df=True,
+            LOGGER=self.LOGGER,
             hist_dir=self.history_dir
         )
         
@@ -137,6 +142,7 @@ class HistoryManager:
             timeframe=STRING2TIMEFRAME_MAP["M1"],  # <- use your map key directly
             start_datetime=self.start_dt,
             end_datetime=self.end_dt,
+            LOGGER=self.LOGGER,
             hist_dir=self.history_dir,
             return_df=return_df
         )
@@ -148,6 +154,7 @@ class HistoryManager:
             bars=one_minute_bars,
             symbol=symbol,
             symbol_point=symbol_points,
+            LOGGER=self.LOGGER,
             hist_dir=self.history_dir,
             return_df=True
         )
