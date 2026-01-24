@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 import polars as pl
-from strategytester5 import LOGGER, MetaTrader5, ensure_utc, TIMEFRAMES_MAP_REVERSE, month_bounds
+from strategytester5 import LOGGER, MetaTrader5, ensure_utc, TIMEFRAME2STRING_MAP, month_bounds
 import os
 
 def bars_to_polars(bars):
@@ -33,7 +33,7 @@ def fetch_historical_bars(
 
     dfs: list[pl.DataFrame] = []
 
-    tf_name = TIMEFRAMES_MAP_REVERSE[timeframe]
+    tf_name = TIMEFRAME2STRING_MAP[timeframe]
 
     while True:
         month_start, month_end = month_bounds(current)
