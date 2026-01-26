@@ -1,4 +1,4 @@
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 __author__  = 'Omega Joctan Msigwa.'
 
 from collections import namedtuple
@@ -102,7 +102,6 @@ def make_tick(
 
     # MT5 semantics
     time  = ensure_utc(time)
-    time_msc = int(time.timestamp() * 1000)
 
     return Tick(
         time=time,
@@ -406,6 +405,56 @@ AccountInfo = namedtuple(
     ]
 )
 
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class MarginEvent:
+    state: str              # "OK" | "MARGIN_CALL" | "STOP_OUT"
+    reason: str
+    value: float            # compared value: margin_level (%) or margin_free (money)
+    call_level: float
+    stop_level: float
+    mode: int               # 0 percent, 1 money
+
+def evaluate_margin_state(acct: AccountInfo) -> MarginEvent:
+    """
+    Implements MT4/MT5 semantics:
+      - mode 0: compare margin_level (%) to call/stop levels
+      - mode 1: compare margin_free (money) to call/stop levels
+    """
+
+    mode = int(acct.margin_so_mode)
+    call_level = float(acct.margin_so_call or 0.0)
+    stop_level = float(acct.margin_so_so   or 0.0)
+
+    if mode == 0:
+        # Percent mode: margin_level is percentage.
+        # Typical formula: equity/margin*100 when margin>0. :contentReference[oaicite:5]{index=5}
+        value = float(acct.margin_level) if acct.margin_level is not None else float("inf")
+
+        if stop_level > 0 and value <= stop_level:
+            return MarginEvent("STOP_OUT", f"margin_level {value:.2f}% <= stop_out {stop_level:.2f}%", value, call_level, stop_level, mode)
+
+        if call_level > 0 and value <= call_level:
+            return MarginEvent("MARGIN_CALL", f"margin_level {value:.2f}% <= margin_call {call_level:.2f}%", value, call_level, stop_level, mode)
+
+        return MarginEvent("OK", "margin ok", value, call_level, stop_level, mode)
+
+    elif mode == 1:
+        # Money mode: compare free margin to absolute thresholds.
+        value = float(acct.margin_free) if acct.margin_free is not None else float("inf")
+
+        if stop_level > 0 and value <= stop_level:
+            return MarginEvent("STOP_OUT", f"free_margin {value:.2f} <= stop_out {stop_level:.2f}", value, call_level, stop_level, mode)
+
+        if call_level > 0 and value <= call_level:
+            return MarginEvent("MARGIN_CALL", f"free_margin {value:.2f} <= margin_call {call_level:.2f}", value, call_level, stop_level, mode)
+
+        return MarginEvent("OK", "margin ok", value, call_level, stop_level, mode)
+
+    # Unknown mode -> don’t stop out
+    return MarginEvent("OK", f"unknown margin_so_mode={mode}", float("inf"), call_level, stop_level, mode)
+
 SUPPORTED_TESTER_MODELLING = {
                 "every_tick",
                 "real_ticks",
@@ -539,7 +588,7 @@ def get_logger(task_name: str, logfile: str, level=logging.INFO):
 
     file_handler = RotatingFileHandler(
         logfile,
-        maxBytes=20 * 1024 * 1024,  # 20 MB
+        maxBytes=10 * 1024 * 1024,  # 10 MB
         backupCount=5,
         encoding="utf-8",
     )
@@ -559,9 +608,5 @@ def get_logger(task_name: str, logfile: str, level=logging.INFO):
 
 LOGGER = None
 
-# Assigning loggers
-
-logging_level = logging.DEBUG if IS_DEBUG else logging.INFO
-
-CURVES_PLOT_INTERVAL_MINS = 1
+CURVES_PLOT_INTERVAL_MINS = 60
 
