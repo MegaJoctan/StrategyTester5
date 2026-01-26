@@ -1,5 +1,6 @@
 from fontTools.misc.bezierTools import epsilon
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from strategytester5 import *
 from . import error_description
 from datetime import datetime, timedelta
@@ -169,7 +170,10 @@ class StrategyTester:
                 company=mt5_acc_info.company,
             )
         )
-        
+
+        self.positions_unrealized_pl = 0
+        self.positions_total_margin = 0
+
         # -------------------- tester reports ----------------------------
         
         self.last_curve_minute = -1
@@ -183,15 +187,16 @@ class StrategyTester:
         
         self.tester_stats = {}
         
-    def __curves_update(self, time):
+    def __curves_update(self, time, time_check=True):
         
         if isinstance(time, datetime):
             time = time.timestamp()
-        
+
         minute = int(time) // (CURVES_PLOT_INTERVAL_MINS*60)
 
-        if minute == self.last_curve_minute:
-            return
+        if time_check:
+            if minute == self.last_curve_minute:
+                return
 
         self.last_curve_minute = minute
 
@@ -287,7 +292,7 @@ class StrategyTester:
             ]
 
         raise TypeError(f"Unsupported rates format: {type(rates)}, dtype={rates.dtype}")
-    
+
     def copy_rates_range(self, symbol: str, timeframe: int, date_from: datetime, date_to: datetime):
         """Get bars in the specified date range from the MetaTrader 5 terminal.
 
@@ -296,21 +301,21 @@ class StrategyTester:
             timeframe (int): Timeframe the bars are requested for. Set by a value from the TIMEFRAME enumeration. Required unnamed parameter.
             date_from (datetime): Date the bars are requested from. Set by the 'datetime' object or as a number of seconds elapsed since 1970.01.01. Bars with the open time >= date_from are returned. Required unnamed parameter.
             date_to (datetime): Date, up to which the bars are requested. Set by the 'datetime' object or as a number of seconds elapsed since 1970.01.01. Bars with the open time <= date_to are returned. Required unnamed parameter.
-            
+
             Returns:
                 Returns bars as the numpy array with the named time, open, high, low, close, tick_volume, spread and real_volume columns. Returns None in case of an error. The info on the error can be obtained using MetaTrader5.last_error().
         """
-        
+
         date_from = ensure_utc(date_from)
         date_to = ensure_utc(date_to)
-        
-        if self.IS_TESTER:    
-            
+
+        if self.IS_TESTER:
+
             # instead of getting data from MetaTrader 5, get data stored in our custom directories
-            
+
             path = os.path.join(self.history_dir, "Bars", symbol, TIMEFRAME2STRING_MAP[timeframe])
             os.makedirs(path, exist_ok=True)
-            
+
             lf = pl.scan_parquet(path)
 
             try:
@@ -320,7 +325,7 @@ class StrategyTester:
                             (pl.col("time") >= pl.lit(date_from)) &
                             (pl.col("time") <= pl.lit(date_to))
                         ) # get bars between date_from and date_to
-                    .sort("time", descending=True) 
+                    .sort("time", descending=True)
                     .select([
                         pl.col("time").dt.epoch("s").cast(pl.Int64).alias("time"),
 
@@ -331,24 +336,24 @@ class StrategyTester:
                         pl.col("tick_volume"),
                         pl.col("spread"),
                         pl.col("real_volume"),
-                    ]) # return only what's required 
-                    .collect(engine="streaming") # the streming engine, doesn't store data in memory
+                    ]) # return only what's required
+                    .collect(engine="streaming") # the streaming engine, doesn't store data in memory
                 ).to_dicts()
 
                 rates = np.array(rates)[::-1] # reverse an array so it becomes oldest -> newest
-            
+
             except Exception as e:
                 self.logger.warning(f"Failed to copy rates from {date_from} to {date_to} {e}")
                 return np.array(dict())
         else:
-            
+
             rates = self.mt5_instance.copy_rates_range(symbol, timeframe, date_from, date_to)
             rates = np.array(self.__mt5_data_to_dicts(rates))
-            
+
             if rates is None:
                 self.logger.warning(f"Failed to copy rates. MetaTrader 5 error = {self.mt5_instance.last_error()}")
                 return np.array(dict())
-            
+
         return rates
 
     def copy_rates_from(self, symbol: str, timeframe: int, date_from: datetime, count: int) -> np.array:
@@ -483,7 +488,7 @@ class StrategyTester:
             
             path = os.path.join(self.history_dir, "Ticks", symbol)
             os.makedirs(path, exist_ok=True)
-            
+
             lf = pl.scan_parquet(path)
 
             try:
@@ -506,12 +511,12 @@ class StrategyTester:
                         pl.col("time_msc"),
                         pl.col("flags"),
                         pl.col("volume_real"),
-                    ]) 
+                    ])
                     .collect(engine="streaming") # the streaming engine, doesn't store data in memory
                 ).to_dicts()
 
                 ticks = np.array(ticks)
-            
+
             except Exception as e:
                 self.logger.warning(f"Failed to copy ticks {e}")
                 return None
@@ -1137,8 +1142,8 @@ class StrategyTester:
                     margin=new_margin,
                 )
 
-                self.__account_monitoring()
-                
+                self.__account_monitoring(pos_must_exist=False)
+                self.__curves_update(now, time_check=False)
                 self.__positions_container__.remove(pos) 
                 
                 # self.__orders_history_container__.append(
@@ -1171,6 +1176,7 @@ class StrategyTester:
                 )
 
                 self.logger.info(f"Position: {position_ticket} closed!")
+                self.logger.debug(f"balance: {self.AccountInfo.balance:.2f} equity: {self.AccountInfo.equity:2f} pl: {self.AccountInfo.profit:.2f}")
                 
                 return {
                     "retcode": self.mt5_instance.TRADE_RETCODE_DONE,
@@ -1630,42 +1636,25 @@ class StrategyTester:
             margin = (volume * contract_size * price) / leverage
 
         return round(margin, 2)
-
-        
-    def __account_monitoring(self):
-        
-        unrealized_pl = 0
-        total_margin = 0
-        
-        for pos in self.__positions_container__:
-            
-            unrealized_pl += pos.profit
-            total_margin += pos.margin
-            
-        self.AccountInfo = self.AccountInfo._replace(
-            profit=unrealized_pl,
-            equity=self.AccountInfo.balance + unrealized_pl,
-            margin=total_margin
-        )
-        
-        self.AccountInfo = self.AccountInfo._replace(
-            margin_free=self.AccountInfo.equity - self.AccountInfo.margin,
-            margin_level=self.AccountInfo.equity / self.AccountInfo.margin * 100 if self.AccountInfo.margin > 0 else 0
-        )
     
     def __positions_monitoring(self):
         """
-        Monitors all open positions:
+        Monitors all open positions and updates the account:
         - updates profit
         - checks SL / TP
         - closes positions when hit
         """
 
-        for i in range(len(self.__positions_container__) - 1, -1, -1):
+        positions_found = len(self.__positions_container__)
+
+        self.positions_total_margin = 0
+        self.positions_unrealized_pl = 0
+
+        for i in range(positions_found- 1, -1, -1):
             
             pos = self.__positions_container__[i]
             
-            tick = self.tick_cache[pos.symbol]
+            tick = self.symbol_info_tick(pos.symbol)
 
             # --- Determine close price and opposite order type ---
             if pos.type == self.mt5_instance.POSITION_TYPE_BUY:
@@ -1687,6 +1676,9 @@ class StrategyTester:
                     price_open=pos.price_open,
                     price_close=price
                 )
+            
+            self.positions_unrealized_pl += profit
+            self.positions_total_margin += pos.margin
             
             # --- Check SL / TP ---
             hit_tp = False
@@ -1732,6 +1724,22 @@ class StrategyTester:
 
             self.order_send(request)
 
+    def __account_monitoring(self, pos_must_exist: bool = True):
+
+        # ------- monitor the account only if there is at least one position ------
+
+        if (len(self.__positions_container__) > 0) if pos_must_exist else True:
+
+            new_equity = self.AccountInfo.balance + self.positions_unrealized_pl
+            self.AccountInfo = self.AccountInfo._replace(
+                profit=self.positions_unrealized_pl,
+                equity=new_equity,
+                margin=self.positions_total_margin,
+                margin_free = new_equity - self.positions_total_margin,
+                margin_level = new_equity / self.positions_total_margin * 100 if self.positions_total_margin > 0 else 0
+            )
+
+        
     def __pending_orders_monitoring(self):
         
         """
@@ -1852,14 +1860,15 @@ class StrategyTester:
         if modelling == "real_ticks" or modelling == "every_tick":
             
             total_ticks = sum(ticks_info["size"] for ticks_info in self.TESTER_ALL_TICKS_INFO)
+            self.tester_stats["Ticks"] = total_ticks
 
             self.logger.debug(f"total number of ticks: {total_ticks}")
 
             with tqdm(total=total_ticks, desc="StrategyTester Progress", unit="tick") as pbar:
                 while True:
-                    
-                    self.__account_monitoring()
+
                     self.__positions_monitoring()
+                    self.__account_monitoring()
                     self.__pending_orders_monitoring()
                     
                     any_tick_processed = False
@@ -1893,14 +1902,15 @@ class StrategyTester:
             
             bars_ = [bars_info["size"] for bars_info in self.TESTER_ALL_BARS_INFO]
             total_bars = sum(bars_)
+            self.tester_stats["Ticks"] = total_bars
             
             self.logger.debug(f"total number of bars: {total_bars}")
 
             with tqdm(total=total_bars, desc="StrategyTester Progress", unit="bar") as pbar:
                 while True:
-                    
-                    self.__account_monitoring()
+
                     self.__positions_monitoring()
+                    self.__account_monitoring()
                     self.__pending_orders_monitoring()
                     
                     any_bar_processed = False
@@ -1932,7 +1942,84 @@ class StrategyTester:
                         break
         
         self.__TesterDeinit()
-    
+
+    def __ontick_symbol(self, symbol: str, modelling: str, ontick_func: any):
+
+        info = None
+        is_tick_mode = False
+
+        if modelling in ("new_bar", "1-minute-ohlc"):
+            info = next(
+                (x for x in self.TESTER_ALL_BARS_INFO if x["symbol"] == symbol),
+                None,
+            )
+
+        if modelling in ("real_ticks", "every_tick"):
+            info = next(
+                (x for x in self.TESTER_ALL_TICKS_INFO if x["symbol"] == symbol),
+                None,
+            )
+
+            is_tick_mode = True
+
+        if info is None:
+            return
+
+        ticks = info["ticks"] if is_tick_mode else info["bars"]
+        size = info["size"]
+        counter = 0
+
+        self.logger.info(f"{symbol} total number of ticks: {size}")
+
+        with tqdm(total=size, desc=f"StrategyTester Progress on {symbol}", unit="tick" if is_tick_mode else "bar") as pbar:
+            while counter < size:
+
+                tick = None
+                if is_tick_mode:
+                    tick = ticks.row(counter)
+                else:
+                    tick = self._bar_to_tick(symbol=symbol, bar=ticks.row(counter)) # a bar=tick is not actually a tick, rather a bar
+
+                if tick is None:
+                    pbar.update(1)
+                    continue
+
+                self.TickUpdate(symbol=symbol, tick=tick)
+                ontick_func()
+
+                positions_found = len(self.positions_get(symbol=symbol))>0
+                pending_orders_found = len(self.orders_get(symbol=symbol))>0
+
+                if positions_found: # we monitor the account and positions only if they exist
+
+                    self.__positions_n_account_monitoring()
+
+                    self.__curves_update(tick.time)
+
+                if pending_orders_found:
+                    self.__pending_orders_monitoring()
+
+                counter += 1
+                pbar.update(1)
+
+    def ParallelOnTick(self, ontick_func):
+        """Calls the assigned function upon the receival of new tick(s)
+
+        Args:
+            ontick_func (_type_): A function to be called on every tick
+        """
+
+        self.__TesterInit()
+
+        symbols = self.tester_config["symbols"]
+        modelling = self.tester_config["modelling"]
+        max_workers = len(symbols)
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futs = {executor.submit(self.__ontick_symbol, s, modelling, ontick_func): s for s in symbols}
+
+        self.__TesterDeinit()
+
     def __make_balance_deal(self, time: datetime) -> TradeDeal:
 
         time_sec = int(time.timestamp())
@@ -1971,7 +2058,9 @@ class StrategyTester:
         # self.__deals_history_container__.append(
         #     self.__make_balance_deal(time=self.tester_config["end_date"])
         # )
-        
+
+        self.tester_stats["Symbols"] = len(self.tester_config["symbols"])
+
         profits = []
         losses = []
         total_trades = 0
@@ -2172,17 +2261,18 @@ class StrategyTester:
             for t in curves["time"]
         ]
 
+        plt.style.use("seaborn-v0_8-darkgrid")
         plt.figure(figsize=(10, 4))
 
-        plt.plot(times, curves["balance"], label="Balance", linewidth=2)
-        plt.plot(times, curves["equity"], label="Equity", linewidth=2)
-        plt.grid(visible=True, which="minor")
+        plt.plot(times, curves["balance"], label="Balance", linewidth=2, color="#1f77b4")
+        plt.plot(times, curves["equity"], label="Equity", linewidth=1.5, color="#0b6623", alpha=0.6)
+
         # plt.plot(times, curves["margin"], label="Margin", linewidth=1, alpha=0.6)
 
-        plt.legend(loc="upper right")
+        plt.legend(loc="lower left")
         plt.tight_layout()
 
-        plt.savefig(output_path, dpi=150, transparent=True)
+        plt.savefig(output_path, dpi=300, transparent=False)
         plt.close()
 
         return output_path
@@ -2363,5 +2453,3 @@ class StrategyTester:
             f.write(html)
 
         self.logger.info(f"Deals report saved to: {output_file}")
-        
-    
