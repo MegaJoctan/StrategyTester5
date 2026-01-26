@@ -58,7 +58,7 @@ class TesterConfigValidators:
 
         # --- TIMEFRAME ---
         timeframe = raw_config["timeframe"].upper()
-        if timeframe not in TIMEFRAMES_MAP:
+        if timeframe not in STRING2TIMEFRAME_MAP:
             raise RuntimeError(f"Invalid timeframe: {timeframe}")
         cfg["timeframe"] = timeframe
 
