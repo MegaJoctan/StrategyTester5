@@ -1,9 +1,13 @@
+import os
+import sys
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, ROOT)  # insert(0) so it wins over other paths
+
 import MetaTrader5 as mt5
 from strategytester5.tester import StrategyTester
 from strategytester5.trade_classes.Trade import CTrade
 import json
-import os
-import sys
 
 if not mt5.initialize(): # Initialize MetaTrader5 instance
     print(f"Failed to Initialize MetaTrader5. Error = {mt5.last_error()}")
