@@ -1,0 +1,12 @@
+{
+    "tester": {
+        "bot_name": "MY EA",
+        "symbols": ["EURUSD", "USDCAD", "USDJPY"],
+        "timeframe": "H1",
+        "start_date": "01.01.2025 00:00",
+        "end_date": "31.12.2025 00:00",
+        "modelling" : "new_bar",
+        "deposit": 1000,
+        "leverage": "1:100"
+    }
+}
