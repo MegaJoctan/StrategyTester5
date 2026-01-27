@@ -115,9 +115,9 @@ class StrategyTester:
         self.logger.info("Initialized")
         
         # ----------------- initialize internal containers -----------------
-        
+
         self.AccountInfo = AccountInfo
-        
+
         self.__orders_container__ = []
         self.__orders_history_container__ = []
         self.__positions_container__ = []
@@ -131,9 +131,8 @@ class StrategyTester:
             raise RuntimeError("Failed to obtain MT5 account info")
 
         deposit = self.tester_config["deposit"]
-        
-        self.__account_state_update(
-            account_info=AccountInfo(
+
+        self.AccountInfo=AccountInfo(
                 # ---- identity / broker-controlled ----
                 login=11223344,
                 trade_mode=mt5_acc_info.trade_mode,
@@ -148,7 +147,7 @@ class StrategyTester:
 
                 # ---- simulator-controlled financials ----
                 balance=deposit,                # simulator starting balance
-                credit=mt5_acc_info.credit,
+                credit=0,
                 profit=0.0,
                 equity=deposit,
                 margin=0.0,
@@ -172,47 +171,23 @@ class StrategyTester:
                 currency=mt5_acc_info.currency,
                 company=mt5_acc_info.company,
             )
-        )
 
         self.positions_unrealized_pl = 0
         self.positions_total_margin = 0
 
         # -------------------- tester reports ----------------------------
         
-        self.last_curve_minute = -1
-        
         self.tester_curves = {
-            "time": [],
-            "balance": [],
-            "equity": [],
-            "margin": []
+            "time": np.array([]),
+            "balance": np.array([]),
+            "equity": np.array([]),
+            "margin": np.array([])
         }
         
         self.tester_stats = {}
+        self.TESTER_IDX = 0
         self.IS_STOPPED = False
-        
-    def __curves_update(self, time, time_check=True):
-        
-        if isinstance(time, datetime):
-            time = time.timestamp()
 
-        minute = int(time) // (CURVES_PLOT_INTERVAL_MINS*60)
-
-        if time_check:
-            if minute == self.last_curve_minute:
-                return
-
-        self.last_curve_minute = minute
-
-        self.tester_curves["time"].append(time)
-        self.tester_curves["balance"].append(self.AccountInfo.balance)
-        self.tester_curves["equity"].append(self.AccountInfo.equity)
-        self.tester_curves["margin"].append(self.AccountInfo.margin)
-    
-    def __account_state_update(self, account_info: AccountInfo):
-        
-        self.AccountInfo = account_info
-        
     def account_info(self) -> AccountInfo:
         
         """Gets info on the current trading account."""
@@ -1119,7 +1094,7 @@ class StrategyTester:
                 # validate position close request
                 
                 if pos.type == order_type:
-                    self.logger.critical("Failed to close an order. Order type must be the opposite")
+                    self.logger.warning("Failed to close an order. Order type must be the opposite")
                     return None
                 
                 if order_type == self.mt5_instance.ORDER_TYPE_BUY: # For a sell order/position
@@ -1147,7 +1122,7 @@ class StrategyTester:
                 )
 
                 self.__account_monitoring(pos_must_exist=False)
-                self.__curves_update(now, time_check=False)
+                self.__curves_update(index=self.TESTER_IDX, time=now)
                 self.__positions_container__.remove(pos) 
                 
                 # self.__orders_history_container__.append(
@@ -1732,11 +1707,13 @@ class StrategyTester:
 
         if evaluate_margin_state(self.AccountInfo).state == "STOP_OUT":
             self.logger.critical("Account Margin STOPOUT Triggered!")
+            self.logger.debug(self.AccountInfo)
             self.IS_STOPPED = True
 
-        # if evaluate_margin_state(self.AccountInfo).state == "MARGIN_CALL":
-            # self.logger.critical("Account Margin CALL Triggered!")
-            # self.IS_STOPPED = True
+        if evaluate_margin_state(self.AccountInfo).state == "MARGIN_CALL":
+            self.logger.critical("Account Margin CALL Triggered!")
+            self.logger.debug(self.AccountInfo)
+            self.IS_STOPPED = True
 
         # ------- monitor the account only if there is at least one position ------
 
@@ -1858,15 +1835,39 @@ class StrategyTester:
             "flags": 0,
             "volume_real": 0,
         }
-    
+
+    def __TesterInit(self, size: int):
+
+        self.TESTER_IDX = 0
+
+        self.tester_curves = {
+            "time": np.empty(size, dtype=np.int64),
+            "balance": np.empty(size, dtype=np.float64),
+            "equity": np.empty(size, dtype=np.float64),
+            "margin": np.empty(size, dtype=np.float64),
+        }
+
+        self.__deals_history_container__.append(
+            self.__make_balance_deal(time=self.tester_config["start_date"])
+        )
+
+    def __curves_update(self, index, time):
+
+        if isinstance(time, datetime):
+            time = time.timestamp()
+
+        self.tester_curves["time"][index] = time
+        self.tester_curves["balance"][index] = self.AccountInfo.balance
+        self.tester_curves["equity"][index] = self.AccountInfo.equity
+        self.tester_curves["margin"][index] = self.AccountInfo.margin
+
     def OnTick(self, ontick_func):
+
         """Calls the assigned function upon the receival of new tick(s)
 
         Args:
             ontick_func (_type_): A function to be called on every tick
         """
-
-        self.__TesterInit()
         
         modelling = self.tester_config["modelling"]
         if modelling == "real_ticks" or modelling == "every_tick":
@@ -1875,6 +1876,7 @@ class StrategyTester:
             self.tester_stats["Ticks"] = total_ticks
 
             self.logger.debug(f"total number of ticks: {total_ticks}")
+            self.__TesterInit(size=total_ticks)
 
             with tqdm(total=total_ticks, desc="StrategyTester Progress", unit="tick") as pbar:
                 while True:
@@ -1896,17 +1898,22 @@ class StrategyTester:
                         counter = ticks_info["counter"]
 
                         if counter >= size:
-                            continue
+                            break
+
+                        if self.TESTER_IDX >= total_ticks:
+                            break
 
                         current_tick = ticks_info["ticks"].row(counter)
                         
                         current_tick = make_tick_from_tuple(current_tick)
                         self.TickUpdate(symbol=symbol, tick=current_tick)
                         
-                        self.__curves_update(current_tick.time)
+                        self.__curves_update(index=self.TESTER_IDX, time=current_tick.time)
                         ontick_func()
 
-                        ticks_info["counter"] = counter + 1
+                        self.TESTER_IDX += 1
+                        ticks_info["counter"] += 1
+
                         any_tick_processed = True
 
                         pbar.update(1)
@@ -1921,6 +1928,7 @@ class StrategyTester:
             self.tester_stats["Ticks"] = total_bars
             
             self.logger.debug(f"total number of bars: {total_bars}")
+            self.__TesterInit(size=total_bars)
 
             with tqdm(total=total_bars, desc="StrategyTester Progress", unit="bar") as pbar:
                 while True:
@@ -1941,19 +1949,24 @@ class StrategyTester:
                         size = bars_info["size"]
                         counter = bars_info["counter"]
 
+                        if self.TESTER_IDX >= total_bars:
+                            break
+
                         if counter >= size:
-                            continue
+                            break
 
                         current_tick = self._bar_to_tick(symbol=symbol, bar=bars_info["bars"].row(counter))
 
-                        self.__curves_update(current_tick["time"])
+                        self.__curves_update(index=self.TESTER_IDX, time=current_tick["time"])
                         
                         # Getting ticks at the current bar
                         
                         self.TickUpdate(symbol=symbol, tick=current_tick)
                         ontick_func()
 
-                        bars_info["counter"] = counter + 1
+                        self.TESTER_IDX += 1
+                        bars_info["counter"] += 1
+
                         any_bar_processed = True
 
                         pbar.update(1)
@@ -1987,18 +2000,17 @@ class StrategyTester:
 
         ticks = info["ticks"] if is_tick_mode else info["bars"]
         size = info["size"]
-        counter = 0
 
         self.logger.info(f"{symbol} total number of ticks: {size}")
 
         with tqdm(total=size, desc=f"StrategyTester Progress on {symbol}", unit="tick" if is_tick_mode else "bar") as pbar:
-            while counter < size:
+            while self.TESTER_IDX < size:
 
                 tick = None
                 if is_tick_mode:
-                    tick = ticks.row(counter)
+                    tick = ticks.row(self.TESTER_IDX)
                 else:
-                    tick = self._bar_to_tick(symbol=symbol, bar=ticks.row(counter)) # a bar=tick is not actually a tick, rather a bar
+                    tick = self._bar_to_tick(symbol=symbol, bar=ticks.row(self.TESTER_IDX)) # a bar=tick is not actually a tick, rather a bar
 
                 if tick is None:
                     pbar.update(1)
@@ -2013,13 +2025,12 @@ class StrategyTester:
                 if positions_found: # we monitor the account and positions only if they exist
 
                     self.__positions_n_account_monitoring()
-
-                    self.__curves_update(tick.time)
+                    self.__curves_update(index=self.TESTER_IDX, time=tick.time)
 
                 if pending_orders_found:
                     self.__pending_orders_monitoring()
 
-                counter += 1
+                self.TESTER_IDX += 1
                 pbar.update(1)
 
     def ParallelOnTick(self, ontick_func):
@@ -2029,7 +2040,7 @@ class StrategyTester:
             ontick_func (_type_): A function to be called on every tick
         """
 
-        self.__TesterInit()
+        # self.__TesterInit()
 
         symbols = self.tester_config["symbols"]
         modelling = self.tester_config["modelling"]
@@ -2067,24 +2078,18 @@ class StrategyTester:
             external_id=""
         )
 
-    def __TesterInit(self):
-        
-        self.__deals_history_container__.append(
-            self.__make_balance_deal(time=self.tester_config["start_date"])
-        )
-        
     def __TesterDeinit(self):
-        
-        # self.__deals_history_container__.append(
-        #     self.__make_balance_deal(time=self.tester_config["end_date"])
-        # )
 
         self.tester_stats["Symbols"] = len(self.tester_config["symbols"])
 
         profits = []
         losses = []
         total_trades = 0
-        
+
+        n = int(self.TESTER_IDX)
+        balance_curve = self.tester_curves["balance"][:n]
+        equity_curve = self.tester_curves["equity"][:n]
+
         max_consec_win_count = 0
         max_consec_win_money = 0.0
 
@@ -2203,7 +2208,7 @@ class StrategyTester:
 
             return max_dd
 
-        returns = np.diff(self.tester_curves["equity"])
+        returns = np.diff(equity_curve)
 
         sharpe = (
             np.mean(returns) / np.std(returns)
@@ -2212,25 +2217,23 @@ class StrategyTester:
         
         self.tester_stats["Sharpe Ratio"] = sharpe
         
-        self.tester_stats["Equity Drawdown Absolute"] = max_drawdown(self.tester_curves["equity"])
-        self.tester_stats["Balance Drawdown Absolute"] = max_drawdown(self.tester_curves["balance"])
+        self.tester_stats["Equity Drawdown Absolute"] = max_drawdown(equity_curve)
+        self.tester_stats["Balance Drawdown Absolute"] = max_drawdown(balance_curve)
         
         self.tester_stats["Recovery Factor"] = (
-            self.tester_stats["Net Profit"] / max(self.tester_stats["Balance Drawdown Absolute"], 1)
+            self.tester_stats["Net Profit"] / (self.tester_stats["Balance Drawdown Absolute"] + epsilon)
         )
 
         self.tester_stats["Equity Drawdown Relative"] = (
-            self.tester_stats["Equity Drawdown Absolute"] / max(self.tester_curves["equity"]) * 100
-            if self.tester_curves["equity"] else 0.0
+            self.tester_stats["Equity Drawdown Absolute"] / (np.max(equity_curve)+epsilon) * 100
         )
         
         self.tester_stats["Balance Drawdown Relative"] = (
-            self.tester_stats["Balance Drawdown Absolute"] / max(self.tester_curves["balance"]) * 100
-            if self.tester_curves["balance"] else 0.0
+            self.tester_stats["Balance Drawdown Absolute"] / (np.max(balance_curve)+epsilon) * 100
         )
         
-        self.tester_stats["Balance Drawdown Maximal"] = max_drawdown(self.tester_curves["balance"])
-        self.tester_stats["Equity Drawdown Maximal"] = max_drawdown(self.tester_curves["equity"])
+        self.tester_stats["Balance Drawdown Maximal"] = max_drawdown(balance_curve)
+        self.tester_stats["Equity Drawdown Maximal"] = max_drawdown(equity_curve)
         
         self.tester_stats["Total Trades"] = total_trades
         self.tester_stats["Total Deals"] = len(self.__deals_history_container__)
@@ -2267,31 +2270,29 @@ class StrategyTester:
         # generate a report at the end
         
         self.__GenerateTesterReport(output_file=f"Reports/{self.tester_config['bot_name']}-report.html")
-    
-    def _plot_tester_curves(self, output_path: str) -> str:
-        
+
+    def _plot_tester_curves(self, output_path: str) -> str | None:
+
         curves = self.tester_curves
 
-        if not curves["time"]:
+        n = int(self.TESTER_IDX)  # how many points you actually filled
+        if n <= 0:
             return None
 
+        t = curves["time"][:n]
+        bal = curves["balance"][:n]
+        eq = curves["equity"][:n]
+
         # Convert timestamps → datetime
-        times = [
-            datetime.fromtimestamp(t) if isinstance(t, (int, float)) else t
-            for t in curves["time"]
-        ]
+        times = [datetime.fromtimestamp(float(x)) for x in t]
 
         plt.style.use("seaborn-v0_8-darkgrid")
         plt.figure(figsize=(10, 4))
-
-        plt.plot(times, curves["balance"], label="Balance", linewidth=2, color="#1f77b4")
-        plt.plot(times, curves["equity"], label="Equity", linewidth=1.5, color="#0b6623", alpha=0.6)
-
-        # plt.plot(times, curves["margin"], label="Margin", linewidth=1, alpha=0.6)
+        plt.plot(times, bal, label="Balance", linewidth=2)
+        plt.plot(times, eq, label="Equity", linewidth=1.5, alpha=0.6)
 
         plt.legend(loc="lower left")
         plt.tight_layout()
-
         plt.savefig(output_path, dpi=300, transparent=False)
         plt.close()
 
@@ -2442,12 +2443,20 @@ class StrategyTester:
         
         path = os.path.join(self.reports_dir, "images")
         os.makedirs(path, exist_ok=True)
+        curve_img = None
 
         try:
-            curve_img = self._plot_tester_curves(output_path=os.path.join(path, f"{self.tester_config['bot_name'].replace(' ', '_')}_curve.png"))
-            curve_img = curve_img.replace(self.reports_dir+'\\', "")
+            curve_img = self._plot_tester_curves(
+                output_path=os.path.join(
+                    path,
+                    f"{self.tester_config['bot_name'].replace(' ', '_')}_curve.png"
+                )
+            )
+            if curve_img:
+                curve_img = curve_img.replace(self.reports_dir + "\\", "")
         except Exception as e:
-            self.logger.warning(f"Failed to generate a balance curve {e}")
+            self.logger.warning(f"Failed to generate a balance curve {e!r}")
+            curve_img = None
 
         # ------------------ render orders and deals ------------------------------
         
