@@ -110,6 +110,7 @@ class TesterStats:
 
         self._win_streaks: list[int] = []
         self._loss_streaks: list[int] = []
+        self._trade_returns = []  # per-trade returns in *fraction* (e.g., 0.01 = +1%)
 
         self.eps = 1e-10
 
@@ -121,7 +122,6 @@ class TesterStats:
         self.lr_res = linregress(x, y)
 
     def _compute(self):
-
         cur_win_count = 0
         cur_win_money = 0.0
         cur_loss_count = 0
@@ -141,10 +141,17 @@ class TesterStats:
 
             profit = float(getattr(d, "profit", 0.0))
 
+            # ---- per-trade return (percent change per trade) for AHPR/GHPR :contentReference[oaicite:10]{index=10}
+            bal_after = getattr(d, "balance", None)
+            if bal_after is not None:
+                bal_after = float(bal_after)
+                bal_before = bal_after - profit
+                if bal_before > self.eps:
+                    self._trade_returns.append(profit / bal_before)
+
             if profit > 0.0:
                 self._profits.append(profit)
 
-                # close loss streak
                 if cur_loss_count > 0:
                     self._loss_streaks.append(cur_loss_count)
                     cur_loss_count = 0
@@ -167,10 +174,8 @@ class TesterStats:
                     self._short_trades_won += 1
 
             else:
-                # treat 0 as non-winning trade (your earlier logic)
                 self._losses.append(profit)  # negative or zero
 
-                # close win streak
                 if cur_win_count > 0:
                     self._win_streaks.append(cur_win_count)
                     cur_win_count = 0
@@ -186,6 +191,12 @@ class TesterStats:
                 if cur_loss_money < self._max_loss_streak_money:
                     self._max_loss_streak_money = cur_loss_money
                     self._max_loss_streak_count = cur_loss_count
+
+        # flush last streaks (important!)
+        if cur_win_count > 0:
+            self._win_streaks.append(cur_win_count)
+        if cur_loss_count > 0:
+            self._loss_streaks.append(cur_loss_count)
 
     @property
     def total_trades(self) -> int:
