@@ -1,5 +1,3 @@
-from fontTools.misc.bezierTools import epsilon
-
 import inspect
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -14,8 +12,9 @@ from typing import Optional
 import polars as pl
 from strategytester5.validators.trade import TradeValidators
 from strategytester5.validators.tester_configs import TesterConfigValidators
-from strategytester5._template import html_report_template
-from strategytester5.hist.manager import  HistoryManager
+import strategytester5._html_templates as templates
+from strategytester5.hist.manager import HistoryManager
+from strategytester5 import stats
 import sys
 import logging
 
@@ -25,8 +24,7 @@ import matplotlib as mpl
 
 mpl.rcParams["agg.path.chunksize"] = 10000
 mpl.rcParams["path.simplify"] = True
-mpl.rcParams["path.simplify_threshold"] = 0.1
-
+mpl.rcParams["path.simplify_threshold"] = 0.9
 
 class StrategyTester:
     def __init__(self,
@@ -154,7 +152,7 @@ class StrategyTester:
                 equity=deposit,
                 margin=0.0,
                 margin_free=deposit,
-                margin_level=0.0,
+                margin_level=np.inf,
 
                 # ---- risk thresholds (copied from broker) ----
                 margin_so_call=mt5_acc_info.margin_so_call,
@@ -183,10 +181,9 @@ class StrategyTester:
             "time": np.array([]),
             "balance": np.array([]),
             "equity": np.array([]),
-            "margin": np.array([])
+            "margin_level": np.array([])
         }
-        
-        self.tester_stats = {}
+
         self.TESTER_IDX = 0
         self.IS_STOPPED = False
         self._engine_lock = threading.RLock()   # re-entrant lock (safe if functions call other locked functions)
@@ -1125,7 +1122,7 @@ class StrategyTester:
                 )
 
                 self.__account_monitoring(pos_must_exist=False)
-                self.__curves_update(index=self.TESTER_IDX, time=now)
+                # self.__curves_update(index=self.TESTER_IDX, time=now)
                 self.__positions_container__.remove(pos) 
                 
                 # self.__orders_history_container__.append(
@@ -1414,7 +1411,42 @@ class StrategyTester:
             "retcode": self.mt5_instance.TRADE_RETCODE_INVALID,
             "comment": "Unsupported trade action",
         }
-    
+
+    def __terminate_all_positions(self, comment: str):
+
+        for pos in self.__positions_container__:
+
+            position_type = pos.type  # 0=BUY, 1=SELL
+
+            # Get close price (BID for buy, ASK for sell)
+
+            tick_info = self.symbol_info_tick(pos.symbol)
+            price = tick_info.bid if position_type == self.mt5_instance.POSITION_TYPE_BUY else tick_info.ask
+
+            # Set close order type
+            order_type = self.mt5_instance.ORDER_TYPE_SELL if position_type == self.mt5_instance.POSITION_TYPE_BUY else self.mt5_instance.ORDER_TYPE_BUY
+
+            request = {
+                "action": self.mt5_instance.TRADE_ACTION_DEAL,
+                "position": pos.ticket,
+                "symbol": pos.symbol,
+                "volume": pos.volume,
+                "magic": pos.magic,
+                "type": order_type,
+                "price": price,
+                "deviation": 1000,
+                "type_time": self.mt5_instance.ORDER_TIME_GTC,
+                "comment": comment
+            }
+
+            # Send the close request
+
+            if self.order_send(request) is None:
+                return False
+
+            LOGGER.info(f"Position {pos.ticket} closed successfully! {comment}")
+            return True
+
     def order_calc_profit(self, 
                         order_type: int,
                         symbol: str,
@@ -1728,7 +1760,7 @@ class StrategyTester:
                 equity=new_equity,
                 margin=self.positions_total_margin,
                 margin_free = new_equity - self.positions_total_margin,
-                margin_level = new_equity / self.positions_total_margin * 100 if self.positions_total_margin > 0 else 0
+                margin_level = new_equity / self.positions_total_margin * 100 if self.positions_total_margin > 0 else np.inf
             )
 
         
@@ -1847,7 +1879,7 @@ class StrategyTester:
             "time": np.empty(size, dtype=np.int64),
             "balance": np.empty(size, dtype=np.float64),
             "equity": np.empty(size, dtype=np.float64),
-            "margin": np.empty(size, dtype=np.float64),
+            "margin_level": np.empty(size, dtype=np.float64),
         }
 
         self.__deals_history_container__.append(
@@ -1862,7 +1894,7 @@ class StrategyTester:
         self.tester_curves["time"][index] = time
         self.tester_curves["balance"][index] = self.AccountInfo.balance
         self.tester_curves["equity"][index] = self.AccountInfo.equity
-        self.tester_curves["margin"][index] = self.AccountInfo.margin
+        self.tester_curves["margin_level"][index] = self.AccountInfo.margin_level
 
     def OnTick(self, ontick_func):
 
@@ -2134,193 +2166,19 @@ class StrategyTester:
 
     def __TesterDeinit(self):
 
-        self.tester_stats["Ticks"] = self.TESTER_IDX
-        self.tester_stats["Symbols"] = len(self.tester_config["symbols"])
+        # terminate all open positions
+        
+        self.__terminate_all_positions(comment="End of test")
 
-        profits = []
-        losses = []
-        total_trades = 0
+        # Build final curves (base pre-allocated slice + 1 extra point)
 
         n = int(self.TESTER_IDX)
-        balance_curve = self.tester_curves["balance"][:n]
-        equity_curve = self.tester_curves["equity"][:n]
+        if n <= 0:
+            return  # nothing to report
 
-        max_consec_win_count = 0
-        max_consec_win_money = 0.0
-
-        max_consec_loss_count = 0
-        max_consec_loss_money = 0.0
-
-        max_profit_streak_money = 0.0
-        max_profit_streak_count = 0
-
-        max_loss_streak_money = 0.0
-        max_loss_streak_count = 0
-
-        cur_win_count = 0
-        cur_win_money = 0.0
-
-        cur_loss_count = 0
-        cur_loss_money = 0.0
-
-        win_streaks = []
-        loss_streaks = []
-        
-        short_trades_won = 0
-        long_trades_won = 0
-        
-        total_short_trades = 0
-        total_long_trades = 0
-        
-        for deal in self.__deals_history_container__:
-            if deal.entry == self.mt5_instance.DEAL_ENTRY_OUT: # a closed position
-                
-                total_trades +=1
-                if deal.type == self.mt5_instance.DEAL_TYPE_BUY:
-                    total_long_trades += 1
-                
-                if deal.type == self.mt5_instance.DEAL_TYPE_SELL:
-                    total_short_trades += 1
-                
-                profit = deal.profit
-                    
-                if profit > 0: # A win
-                    
-                    profits.append(profit)
-                    
-                    # reset loss streak
-                    if cur_loss_count > 0:
-                        loss_streaks.append(cur_loss_count)
-                        cur_loss_count = 0
-                        cur_loss_money = 0.0
-
-                    cur_win_count += 1
-                    cur_win_money += profit
-
-                    # longest win streak
-                    if cur_win_count > max_consec_win_count:
-                        max_consec_win_count = cur_win_count
-                        max_consec_win_money = cur_win_money
-
-                    # most profitable win streak
-                    if cur_win_money > max_profit_streak_money:
-                        max_profit_streak_money = cur_win_money
-                        max_profit_streak_count = cur_win_count
-
-                    if deal.type == self.mt5_instance.DEAL_TYPE_BUY:
-                        long_trades_won += 1
-                    
-                    if deal.type == self.mt5_instance.DEAL_TYPE_SELL:
-                        short_trades_won += 1
-                        
-                else: # A loss
-                    
-                    losses.append(profit)
-                    
-                    # reset win streak
-                    if cur_win_count > 0:
-                        win_streaks.append(cur_win_count)
-                        cur_win_count = 0
-                        cur_win_money = 0.0
-
-                    cur_loss_count += 1
-                    cur_loss_money += profit
-
-                    # longest loss streak
-                    if cur_loss_count > max_consec_loss_count:
-                        max_consec_loss_count = cur_loss_count
-                        max_consec_loss_money = cur_loss_money
-
-                    # largest losing streak
-                    if cur_loss_money < max_loss_streak_money:
-                        max_loss_streak_money = cur_loss_money
-                        max_loss_streak_count = cur_loss_count
-                    
-        
-        self.tester_stats["Gross Profit"] = np.sum(profits) if profits else 0
-        self.tester_stats["Gross Loss"] = np.sum(losses) if losses else 0
-        self.tester_stats["Net Profit"] = self.tester_stats["Gross Profit"] + self.tester_stats["Gross Loss"]
-        
-        self.tester_stats["Profit Factor"] = self.tester_stats["Gross Profit"] / (self.tester_stats["Gross Loss"]+epsilon)
-        
-        self.tester_stats["Expected Payoff"] = (
-            self.tester_stats["Net Profit"] / total_trades
-            if total_trades > 0 else 0
-        )
-
-        def max_drawdown(curve):
-            try:
-                peak = curve[0]
-            except IndexError:
-                peak = 0
-
-            max_dd = 0.0
-
-            for value in curve:
-                peak = max(peak, value)
-                dd = peak - value
-                max_dd = max(max_dd, dd)
-
-            return max_dd
-
-        returns = np.diff(equity_curve)
-
-        sharpe = (
-            np.mean(returns) / np.std(returns)
-            if len(returns) > 1 and np.std(returns) > 0 else 0.0
-        )
-        
-        self.tester_stats["Sharpe Ratio"] = sharpe
-        
-        self.tester_stats["Equity Drawdown Absolute"] = max_drawdown(equity_curve)
-        self.tester_stats["Balance Drawdown Absolute"] = max_drawdown(balance_curve)
-        
-        self.tester_stats["Recovery Factor"] = (
-            self.tester_stats["Net Profit"] / (self.tester_stats["Balance Drawdown Absolute"] + epsilon)
-        )
-
-        self.tester_stats["Equity Drawdown Relative"] = (
-            self.tester_stats["Equity Drawdown Absolute"] / (np.max(equity_curve)+epsilon) * 100
-        )
-        
-        self.tester_stats["Balance Drawdown Relative"] = (
-            self.tester_stats["Balance Drawdown Absolute"] / (np.max(balance_curve)+epsilon) * 100
-        )
-        
-        self.tester_stats["Balance Drawdown Maximal"] = max_drawdown(balance_curve)
-        self.tester_stats["Equity Drawdown Maximal"] = max_drawdown(equity_curve)
-        
-        self.tester_stats["Total Trades"] = total_trades
-        self.tester_stats["Total Deals"] = len(self.__deals_history_container__)
-        
-        self.tester_stats["Total Short Trades"] = total_short_trades
-        self.tester_stats["Total Long Trades"] = total_long_trades
-        
-        self.tester_stats["Short Trades Won"] = short_trades_won
-        self.tester_stats["Long Trades Won"] = long_trades_won
-        
-        self.tester_stats["Profit Trades"] = len(profits) if profits else 0
-        self.tester_stats["Loss Trades"] = len(losses) if losses else 0
-        
-        self.tester_stats["Largest Profit Trade"] = np.max(profits) if profits else 0
-        self.tester_stats["Largest Loss Trade"] = np.min(losses) if losses else 0
-        
-        self.tester_stats["Average Profit Trade"] = np.mean(profits) if profits else 0
-        self.tester_stats["Average Loss Trade"] = np.mean(losses) if losses else 0
-        
-        self.tester_stats["Maximum Consecutive Wins"] = max_profit_streak_count
-        self.tester_stats["Maximum Consecutive Losses"] = max_loss_streak_count
-        
-        self.tester_stats["Maximum Consecutive Wins Money"] = max_profit_streak_money
-        self.tester_stats["Maximum Consecutive Losses Money"] = max_loss_streak_money
-        
-        self.tester_stats["Average Consecutive Wins"] = np.mean(win_streaks)
-        self.tester_stats["Average Consecutive Losses"] = np.mean(loss_streaks)
-        
-        # AHPR / GHPR
-        
-        self.tester_stats["AHPR"] = np.prod(1 + returns) ** (1/len(returns)) if len(returns) else 0
-        self.tester_stats["GHPR"] = np.prod(1 + returns) if len(returns) else 0
+        self.tester_curves["balance"][n-1] = self.AccountInfo.balance
+        self.tester_curves["equity"][n-1] = self.AccountInfo.balance
+        self.tester_curves["margin_level"][n-1] = self.AccountInfo.margin_level
 
         # generate a report at the end
         
@@ -2338,13 +2196,18 @@ class StrategyTester:
         bal = curves["balance"][:n]
         eq = curves["equity"][:n]
 
-        # Convert timestamps → datetime
-        times = [datetime.fromtimestamp(float(x)) for x in t]
+        # IMPORTANT: sort by time (because parallel threads interleave symbols)
+        order = np.argsort(t)
+        t = t[order]
+        bal = bal[order]
+        eq = eq[order]
+
+        times = [datetime.fromtimestamp(x) for x in t]
 
         plt.style.use("seaborn-v0_8-darkgrid")
         plt.figure(figsize=(10, 4))
-        plt.plot(times, bal, label="Balance", linewidth=2)
-        plt.plot(times, eq, label="Equity", linewidth=1.5, alpha=0.6)
+        plt.plot(times, bal, label="Balance", linewidth=2, color="#1f77b4")
+        plt.plot(times, eq, label="Equity", linewidth=1.5, color="#0b6623", alpha=0.6)
 
         plt.legend(loc="lower left")
         plt.tight_layout()
@@ -2354,151 +2217,11 @@ class StrategyTester:
         return output_path
 
     def __GenerateTesterReport(self, output_file="StrategyTester report.html"):
-        
-        def render_order_rows(orders):
-            rows = []
 
-            for o in orders:
-                rows.append(f"""
-                <tr>
-                    <td>{datetime.fromtimestamp(o.time_setup)}</td>
-                    <td>{o.ticket}</td>
-                    <td>{o.symbol}</td>
-                    <td>{ORDER_TYPE_MAP.get(o.type, o.type)}</td>
-                    <td class="text-end">{o.volume_initial:.2f} / {o.volume_current:.2f}</td>
-                    <td class="text-end">{o.price_open:.5f}</td>
-                    <td class="text-end">{"" if o.sl == 0 else f"{o.sl:.5f}"}</td>
-                    <td class="text-end">{"" if o.tp == 0 else f"{o.tp:.5f}"}</td>
-                    <td>{datetime.fromtimestamp(o.time_done) if o.time_done else ""}</td>
-                    <td>{ORDER_STATE_MAP.get(o.state, o.state)}</td>
-                    <td>{o.comment}</td>
-                </tr>
-                """)
-
-            return "\n".join(rows)
-
-        def render_deal_rows(deals):
-            rows = []
-
-            for d in deals:
-
-                rows.append(f"""
-                <tr>
-                    <td>{datetime.fromtimestamp(d.time)}</td>
-                    <td>{d.ticket}</td>
-                    <td>{d.symbol}</td>
-                    <td>{DEAL_TYPE_MAP[d.type]}</td>
-                    <td>{DEAL_ENTRY_MAP[d.entry]}</td>
-                    <td class="text-end">{d.volume:.2f}</td>
-                    <td class="text-end">{d.price:.5f}</td>
-                    <td class="text-end">{d.commission:.2f}</td>
-                    <td class="text-end">{d.swap:.2f}</td>
-                    <td class="text-end">{d.profit:.2f}</td>
-                    <td>{d.comment}</td>
-                    <td>{round(d.balance, 2)}</td>
-                </tr>
-                """)
-
-            return "\n".join(rows)
-        # ---------------------- write stats table to a template --------------------
-        
-        short_trades_won = self.tester_stats.get("Short Trades Won", 0)
-        long_trades_won = self.tester_stats.get('Long Trades Won', 0)
-        
-        max_profit_streak_count = self.tester_stats["Maximum Consecutive Wins"]
-        max_loss_streak_count = self.tester_stats["Maximum Consecutive Losses"]
-        
-        max_profit_streak_money = self.tester_stats["Maximum Consecutive Wins Money"]
-        max_loss_streak_money = self.tester_stats["Maximum Consecutive Losses Money"]
-        
-        stats_table = f"""
-            <table class="report-table table-sm table-striped">
-                <tbody>
-                    <tr>
-                        <th>Initial Deposit</th><td class="number">{self.tester_config.get('deposit', 0)}</td>
-                        <th>Ticks</th><td class="number">{self.tester_stats.get('Ticks', 0)}</td>
-                        <th>Symbols</th><td class="number">{self.tester_stats.get('Symbols', 0)}</td>
-                    </tr>
-                    <tr>
-                        <th>Total Net Profit</th><td class="number">{self.tester_stats.get('Net Profit', 0):.2f}</td>
-                        <th>Balance Drawdown Absolute</th><td class="number">{self.tester_stats.get('Balance Drawdown Absolute', 0):.2f}</td>
-                        <th>Equity Drawdown Absolute</th><td class="number">{self.tester_stats.get('Equity Drawdown Absolute', 0):.2f}</td>
-                    </tr>
-                    <tr>
-                        <th>Gross Profit</th><td class="number">{self.tester_stats.get('Gross Profit', 0):.2f}</td>
-                        <th>Balance Drawdown Maximal</th><td class="number">{self.tester_stats.get('Balance Drawdown Maximal', 0):.2f}</td>
-                        <th>Equity Drawdown Maximal</th><td class="number">{self.tester_stats.get('Equity Drawdown Maximal', 0):.2f}</td>
-                    </tr>
-                    <tr>
-                        <th>Gross Loss</th><td class="number">{self.tester_stats.get('Gross Loss', 0):.2f}</td>
-                        <th>Balance Drawdown Relative</th><td class="number">{self.tester_stats.get('Balance Drawdown Relative', 0):.2f}%</td>
-                        <th>Equity Drawdown Relative</th><td class="number">{self.tester_stats.get('Equity Drawdown Relative', 0):.2f}%</td>
-                    </tr>
-                    <tr>
-                        <th>Profit Factor</th><td class="number">{self.tester_stats.get('Profit Factor', 0):.2f}</td>
-                        <th>Expected Payoff</th><td class="number">{self.tester_stats.get('Expected Payoff', 0):.2f}</td>
-                        <th>Margin Level</th><td class="number">{self.tester_stats.get('Margin Level', 0):.2f}%</td>
-                    </tr>
-                    <tr>
-                        <th>Recovery Factor</th><td class="number">{self.tester_stats.get('Recovery Factor', 0):.2f}</td>
-                        <th>Sharpe Ratio</th><td class="number">{self.tester_stats.get('Sharpe Ratio', 0):.2f}</td>
-                        <th>Z-Score</th><td class="number">{self.tester_stats.get('Z-Score', 0):.2f}</td>
-                    </tr>
-                    <tr>
-                        <th>AHPR</th><td class="number">{self.tester_stats.get('AHPR', 0):.4f}</td>
-                        <th>LR Correlation</th><td class="number">{self.tester_stats.get('LR Correlation', 0):.2f}</td>
-                        <th>OnTester result</th><td class="number">{self.tester_stats.get('OnTester result', 0)}</td>
-                    </tr>
-                    <tr>
-                        <th>GHPR</th><td class="number">{self.tester_stats.get('GHPR', 0):.4f}</td>
-                        <th>LR Standard Error</th><td class="number">{self.tester_stats.get('LR Standard Error', 0):.2f}</td>
-                        <td></td><td></td>
-                    </tr>
-                    <tr>
-                        <th>Total Trades</th><td class="number">{self.tester_stats.get('Total Trades', 0)}</td>
-                        <th>Short Trades (won %)</th><td class="number">{short_trades_won} ({100*short_trades_won/(self.tester_stats.get('Total Short Trades',1)+epsilon):.2f}%)</td>
-                        <th>Long Trades (won %)</th><td class="number">{long_trades_won} ({100*long_trades_won/(self.tester_stats.get('Total Long Trades',1)+epsilon):.2f}%)</td>
-                    </tr>
-                    <tr>
-                        <th>Total Deals</th><td class="number">{self.tester_stats.get('Total Deals', 0)}</td>
-                        <th>Profit Trades (% of total)</th><td class="number">{self.tester_stats.get('Profit Trades', 0)} ({100*self.tester_stats.get('Profit Trades',0)/max(self.tester_stats.get('Total Trades',1),1):.2f}%)</td>
-                        <th>Loss Trades (% of total)</th><td class="number">{self.tester_stats.get('Loss Trades', 0)} ({100*self.tester_stats.get('Loss Trades',0)/max(self.tester_stats.get('Total Trades',1),1):.2f}%)</td>
-                    </tr>
-                    <tr>
-                        <th>Largest Profit Trade</th><td class="number">{self.tester_stats.get('Largest Profit Trade', 0):.2f}</td>
-                        <th>Largest Loss Trade</th><td class="number">{self.tester_stats.get('Largest Loss Trade', 0):.2f}</td>
-                        <td></td><td></td>
-                    </tr>
-                    <tr>
-                        <th>Average Profit Trade</th><td class="number">{self.tester_stats.get('Average Profit Trade', 0):.2f}</td>
-                        <th>Average Loss Trade</th><td class="number">{self.tester_stats.get('Average Loss Trade', 0):.2f}</td>
-                        <td></td><td></td>
-                    </tr>
-                    <tr>
-                        <th>Max Consecutive Wins ($)</th><td class="number">{max_profit_streak_count} ({max_profit_streak_money:.2f})</td>
-                        <th>Max Consecutive Losses ($)</th><td class="number">{max_loss_streak_count} ({max_loss_streak_money:.2f})</td>
-                        <td></td><td></td>
-                    </tr>
-                    <tr>
-                        <th>Max Consecutive Profit (count)</th><td class="number">{max_profit_streak_count} ({max_profit_streak_money:.2f})</td>
-                        <th>Max Consecutive Loss (count)</th><td class="number">{max_loss_streak_count} ({max_loss_streak_money:.2f})</td>
-                        <td></td><td></td>
-                    </tr>
-                    <tr>
-                        <th>Average Consecutive Wins</th><td class="number">{self.tester_stats.get('Average Consecutive Wins', 0):.2f}</td>
-                        <th>Average Consecutive Losses</th><td class="number">{self.tester_stats.get('Average Consecutive Losses', 0):.2f}</td>
-                        <td></td><td></td>
-                    </tr>
-                </tbody>
-            </table>
-            """
-
-        
-        # ----------------------- append a PNG for curves to the HTML -----------------
+        # Balance and Equity curves
         
         path = os.path.join(self.reports_dir, "images")
         os.makedirs(path, exist_ok=True)
-        curve_img = None
 
         try:
             curve_img = self._plot_tester_curves(
@@ -2513,17 +2236,29 @@ class StrategyTester:
             self.logger.warning(f"Failed to generate a balance curve {e!r}")
             curve_img = None
 
-        # ------------------ render orders and deals ------------------------------
+        # ---------------- Render tester report with stas, orders and deals --------------------
         
-        order_rows_html = render_order_rows(self.__orders_history_container__)
-        deal_rows_html = render_deal_rows(self.__deals_history_container__)
-        
-        template = html_report_template()
-        
+        base_template = templates.html_report_template()
+
+        stats_table = templates.render_stats_table(
+            stats=stats.TesterStats(
+                deals=self.__deals_history_container__,
+                initial_deposit=self.tester_config.get("deposit"),
+                symbols=len(self.tester_config.get("symbols")),
+                balance_curve=self.tester_curves["balance"],
+                equity_curve=self.tester_curves["equity"],
+                margin_level_curve=self.tester_curves["margin_level"],
+                ticks=self.TESTER_IDX,
+            )
+        )
+
+        order_rows_html = templates.render_order_rows(self.__orders_history_container__)
+        deal_rows_html = templates.render_deal_rows(self.__deals_history_container__)
+
         # we populate table's body
         
         html = (
-            template
+            base_template
             .replace("{{STATS_TABLE}}", stats_table)
             .replace("{{ORDER_ROWS}}", order_rows_html)
             .replace("{{DEAL_ROWS}}", deal_rows_html)
