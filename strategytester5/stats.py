@@ -1,7 +1,6 @@
-from typing import Any, Dict, List, Optional, Sequence
 import numpy as np
 from numba import njit
-from dataclasses import dataclass, field
+from strategytester5 import MetaTrader5
 
 @njit(cache=True)
 def _maximal_drawdown_local_extrema_nb(x: np.ndarray, eps: float = 1e-12) -> float:
@@ -75,13 +74,14 @@ class TesterStats:
                 initial_deposit: float,
                 balance_curve: np.ndarray,
                 equity_curve: np.ndarray,
-                mt5_instance: Any):
+                ticks: int,
+                symbols: list
+                ):
 
         self.deals = deals
         self.initial_deposit = float(initial_deposit)
         self.balance_curve = np.ascontiguousarray(np.asarray(balance_curve, dtype=np.float64)).reshape(-1)
         self.equity_curve = np.ascontiguousarray(np.asarray(equity_curve, dtype=np.float64)).reshape(-1)
-        self.mt5 = mt5_instance
 
         self._profits: list[float] = []
         self._losses: list[float] = []  # negative profits (losses)
@@ -118,15 +118,15 @@ class TesterStats:
         cur_loss_money = 0.0
 
         for d in self.deals:
-            if getattr(d, "entry", None) != self.mt5.DEAL_ENTRY_OUT:
+            if getattr(d, "entry", None) != MetaTrader5.DEAL_ENTRY_OUT:
                 continue
 
             self._total_trades += 1
 
             d_type = getattr(d, "type", None)
-            if d_type == self.mt5.DEAL_TYPE_BUY:
+            if d_type == MetaTrader5.DEAL_TYPE_BUY:
                 self._total_long_trades += 1
-            elif d_type == self.mt5.DEAL_TYPE_SELL:
+            elif d_type == MetaTrader5.DEAL_TYPE_SELL:
                 self._total_short_trades += 1
 
             profit = float(getattr(d, "profit", 0.0))
@@ -151,9 +151,9 @@ class TesterStats:
                     self._max_profit_streak_money = cur_win_money
                     self._max_profit_streak_count = cur_win_count
 
-                if d_type == self.mt5.DEAL_TYPE_BUY:
+                if d_type == MetaTrader5.DEAL_TYPE_BUY:
                     self._long_trades_won += 1
-                elif d_type == self.mt5.DEAL_TYPE_SELL:
+                elif d_type == MetaTrader5.DEAL_TYPE_SELL:
                     self._short_trades_won += 1
 
             else:
