@@ -1,4 +1,5 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
+
 import polars as pl
 from strategytester5 import MetaTrader5, ensure_utc, TIMEFRAME2STRING_MAP, month_bounds
 import os
@@ -18,16 +19,16 @@ def bars_to_polars(bars):
         "real_volume": bars["real_volume"],
     })
 
-def fetch_historical_bars(
-                        which_mt5: MetaTrader5,
-                        symbol: str,
-                        timeframe: int,
-                        start_datetime: datetime,
-                        end_datetime: datetime,
-                        LOGGER: Optional[logging.Logger] = None,
-                        hist_dir: str="History",
-                        return_df: bool = False
-                        ) -> pl.DataFrame:
+def get_bars_from_mt5(
+                    which_mt5: MetaTrader5,
+                    symbol: str,
+                    timeframe: int,
+                    start_datetime: datetime,
+                    end_datetime: datetime,
+                    logger: Optional[logging.Logger] = None,
+                    hist_dir: str="History",
+                    return_df: bool = False
+                    ) -> pl.DataFrame:
     
     start_datetime = ensure_utc(start_datetime)
     end_datetime   = ensure_utc(end_datetime)
@@ -50,10 +51,10 @@ def fetch_historical_bars(
         if month_start > end_datetime:
             break
 
-        if LOGGER is None:
+        if logger is None:
             print(f"\nProcessing bars for {symbol} ({tf_name}): {month_start:%Y-%m-%d} -> {month_end:%Y-%m-%d}")
         else:
-            LOGGER.info(f"Processing bars for {symbol} ({tf_name}): {month_start:%Y-%m-%d} -> {month_end:%Y-%m-%d}")
+            logger.info(f"Processing bars for {symbol} ({tf_name}): {month_start:%Y-%m-%d} -> {month_end:%Y-%m-%d}")
         
 
         rates = which_mt5.copy_rates_range(
@@ -65,10 +66,10 @@ def fetch_historical_bars(
 
         if rates is None:
             
-            if LOGGER is None:
+            if logger is None:
                 print(f"\nNo bars for {symbol} {tf_name} {month_start:%Y-%m}")
             else:
-                LOGGER.warning(f"No bars for {symbol} {tf_name} {month_start:%Y-%m}")
+                logger.warning(f"No bars for {symbol} {tf_name} {month_start:%Y-%m}")
                 
             current = (month_start + timedelta(days=32)).replace(day=1)
             continue
@@ -101,3 +102,53 @@ def fetch_historical_bars(
         current = (month_start + timedelta(days=32)).replace(day=1)
 
     return pl.concat(dfs, how="vertical") if return_df else None
+
+def get_bars_from_history(
+                    symbol: str,
+                    timeframe: int,
+                    start_datetime: datetime,
+                    end_datetime: datetime,
+                    POLARS_COLLECT_ENGINE: str,
+                    logger: Optional[logging.Logger] = None,
+                    hist_dir: str="History") -> pl.DataFrame:
+
+    start_datetime = ensure_utc(start_datetime)
+    end_datetime   = ensure_utc(end_datetime)
+
+    if isinstance(timeframe, (int, float)):
+        timeframe = TIMEFRAME2STRING_MAP[timeframe]
+
+    guess_path = os.path.join(hist_dir, "Bars", symbol, timeframe)
+    if not os.path.exists(guess_path):
+        logger.critical(f"Failed to obtain history, data path couldn't be found for {symbol} and {timeframe}: path = {guess_path}")
+        return pl.DataFrame()
+
+    lf = pl.scan_parquet(guess_path)
+
+    try:
+        rates = (
+            lf
+            .filter(
+                (pl.col("time") >= pl.lit(start_datetime)) &
+                (pl.col("time") <= pl.lit(end_datetime))
+            )  # get bars between date_from and date_to
+            .sort("time", descending=True)
+            .select([
+                pl.col("time").dt.epoch("s").cast(pl.Int64).alias("time"),
+
+                pl.col("open"),
+                pl.col("high"),
+                pl.col("low"),
+                pl.col("close"),
+                pl.col("tick_volume"),
+                pl.col("spread"),
+                pl.col("real_volume"),
+            ])  # return only what's required
+            .collect(engine=POLARS_COLLECT_ENGINE)  # the streaming engine, doesn't store data in memory
+        )
+
+    except Exception as e:
+        logger.critical(f"Failed to get bars from {start_datetime} to {end_datetime} {e}")
+        return pl.DataFrame()
+    
+    return rates

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import polars as pl
-from strategytester5 import MetaTrader5, ensure_utc, LOGGER, month_bounds, make_tick
+from strategytester5 import MetaTrader5, ensure_utc, month_bounds, make_tick, TIMEFRAME2STRING_MAP
 import numpy as np
 import os
 from typing import Optional
@@ -18,15 +18,14 @@ def ticks_to_polars(ticks):
         "volume_real": ticks["volume_real"],
     })
     
-def fetch_historical_ticks(which_mt5: MetaTrader5,
-                        start_datetime: datetime, 
-                        end_datetime: datetime,
-                        symbol: str,
-                        LOGGER: Optional[logging.Logger] = None,
-                        return_df: bool = False,
-                        hist_dir: str = "History"
-                        ) -> pl.DataFrame:
-    
+def get_ticks_from_mt5(which_mt5: MetaTrader5,
+                    start_datetime: datetime, 
+                    end_datetime: datetime,
+                    symbol: str,
+                    logger: Optional[logging.Logger] = None,
+                    return_df: bool = False,
+                    hist_dir: str = "History"
+                    ) -> pl.DataFrame:
     
     start_datetime = ensure_utc(start_datetime)
     end_datetime   = ensure_utc(end_datetime)
@@ -47,10 +46,10 @@ def fetch_historical_ticks(which_mt5: MetaTrader5,
         if month_start > end_datetime:
             break
         
-        if LOGGER is None:
+        if logger is None:
             print(f"Processing ticks for {symbol}: {month_start:%Y-%m-%d} -> {month_end:%Y-%m-%d}")
         else:
-            LOGGER.info(f"Processing ticks for {symbol}: {month_start:%Y-%m-%d} -> {month_end:%Y-%m-%d}")
+            logger.info(f"Processing ticks for {symbol}: {month_start:%Y-%m-%d} -> {month_end:%Y-%m-%d}")
 
         ticks = which_mt5.copy_ticks_range(
             symbol,
@@ -61,10 +60,10 @@ def fetch_historical_ticks(which_mt5: MetaTrader5,
 
         if ticks is None or len(ticks) == 0:
             
-            if LOGGER is None:
+            if logger is None:
                 print(f"No ticks for {symbol} {month_start:%Y-%m}")
             else:
-                LOGGER.warning(f"No ticks for {symbol} {month_start:%Y-%m}")
+                logger.warning(f"No ticks for {symbol} {month_start:%Y-%m}")
                 
             current = (month_start + timedelta(days=32)).replace(day=1)
             continue
@@ -95,6 +94,64 @@ def fetch_historical_ticks(which_mt5: MetaTrader5,
         current = (month_start + timedelta(days=32)).replace(day=1)
 
     return pl.concat(dfs, how="vertical") if return_df else None
+
+def get_ticks_from_history(
+                    symbol: str,
+                    start_datetime: datetime,
+                    end_datetime: datetime,
+                    POLARS_COLLECT_ENGINE: str,
+                    logger: Optional[logging.Logger] = None,
+                    hist_dir: str="History") -> pl.DataFrame:
+
+    start_datetime = ensure_utc(start_datetime)
+    end_datetime   = ensure_utc(end_datetime)
+
+    guess_path = os.path.join(hist_dir, "Ticks", symbol)
+    if not os.path.exists(guess_path):
+        logger.critical(f"Failed to obtain history, data path couldn't be found for {symbol}")
+        return pl.DataFrame()
+
+    lf = pl.scan_parquet(guess_path)
+
+    """
+    flag_mask = (MetaTrader5.TICK_FLAG_BID 
+                 | MetaTrader5.TICK_FLAG_ASK 
+                 | MetaTrader5.TICK_FLAG_LAST
+                 | MetaTrader5.TICK_FLAG_VOLUME
+                 | MetaTrader5.TICK_FLAG_BUY 
+                 | MetaTrader5.TICK_FLAG_SELL)
+    """
+
+    try:
+        ticks = (
+            lf
+            .filter(
+                (pl.col("time") >= pl.lit(start_datetime)) &
+                (pl.col("time") <= pl.lit(end_datetime))
+            )  # get ticks between a date range
+            # .filter((pl.col("flags") & flag_mask) != 0)
+            .sort(
+                ["time", "time_msc"],
+                descending=[False, False]
+            )
+            .select([
+                pl.col("time").dt.epoch("s").cast(pl.Int64).alias("time"),
+                pl.col("bid"),
+                pl.col("ask"),
+                pl.col("last"),
+                pl.col("volume"),
+                pl.col("time_msc"),
+                pl.col("flags"),
+                pl.col("volume_real"),
+            ])
+            .collect(engine=POLARS_COLLECT_ENGINE)  # the streaming engine, doesn't store data in memory
+        )
+
+    except Exception as e:
+        logger.warning(f"Failed to copy ticks {e}")
+        return pl.DataFrame()
+
+    return ticks
     
     
 class TicksGen:
@@ -180,7 +237,7 @@ class TicksGen:
         bars: pl.DataFrame,
         symbol: str,
         symbol_point: float,
-        LOGGER: Optional[logging.Logger] = None,
+        logger: Optional[logging.Logger] = None,
         hist_dir: str="History",
         return_df: bool = False,
     ) -> pl.DataFrame:
@@ -198,10 +255,10 @@ class TicksGen:
 
         for (year, month), bars_chunk in bars.group_by(["year", "month"], maintain_order=True):
 
-            if LOGGER is None:
+            if logger is None:
                 print(f"\nGenerating ticks for {symbol}: {year}-{month:02d}")
             else:
-                LOGGER.info(f"Generating ticks for {symbol}: {year}-{month:02d}")
+                logger.info(f"Generating ticks for {symbol}: {year}-{month:02d}")
 
             tick_rows = []
 
