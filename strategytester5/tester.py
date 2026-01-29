@@ -2,7 +2,7 @@ import inspect
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from strategytester5 import *
-from . import error_description
+from strategytester5 import error_description
 from datetime import datetime, timedelta
 import secrets
 import os
@@ -33,23 +33,36 @@ class StrategyTester:
                  logging_level: int = logging.WARNING,
                  logs_dir: Optional[str]="Logs",
                  reports_dir: Optional[str]="Reports",
-                 history_dir: Optional[str]="History"):
+                 history_dir: Optional[str]="History",
+                 POLARS_COLLECT_ENGINE: str="auto"):
         
         """MetaTrader 5-Like Strategy tester for the MetaTrader5-Python module.
 
         Args:
-            tester_config: Dictionary of tester configuration values.
-            mt5_instance: MetaTrader5 API/client instance used for obtaining crucial information from the broker as an attempt to mimic the terminal.
+            tester_config (dict): Dictionary of tester configuration values.
+            mt5_instance (MetaTrader5): MetaTrader5 API/client instance used for obtaining crucial information from the broker as an attempt to mimic the terminal.
             logging_level: Minimum severity of messages to record. Uses standard `logging` levels (e.g., logging.DEBUG, INFO, WARNING, ERROR, CRITICAL). Messages below this level are ignored.
-            logs_dir: Directory for log files.
-            reports_dir: Directory for HTML reports and assets.
-            history_dir: Directory for historical data storage.
+            logs_dir (str): Directory for log files.
+            reports_dir (str): Directory for HTML reports and assets.
+            history_dir (str): Directory for historical data storage.
+
+             POLARS_COLLECT_ENGINE (str): Engine used by Polars when collecting historical data in functions for obtaining ticks — copy_ticks*, and bars information/rates (copy_rates*). Supported values are:
+                - ``"auto"`` (default): Use Polars’ standard in-memory engine and
+                  respect the ``POLARS_ENGINE_AFFINITY`` environment variable if set.
+                - ``"in-memory"``: Explicitly use the default in-memory engine,
+                  optimized with multi-threading and SIMD over Arrow data.
+                - ``"streaming"``: Process queries in batches, enabling
+                  larger-than-RAM datasets.
+                - ``"gpu"``: Use NVIDIA GPUs via RAPIDS cuDF for accelerated execution.
+                  Requires installing Polars with GPU support, e.g.:
+                  ``pip install polars[gpu] --extra-index-url=https://pypi.nvidia.com``.
         Raises:
             RuntimeError: If required MT5 account info cannot be obtained.
         """
         
         self.reports_dir = reports_dir
         self.history_dir = history_dir
+        self.POLARS_COLLECT_ENGINE = POLARS_COLLECT_ENGINE
         
         self.symbol_info_cache: dict[str, SymbolInfo] = {}
         self.trade_validators_cache: dict[str, TradeValidators] = {}
@@ -78,14 +91,14 @@ class StrategyTester:
         LOGGER = self.logger
         
         if not self.IS_TESTER:
-            self.logger.debug("MT5 mode")
+            self.logger.info("MT5 mode")
             
         # -------------- Check if we are not on the tester mode ------------------
         
         self.IS_TESTER = not any(arg.startswith("--mt5") for arg in sys.argv) # are we on the strategy tester mode or live trading
         
         if not self.IS_TESTER:
-            self.logger.debug("MT5 mode")
+            self.logger.info("MT5 mode")
             
         # --------------- initialize ticks or bars data ----------------------------
         
@@ -97,8 +110,10 @@ class StrategyTester:
                                       start_dt=self.tester_config["start_date"],
                                       end_dt=self.tester_config["end_date"],
                                       timeframe=self.tester_config["timeframe"],
+                                      POLARS_COLLECT_ENGINE=self.POLARS_COLLECT_ENGINE,
                                       history_dir=self.history_dir,
-                                      LOGGER=self.logger
+                                      mt5_source= not self.IS_TESTER,
+                                      logger=self.logger
                                       )
 
         for symbol in self.tester_config["symbols"]:
@@ -185,6 +200,7 @@ class StrategyTester:
         }
 
         self.TESTER_IDX = 0
+        self.CURVES_IDX = 0
         self.IS_STOPPED = False
         self._engine_lock = threading.RLock()   # re-entrant lock (safe if functions call other locked functions)
 
@@ -316,7 +332,7 @@ class StrategyTester:
                         pl.col("spread"),
                         pl.col("real_volume"),
                     ]) # return only what's required
-                    .collect(engine="streaming") # the streaming engine, doesn't store data in memory
+                    .collect(engine=self.POLARS_COLLECT_ENGINE) # the streaming engine, doesn't store data in memory
                 ).to_dicts()
 
                 rates = np.array(rates)[::-1] # reverse an array so it becomes oldest -> newest
@@ -466,8 +482,6 @@ class StrategyTester:
         if self.IS_TESTER:    
             
             path = os.path.join(self.history_dir, "Ticks", symbol)
-            os.makedirs(path, exist_ok=True)
-
             lf = pl.scan_parquet(path)
 
             try:
@@ -491,7 +505,7 @@ class StrategyTester:
                         pl.col("flags"),
                         pl.col("volume_real"),
                     ])
-                    .collect(engine="streaming") # the streaming engine, doesn't store data in memory
+                    .collect(engine=self.POLARS_COLLECT_ENGINE) # the streaming engine, doesn't store data in memory
                 ).to_dicts()
 
                 ticks = np.array(ticks)
@@ -552,7 +566,6 @@ class StrategyTester:
                     )
                     .select([
                         pl.col("time").dt.epoch("s").cast(pl.Int64).alias("time"),
-
                         pl.col("bid"),
                         pl.col("ask"),
                         pl.col("last"),
@@ -561,7 +574,7 @@ class StrategyTester:
                         pl.col("flags"),
                         pl.col("volume_real"),
                     ]) 
-                    .collect(engine="streaming") # the streaming engine, doesn't store data in memory
+                    .collect(engine=self.POLARS_COLLECT_ENGINE) # the streaming engine, doesn't store data in memory
                 ).to_dicts()
 
                 ticks = np.array(ticks)
@@ -1122,7 +1135,6 @@ class StrategyTester:
                 )
 
                 self.__account_monitoring(pos_must_exist=False)
-                # self.__curves_update(index=self.TESTER_IDX, time=now)
                 self.__positions_container__.remove(pos) 
                 
                 # self.__orders_history_container__.append(
@@ -1860,13 +1872,12 @@ class StrategyTester:
         tv = bar["tick_volume"] if isinstance(bar, dict) else bar[5]
         
         return {
-            
             "time": time,
             "bid": price,
             "ask": price + spread * self.symbol_info(symbol).point,
             "last": price,
             "volume": tv,
-            "time_msc": time.timestamp(),
+            "time_msc": time.timestamp() if isinstance(time, datetime) else time,
             "flags": 0,
             "volume_real": 0,
         }
@@ -1903,7 +1914,7 @@ class StrategyTester:
         Args:
             ontick_func (_type_): A function to be called on every tick
         """
-        
+
         modelling = self.tester_config["modelling"]
         if modelling == "real_ticks" or modelling == "every_tick":
 
@@ -1922,7 +1933,7 @@ class StrategyTester:
                         break #quit
 
                     self.__pending_orders_monitoring()
-                    
+
                     any_tick_processed = False
 
                     for ticks_info in self.TESTER_ALL_TICKS_INFO:
@@ -1938,11 +1949,14 @@ class StrategyTester:
                             break
 
                         current_tick = ticks_info["ticks"].row(counter)
-                        
+
                         current_tick = make_tick_from_tuple(current_tick)
                         self.TickUpdate(symbol=symbol, tick=current_tick)
-                        
-                        self.__curves_update(index=self.TESTER_IDX, time=current_tick.time)
+
+                        if self.positions_total() > 0:
+                            self.__curves_update(index=self.CURVES_IDX, time=current_tick.time)
+                            self.CURVES_IDX+=1
+
                         ontick_func()
 
                         self.TESTER_IDX += 1
@@ -1954,12 +1968,12 @@ class StrategyTester:
 
                     if not any_tick_processed:
                         break
-                    
+
         elif modelling == "new_bar" or modelling == "1-minute-ohlc":
-            
+
             bars_ = [bars_info["size"] for bars_info in self.TESTER_ALL_BARS_INFO]
             total_bars = sum(bars_)
-            
+
             self.logger.debug(f"total number of bars: {total_bars}")
             self.__TesterInit(size=total_bars)
 
@@ -1990,10 +2004,12 @@ class StrategyTester:
 
                         current_tick = self._bar_to_tick(symbol=symbol, bar=bars_info["bars"].row(counter))
 
-                        self.__curves_update(index=self.TESTER_IDX, time=current_tick["time"])
-                        
+                        if self.positions_total() > 0:
+                            self.__curves_update(index=self.CURVES_IDX, time=current_tick["time"])
+                            self.CURVES_IDX+=1
+
                         # Getting ticks at the current bar
-                        
+
                         self.TickUpdate(symbol=symbol, tick=current_tick)
                         ontick_func()
 
@@ -2006,7 +2022,7 @@ class StrategyTester:
 
                     if not any_bar_processed:
                         break
-        
+
         self.__TesterDeinit()
 
     def __validate_ontick_signature(self, ontick_func):
@@ -2100,7 +2116,9 @@ class StrategyTester:
                         self.logger.error("Unknown tick type")
                         continue
 
-                    self.__curves_update(index=self.TESTER_IDX, time=time)
+                    if self.positions_total() > 0:
+                        self.__curves_update(index=self.CURVES_IDX, time=time)
+                        self.CURVES_IDX+=1
 
                     self.TESTER_IDX += 1
 
@@ -2167,30 +2185,29 @@ class StrategyTester:
     def __TesterDeinit(self):
 
         # terminate all open positions
-        
+
         self.__terminate_all_positions(comment="End of test")
 
         # Build final curves (base pre-allocated slice + 1 extra point)
 
-        n = int(self.TESTER_IDX)
-        if n <= 0:
-            return  # nothing to report
+        n = int(self.CURVES_IDX)
 
-        self.tester_curves["balance"][n-1] = self.AccountInfo.balance
-        self.tester_curves["equity"][n-1] = self.AccountInfo.balance
-        self.tester_curves["margin_level"][n-1] = self.AccountInfo.margin_level
+        if n > 0:
+            self.tester_curves["balance"][n-1] = self.AccountInfo.balance
+            self.tester_curves["equity"][n-1] = self.AccountInfo.balance
+            self.tester_curves["margin_level"][n-1] = self.AccountInfo.margin_level
 
         # generate a report at the end
-        
+
         self.__GenerateTesterReport(output_file=f"Reports/{self.tester_config['bot_name']}-report.html")
 
     def _plot_tester_curves(self, output_path: str) -> str | None:
 
         curves = self.tester_curves
 
-        n = int(self.TESTER_IDX)  # how many points you actually filled
-        if n <= 0:
-            return None
+        n = int(self.CURVES_IDX)  # how many points you actually filled
+        # if n <= 0:
+        #     return None
 
         t = curves["time"][:n]
         bal = curves["balance"][:n]
@@ -2219,7 +2236,7 @@ class StrategyTester:
     def __GenerateTesterReport(self, output_file="StrategyTester report.html"):
 
         # Balance and Equity curves
-        
+
         path = os.path.join(self.reports_dir, "images")
         os.makedirs(path, exist_ok=True)
 
@@ -2237,7 +2254,7 @@ class StrategyTester:
             curve_img = None
 
         # ---------------- Render tester report with stas, orders and deals --------------------
-        
+
         base_template = templates.html_report_template()
 
         stats_table = templates.render_stats_table(
@@ -2256,7 +2273,7 @@ class StrategyTester:
         deal_rows_html = templates.render_deal_rows(self.__deals_history_container__)
 
         # we populate table's body
-        
+
         html = (
             base_template
             .replace("{{STATS_TABLE}}", stats_table)
@@ -2271,4 +2288,4 @@ class StrategyTester:
         with open(output_file, "w", encoding="utf-8") as f:
             f.write(html)
 
-        self.logger.info(f"Deals report saved to: {output_file}")
+        self.logger.info(f"Strategy tester report saved at: {output_file}")
