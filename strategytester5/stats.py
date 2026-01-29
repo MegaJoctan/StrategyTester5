@@ -180,7 +180,10 @@ class TesterStats:
         y = self.balance_curve.astype(float)
         x = np.arange(len(y), dtype=float)
 
-        self.lr_res = linregress(x, y)
+        if len(x) == 0 or len(y) == 0:
+            self.lr_res = None
+        else:
+            self.lr_res = linregress(x, y)
 
     def _compute(self):
         cur_win_count = 0
@@ -507,11 +510,11 @@ class TesterStats:
 
     @property
     def lr_correlation(self) -> float:
-        return self.lr_res.rvalue
+        return np.nan if not self.lr_res else self.lr_res.rvalue
 
     @property
     def lr_standard_error(self) -> float:
-        return self.lr_res.stderr
+        return np.nan if not self.lr_res else self.lr_res.stderr
 
     @property
     def on_tester_results(self) -> float:
@@ -519,4 +522,4 @@ class TesterStats:
 
     @property
     def margin_level(self) -> float:
-        return np.min(self.margin_level_curve)
+        return np.min(self.margin_level_curve) if len(self.margin_level_curve)>0 else np.nan
