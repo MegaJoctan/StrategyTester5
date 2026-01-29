@@ -135,7 +135,7 @@ def get_ticks_from_history(
                 descending=[False, False]
             )
             .select([
-                pl.col("time").dt.epoch("s").cast(pl.Int64).alias("time"),
+                pl.col("time"),
                 pl.col("bid"),
                 pl.col("ask"),
                 pl.col("last"),

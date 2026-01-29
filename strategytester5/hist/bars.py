@@ -134,8 +134,7 @@ def get_bars_from_history(
             )  # get bars between date_from and date_to
             .sort("time", descending=True)
             .select([
-                pl.col("time").dt.epoch("s").cast(pl.Int64).alias("time"),
-
+                pl.col("time"),
                 pl.col("open"),
                 pl.col("high"),
                 pl.col("low"),
