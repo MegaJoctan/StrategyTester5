@@ -1,9 +1,6 @@
 import inspect
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
-from MetaTrader5 import account_info
-
 from strategytester5 import *
 from strategytester5 import error_description
 from datetime import datetime, timedelta
@@ -34,7 +31,7 @@ mpl.rcParams["path.simplify_threshold"] = 0.9
 class StrategyTester:
     def __init__(self,
                  tester_config: dict,
-                 mt5_instance: MetaTrader5,
+                 mt5_instance: Optional[MetaTrader5]=None,
                  logging_level: int = logging.WARNING,
                  logs_dir: Optional[str]="Logs",
                  reports_dir: Optional[str]="Reports",
@@ -46,7 +43,7 @@ class StrategyTester:
 
         Args:
             tester_config (dict): Dictionary of tester configuration values.
-            mt5_instance (MetaTrader5): MetaTrader5 API/client instance used for obtaining crucial information from the broker as an attempt to mimic the terminal.
+            mt5_instance (MetaTrader5|Optional): MetaTrader5 API/client instance used for obtaining crucial information from the broker as an attempt to mimic the terminal.
             logging_level: Minimum severity of messages to record. Uses standard `logging` levels (e.g., logging.DEBUG, INFO, WARNING, ERROR, CRITICAL). Messages below this level are ignored.
             logs_dir (str): Directory for log files.
             reports_dir (str): Directory for HTML reports and assets.
@@ -86,7 +83,7 @@ class StrategyTester:
             
         # -------------------- initialize the Loggers ----------------------------
         
-        self.mt5_instance = mt5_instance
+        self.mt5_instance = MetaTrader5 if not mt5_instance else mt5_instance # give it a naive MetaTrader5-API when a true one isn't given
         self.simulator_name = self.tester_config["bot_name"]
         
         os.makedirs(logs_dir, exist_ok=True)
@@ -105,10 +102,6 @@ class StrategyTester:
         
         if not self.IS_TESTER:
             self.logger.info("MT5 mode")
-
-        # ------------------- get symbol and account information ------------------
-
-        self._assign_broker_info()
 
         # --------------- initialize ticks or bars data ----------------------------
         
@@ -138,10 +131,13 @@ class StrategyTester:
             hist_manager.synchronize_timeframes()
 
         self.logger.info("Initialized")
-        
-        # ----------------- initialize internal containers -----------------
+
+        # ------------------- get symbol and account information ------------------
 
         self.AccountInfo = AccountInfo
+        self._assign_broker_info()
+
+        # ----------------- initialize internal containers -----------------
 
         self.__orders_container__ = []
         self.__orders_history_container__ = []
@@ -149,53 +145,28 @@ class StrategyTester:
         self.__deals_history_container__ = []
 
         # ----------------- AccountInfo -----------------
-        
-        mt5_acc_info = mt5_instance.account_info()
-
-        if mt5_acc_info is None:
-            raise RuntimeError("Failed to obtain MT5 account info")
 
         deposit = self.tester_config["deposit"]
 
-        self.AccountInfo=AccountInfo(
-                # ---- identity / broker-controlled ----
-                login=11223344,
-                trade_mode=mt5_acc_info.trade_mode,
-                leverage=int(self.tester_config["leverage"]),
-                limit_orders=mt5_acc_info.limit_orders,
-                margin_so_mode=mt5_acc_info.margin_so_mode,
-                trade_allowed=mt5_acc_info.trade_allowed,
-                trade_expert=mt5_acc_info.trade_expert,
-                margin_mode=mt5_acc_info.margin_mode,
-                currency_digits=mt5_acc_info.currency_digits,
-                fifo_close=mt5_acc_info.fifo_close,
+        self.AccountInfo = self.AccountInfo._replace(
+            # ---- identity / broker-controlled ----
+            login=11223344,
+            trade_mode=self.AccountInfo.trade_mode,
+            leverage=int(self.tester_config["leverage"]),
 
-                # ---- simulator-controlled financials ----
-                balance=deposit,                # simulator starting balance
-                credit=0,
-                profit=0.0,
-                equity=deposit,
-                margin=0.0,
-                margin_free=deposit,
-                margin_level=np.inf,
+            # ---- simulator-controlled financials ----
+            balance=deposit,                # simulator starting balance
+            credit=0,
+            profit=0.0,
+            equity=deposit,
+            margin=0.0,
+            margin_free=deposit,
+            margin_level=np.inf,
 
-                # ---- risk thresholds (copied from broker) ----
-                margin_so_call=mt5_acc_info.margin_so_call,
-                margin_so_so=mt5_acc_info.margin_so_so,
-                margin_initial=mt5_acc_info.margin_initial,
-                margin_maintenance=mt5_acc_info.margin_maintenance,
-
-                # ---- rarely used but keep parity ----
-                assets=mt5_acc_info.assets,
-                liabilities=mt5_acc_info.liabilities,
-                commission_blocked=mt5_acc_info.commission_blocked,
-
-                # ---- descriptive ----
-                name="John Doe",
-                server="MetaTrader5-Simulator",
-                currency=mt5_acc_info.currency,
-                company=mt5_acc_info.company,
-            )
+            # ---- descriptive ----
+            name="John Doe",
+            server="MetaTrader5-Simulator",
+        )
 
         self.positions_unrealized_pl = 0
         self.positions_total_margin = 0
