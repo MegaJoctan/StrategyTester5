@@ -22,7 +22,7 @@ def account_info(broker_path: str, logger: logging.Logger = None) -> AccountInfo
         else:
             logger.error(err)
 
-        raise RuntimeError(err)
+        return dict()
 
     with open(file) as json_file:
         data = json.load(json_file)
