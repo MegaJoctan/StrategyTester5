@@ -4,17 +4,11 @@ import os
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, ROOT)  # insert(0) so it wins over other paths
 
-import MetaTrader5 as mt5
-from strategytester5.tester import StrategyTester
+from strategytester5.tester import StrategyTester, MetaTrader5
 from strategytester5.trade_classes.Trade import CTrade
 import json
 import os
 import logging
-
-if not mt5.initialize(): # Initialize MetaTrader5 instance
-    print(f"Failed to Initialize MetaTrader5. Error = {mt5.last_error()}")
-    mt5.shutdown()
-    quit()
 
 # Get path to the folder where this script lives
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -27,7 +21,7 @@ except Exception as e:
     raise RuntimeError(e)
 
 tester_configs = configs_json["tester"]
-tester = StrategyTester(tester_config=tester_configs, mt5_instance=mt5, logging_level=logging.INFO) # very important
+tester = StrategyTester(tester_config=tester_configs, logging_level=logging.INFO) # very important
 
 # ---------------------- inputs ----------------------------
 
@@ -38,7 +32,7 @@ sl = 1000
 tp = 100
 
 symbols = tester_configs["symbols"]
-timeframes = [mt5.TIMEFRAME_M15, mt5.TIMEFRAME_H1, mt5.TIMEFRAME_H4, mt5.TIMEFRAME_D1]
+timeframes = [MetaTrader5.TIMEFRAME_M15, MetaTrader5.TIMEFRAME_H1, MetaTrader5.TIMEFRAME_H4, MetaTrader5.TIMEFRAME_D1]
 
 # ---------------------------------------------------------
 
