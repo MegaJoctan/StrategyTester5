@@ -132,7 +132,7 @@ def get_bars_from_history(
                 (pl.col("time") >= pl.lit(start_datetime)) &
                 (pl.col("time") <= pl.lit(end_datetime))
             )  # get bars between date_from and date_to
-            .sort("time", descending=True)
+            .sort("time", descending=False)
             .select([
                 pl.col("time"),
                 pl.col("open"),
