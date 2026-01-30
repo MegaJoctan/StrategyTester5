@@ -1,6 +1,9 @@
 import inspect
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from MetaTrader5 import account_info
+
 from strategytester5 import *
 from strategytester5 import error_description
 from datetime import datetime, timedelta
@@ -14,6 +17,8 @@ from strategytester5.validators.trade import TradeValidators
 from strategytester5.validators.tester_configs import TesterConfigValidators
 import strategytester5._html_templates as templates
 from strategytester5.hist.manager import HistoryManager
+import strategytester5.mt5.importer as mt5_importer
+import strategytester5.mt5.exporter as mt5_exporter
 from strategytester5 import stats
 import sys
 import logging
@@ -34,6 +39,7 @@ class StrategyTester:
                  logs_dir: Optional[str]="Logs",
                  reports_dir: Optional[str]="Reports",
                  history_dir: Optional[str]="History",
+                 broker_data_dir: Optional[str]="ICMarketsSC-Demo",
                  POLARS_COLLECT_ENGINE: str="auto"):
         
         """MetaTrader 5-Like Strategy tester for the MetaTrader5-Python module.
@@ -45,6 +51,7 @@ class StrategyTester:
             logs_dir (str): Directory for log files.
             reports_dir (str): Directory for HTML reports and assets.
             history_dir (str): Directory for historical data storage.
+            broker_data_dir (str | optional): Directory containing account_info.json, symbol_info.json and similar files containing information about the broker
 
              POLARS_COLLECT_ENGINE (str): Engine used by Polars when collecting historical data in functions for obtaining ticks — copy_ticks*, and bars information/rates (copy_rates*). Supported values are:
                 - ``"auto"`` (default): Use Polars’ standard in-memory engine and
@@ -63,11 +70,12 @@ class StrategyTester:
         self.reports_dir = reports_dir
         self.history_dir = history_dir
         self.POLARS_COLLECT_ENGINE = POLARS_COLLECT_ENGINE
+        self.broker_data_dir = broker_data_dir
         
         self.symbol_info_cache: dict[str, SymbolInfo] = {}
         self.trade_validators_cache: dict[str, TradeValidators] = {}
         self.tick_cache: dict[str, Tick] = {}
-        
+
         # ---------------- validate all configs from a dictionary -----------------
         
         self.tester_config = TesterConfigValidators.parse_tester_configs(tester_config)
@@ -81,17 +89,15 @@ class StrategyTester:
         self.mt5_instance = mt5_instance
         self.simulator_name = self.tester_config["bot_name"]
         
-        
         os.makedirs(logs_dir, exist_ok=True)
         self.logger = get_logger(self.simulator_name+ ".tester" if self.IS_TESTER else ".mt5", 
                                         logfile=os.path.join(logs_dir, f"{LOG_DATE}.log"),
                                         level=logging_level)
         
-        global LOGGER
-        LOGGER = self.logger
-        
         if not self.IS_TESTER:
             self.logger.info("MT5 mode")
+            if not MT5_AVAILABLE:
+                no_mt5_runtime_error()
             
         # -------------- Check if we are not on the tester mode ------------------
         
@@ -99,7 +105,11 @@ class StrategyTester:
         
         if not self.IS_TESTER:
             self.logger.info("MT5 mode")
-            
+
+        # ------------------- get symbol and account information ------------------
+
+        self._assign_broker_info()
+
         # --------------- initialize ticks or bars data ----------------------------
         
         self.logger.info("StrategyTester Initializing")
@@ -204,31 +214,109 @@ class StrategyTester:
         self.IS_STOPPED = False
         self._engine_lock = threading.RLock()   # re-entrant lock (safe if functions call other locked functions)
 
-    def account_info(self) -> AccountInfo:
-        
-        """Gets info on the current trading account."""
-        
+    def _get_acinfo_from_MT5(self) -> AccountInfo:
+
+        ac_info = self.mt5_instance.account_info()
+        if ac_info is None:
+            msg = f"Failed to get account info. MT5 Error = {self.mt5_instance.last_error()}"
+            self.logger.critical(msg)
+            raise RuntimeError(msg)
+
+        return ac_info
+
+    def _get_allsymbolinfo_from_MT5(self) -> tuple:
+
+        info = self.mt5_instance.symbols_get()
+        if info is None:
+            msg = f"Failed to get all symbol information from MT5. Error = {self.mt5_instance.last_error()}"
+            self.logger.critical(msg)
+            raise RuntimeError(msg)
+
+        return info
+
+    def _assign_broker_info(self):
+        symbols = list(self.tester_config.get("symbols", []))
+        requested = set(symbols)
+
+        # ----------- account info ----------
+
         if self.IS_TESTER:
-            return self.AccountInfo
-        
-        mt5_ac_info = self.mt5_instance.account_info()
-        if  mt5_ac_info is None:
-            self.logger.warning(f"Failed to obtain MT5 account info, MT5 Error = {self.mt5_instance.last_error()}")
-            return
-            
-        return mt5_ac_info
+            self.AccountInfo = mt5_importer.account_info(self.broker_data_dir, self.logger)
+
+            if not self.AccountInfo: # empty named tuple
+                if MT5_AVAILABLE:
+                    self.logger.warning("Falling back to MT5 for account info")
+                    self.AccountInfo = self._get_acinfo_from_MT5()
+
+                    mt5_exporter.account_info(self.mt5_instance, self.broker_data_dir)
+
+            if not self.broker_data_dir:
+                self.broker_data_dir = self.AccountInfo.server
+
+        else:
+            if not MT5_AVAILABLE:
+                no_mt5_runtime_error()
+
+            self.AccountInfo = self._get_acinfo_from_MT5()
+
+        # ------------- symbol info --------------------
+
+        invalid = []
+        self.symbol_info_cache = {}
+
+        if self.IS_TESTER:
+            # If this returns “all symbols”, filter down to only requested ones
+            all_info = mt5_importer.all_symbol_info(self.broker_data_dir, self.logger)
+
+            if not all_info: # all symbol information wasn't received
+                if MT5_AVAILABLE:
+                    self.logger.warning("Falling back to MT5 for all symbols information")
+
+                    all_info = self._get_allsymbolinfo_from_MT5()
+                    mt5_exporter.all_symbol_info(self.mt5_instance, self.broker_data_dir)
+
+            for info in all_info:
+                name = getattr(info, "name", None)
+                if not name or name not in requested:
+                    continue
+
+                self.symbol_info_cache[name] = info
+
+                if len(self.symbol_info_cache) == len(requested):
+                    break
+
+            # figure out which requested symbols weren’t found
+            missing = requested - set(self.symbol_info_cache.keys())
+            for sym in missing:
+                self.logger.warning(f"Missing symbol info for requested symbol: {sym}")
+                invalid.append(sym)
+
+        else:
+            for sym in symbols:
+                info = self.mt5_instance.symbol_info(sym)
+                if info is None:
+                    self.logger.warning(
+                        f"Failed to get symbol info for {sym}. MT5 Error = {self.mt5_instance.last_error()}"
+                    )
+                    invalid.append(sym)
+                    continue
+
+                self.symbol_info_cache[sym] = info
+
+        # Remove invalid symbols from config (after loops)
+        if invalid:
+            self.tester_config["symbols"] = [s for s in symbols if s not in set(invalid)]
+
+    def account_info(self) -> AccountInfo:
+        """Gets info on the current trading account."""
+        return self.AccountInfo
     
-    def symbol_info(self, symbol: str) -> SymbolInfo:    
-        
+    def symbol_info(self, symbol: str) -> SymbolInfo:
         """Gets data on the specified financial instrument."""
 
         if symbol not in self.symbol_info_cache:
-            info = self.mt5_instance.symbol_info(symbol)
-            if info is None:
-                self.logger.warning(f"Failed to obtain symbol info for {symbol}")
-                return None
-
-            self.symbol_info_cache[symbol] = info
+            self.logger.warning(f"Failed to obtain symbol info for {symbol}")
+            return None
 
         return self.symbol_info_cache[symbol]
 
@@ -1456,7 +1544,7 @@ class StrategyTester:
             if self.order_send(request) is None:
                 return False
 
-            LOGGER.info(f"Position {pos.ticket} closed successfully! {comment}")
+            self.logger.info(f"Position {pos.ticket} closed successfully! {comment}")
             return True
 
     def order_calc_profit(self, 
