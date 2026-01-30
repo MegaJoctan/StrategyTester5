@@ -1,9 +1,8 @@
-import MetaTrader5
 import os
 import json
 
 
-def all_symbol_info(mt5_instance: MetaTrader5, out_path: str):
+def all_symbol_info(mt5_instance: any, out_path: str):
     symbols = mt5_instance.symbols_get()
     if symbols is None:
         raise RuntimeError(f"symbols_get() failed: {mt5_instance.last_error()}")
@@ -44,7 +43,7 @@ def all_symbol_info(mt5_instance: MetaTrader5, out_path: str):
     print(f"Symbol info written to: {file_path}")
 
 
-def account_info(mt5_instance: MetaTrader5, out_path: str):
+def account_info(mt5_instance: any, out_path: str):
     ac_info = mt5_instance.account_info()
     if ac_info is None:
         raise RuntimeError(f"account_info() failed: {mt5_instance.last_error()}")
