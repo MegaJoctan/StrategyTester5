@@ -2802,8 +2802,7 @@
 <span class="normal">988</span>
 <span class="normal">989</span>
 <span class="normal">990</span>
-<span class="normal">991</span>
-<span class="normal">992</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">StrategyTester</span><span class="p">:</span>
+<span class="normal">991</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">StrategyTester</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The &quot;engine&quot; that drives the entire backtesting process, simulating the MetaTrader5 environment and allowing you to test your trading strategies against historical data. The main method is `run()`, which takes a callback function that contains your strategy logic and executes it on each tick or bar, depending on the modelling mode you choose.</span>
 
@@ -2824,11 +2823,8 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            tester_config (dict): Dictionary of tester configuration values.</span>
-
 <span class="sd">            mt5_instance (MetaTrader5): MetaTrader5 API/client instance used for obtaining crucial information from the broker as an attempt to mimic the terminal.</span>
-
 <span class="sd">            logging_level: Minimum severity of messages to record. Uses standard `logging` levels (e.g., logging.DEBUG, INFO, WARNING, ERROR, CRITICAL). Messages below this level are ignored.</span>
-
 <span class="sd">            logs_dir (str): Directory for log files.</span>
 <span class="sd">            reports_dir (str): Directory for HTML reports and assets.</span>
 <span class="sd">            history_dir (str): Directory for historical data storage.</span>
@@ -2871,13 +2867,15 @@
                 <span class="s2">&quot;Fatal, A live MetaTrader5 Instance isn&#39;t given. If you haven&#39;t installed it (WINDOWS-ONLY) run `pip install metatrader5`&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">broker_data_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">live_mt5_instance</span><span class="o">.</span><span class="n">account_info</span><span class="p">()</span><span class="o">.</span><span class="n">server</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">simulated_mt5</span> <span class="o">=</span> <span class="n">OverLoadedMetaTrader5API</span><span class="p">(</span><span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
-                                                      <span class="n">broker_data_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">broker_data_dir</span><span class="p">,</span>
-                                                      <span class="n">polars_collect_engine</span><span class="o">=</span><span class="n">polars_collect_engine</span><span class="p">,</span>
-                                                      <span class="n">live_mt5</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">live_mt5_instance</span><span class="p">)</span>
 
         <span class="n">start_dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tester_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;start_date&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">start_dt_ts</span> <span class="o">=</span> <span class="n">start_dt</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">start_dt</span><span class="p">,</span> <span class="n">datetime</span><span class="p">)</span> <span class="k">else</span> <span class="n">start_dt</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulated_mt5</span> <span class="o">=</span> <span class="n">OverLoadedMetaTrader5API</span><span class="p">(</span><span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
+                                                      <span class="n">broker_data_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">broker_data_dir</span><span class="p">,</span>
+                                                      <span class="n">polars_collect_engine</span><span class="o">=</span><span class="n">polars_collect_engine</span><span class="p">,</span>
+                                                      <span class="n">history_start_date</span><span class="o">=</span><span class="n">start_dt</span><span class="p">,</span>
+                                                      <span class="n">live_mt5</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">live_mt5_instance</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">simulated_mt5</span><span class="o">.</span><span class="n">_current_time</span> <span class="o">=</span> <span class="n">start_dt_ts</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">simulated_mt5</span><span class="o">.</span><span class="n">_current_time_msc</span> <span class="o">=</span> <span class="n">start_dt_ts</span> <span class="o">*</span> <span class="mi">1000</span>
@@ -4049,8 +4047,7 @@
 <span class="normal">153</span>
 <span class="normal">154</span>
 <span class="normal">155</span>
-<span class="normal">156</span>
-<span class="normal">157</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+<span class="normal">156</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
              <span class="n">tester_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
              <span class="n">mt5_instance</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
              <span class="n">logging_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span>
@@ -4064,11 +4061,8 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        tester_config (dict): Dictionary of tester configuration values.</span>
-
 <span class="sd">        mt5_instance (MetaTrader5): MetaTrader5 API/client instance used for obtaining crucial information from the broker as an attempt to mimic the terminal.</span>
-
 <span class="sd">        logging_level: Minimum severity of messages to record. Uses standard `logging` levels (e.g., logging.DEBUG, INFO, WARNING, ERROR, CRITICAL). Messages below this level are ignored.</span>
-
 <span class="sd">        logs_dir (str): Directory for log files.</span>
 <span class="sd">        reports_dir (str): Directory for HTML reports and assets.</span>
 <span class="sd">        history_dir (str): Directory for historical data storage.</span>
@@ -4111,13 +4105,15 @@
             <span class="s2">&quot;Fatal, A live MetaTrader5 Instance isn&#39;t given. If you haven&#39;t installed it (WINDOWS-ONLY) run `pip install metatrader5`&quot;</span><span class="p">)</span>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">broker_data_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">live_mt5_instance</span><span class="o">.</span><span class="n">account_info</span><span class="p">()</span><span class="o">.</span><span class="n">server</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">simulated_mt5</span> <span class="o">=</span> <span class="n">OverLoadedMetaTrader5API</span><span class="p">(</span><span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
-                                                  <span class="n">broker_data_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">broker_data_dir</span><span class="p">,</span>
-                                                  <span class="n">polars_collect_engine</span><span class="o">=</span><span class="n">polars_collect_engine</span><span class="p">,</span>
-                                                  <span class="n">live_mt5</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">live_mt5_instance</span><span class="p">)</span>
 
     <span class="n">start_dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tester_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;start_date&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="n">start_dt_ts</span> <span class="o">=</span> <span class="n">start_dt</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">start_dt</span><span class="p">,</span> <span class="n">datetime</span><span class="p">)</span> <span class="k">else</span> <span class="n">start_dt</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">simulated_mt5</span> <span class="o">=</span> <span class="n">OverLoadedMetaTrader5API</span><span class="p">(</span><span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
+                                                  <span class="n">broker_data_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">broker_data_dir</span><span class="p">,</span>
+                                                  <span class="n">polars_collect_engine</span><span class="o">=</span><span class="n">polars_collect_engine</span><span class="p">,</span>
+                                                  <span class="n">history_start_date</span><span class="o">=</span><span class="n">start_dt</span><span class="p">,</span>
+                                                  <span class="n">live_mt5</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">live_mt5_instance</span><span class="p">)</span>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">simulated_mt5</span><span class="o">.</span><span class="n">_current_time</span> <span class="o">=</span> <span class="n">start_dt_ts</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">simulated_mt5</span><span class="o">.</span><span class="n">_current_time_msc</span> <span class="o">=</span> <span class="n">start_dt_ts</span> <span class="o">*</span> <span class="mi">1000</span>
@@ -4244,7 +4240,8 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\tester.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">521</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">520</span>
+<span class="normal">521</span>
 <span class="normal">522</span>
 <span class="normal">523</span>
 <span class="normal">524</span>
@@ -4314,8 +4311,7 @@
 <span class="normal">588</span>
 <span class="normal">589</span>
 <span class="normal">590</span>
-<span class="normal">591</span>
-<span class="normal">592</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">on_tick_function</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">stats</span><span class="o">.</span><span class="n">TesterStats</span><span class="p">:</span>
+<span class="normal">591</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">on_tick_function</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">stats</span><span class="o">.</span><span class="n">TesterStats</span><span class="p">:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Main function to run the strategy tester simulation. It initializes the tester, processes historical data according to the specified modelling mode, and generates a report at the end.</span>
 
@@ -4471,7 +4467,8 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\tester.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">466</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">465</span>
+<span class="normal">466</span>
 <span class="normal">467</span>
 <span class="normal">468</span>
 <span class="normal">469</span>
@@ -4523,8 +4520,7 @@
 <span class="normal">515</span>
 <span class="normal">516</span>
 <span class="normal">517</span>
-<span class="normal">518</span>
-<span class="normal">519</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run_bar_simulation</span><span class="p">(</span>
+<span class="normal">518</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run_bar_simulation</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">df</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
         <span class="n">symbols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
@@ -4662,7 +4658,8 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\tester.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">425</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">424</span>
+<span class="normal">425</span>
 <span class="normal">426</span>
 <span class="normal">427</span>
 <span class="normal">428</span>
@@ -4700,8 +4697,7 @@
 <span class="normal">460</span>
 <span class="normal">461</span>
 <span class="normal">462</span>
-<span class="normal">463</span>
-<span class="normal">464</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run_tick_simulation</span><span class="p">(</span>
+<span class="normal">463</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run_tick_simulation</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">df</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
         <span class="n">symbols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
