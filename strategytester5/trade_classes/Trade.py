@@ -13,7 +13,7 @@ class CTrade:
         a convenient Python interface for sending and managing trade requests through
         the MetaTrader 5 Python API.
 
-        Reference (MQL5): https://www.mql5.com/en/docs/standardlibrary/tradeclasses/ctrade
+        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/ctrade)
     """
 
     def __init__(
@@ -27,36 +27,21 @@ class CTrade:
         """
         Initializes a CTrade wrapper for MetaTrader 5 trade operations.
 
-        Parameters
-        ----------
-        terminal : Any
-            MetaTrader5 module-like or the overloaded/simulated MetaTrader5 instance
+        Args:
+            terminal : MetaTrader5 module-like or the overloaded/simulated MetaTrader5 instance
+            magic_number : Expert Advisor identifier used to tag and track orders and positions created by this trade object.
+            filling_type_symbol : Symbol name used to determine the appropriate order filling policy through the internal `_get_type_filling()` helper.
+            deviation_points : Maximum allowed price deviation, in points, when executing market orders.
+            logger : Logger instance used for diagnostic and error messages. If None, logging output is handled only by the class' internal logic.
 
-        magic_number : int
-            Expert Advisor identifier used to tag and track orders and positions
-            created by this trade object.
-
-        filling_type_symbol : str
-            Symbol name used to determine the appropriate order filling policy
-            through the internal `_get_type_filling()` helper.
-
-        deviation_points : int
-            Maximum allowed price deviation, in points, when executing market
-            orders.
-
-        logger : logging.Logger | None, optional
-            Logger instance used for diagnostic and error messages. If None,
-            logging output is handled only by the class' internal logic.
-
-        Notes
-        -----
-        - The constructor resolves and stores the filling type for the provided
-          symbol at initialization time.
-        - If the filling type cannot be resolved, initialization logs a critical
-          error and returns early.
-        - This class is intended to act similarly to MQL5's `CTrade`, where trade
-          settings such as magic number, filling mode, and deviation are configured
-          once and reused across requests.
+        Notes:
+            - The constructor resolves and stores the filling type for the provided
+              symbol at initialization time.
+            - If the filling type cannot be resolved, initialization logs a critical
+              error and returns early.
+            - This class is intended to act similarly to MQL5's `CTrade`, where trade
+              settings such as magic number, filling mode, and deviation are configured
+              once and reused across requests.
         """
         
         self.logger = logger
@@ -88,11 +73,6 @@ class CTrade:
             self.logger.error(message)
         else:
             print(f"ERROR: {message}")
-
-    def _error_code_log(self, ret_code: int):
-        ret_code_description = self.terminal.RETCODE_MAP.get(ret_code, f"Unknown")
-        error_message = f"Trade operation failed with retcode {ret_code}: {ret_code_description}"
-        return self._error_log(error_message)
     
     def _warning_log(self, message: str):
         if self.logger:
@@ -158,7 +138,6 @@ class CTrade:
 
         result = self.terminal.order_send(request)
         if result.retcode != self.terminal.TRADE_RETCODE_DONE:
-            self._error_code_log(result.retcode)
             return False
         
         self._info_log(f"Position #{result.deal} Opened successfully!")
@@ -221,7 +200,6 @@ class CTrade:
         # Send order
         result = self.terminal.order_send(request)
         if result.retcode != self.terminal.TRADE_RETCODE_DONE:
-            self._error_code_log(result.retcode)
             return False
 
         # self._info_log(f"Order opened successfully!")
@@ -556,7 +534,6 @@ class CTrade:
 
         result = self.terminal.order_send(request=request)
         if result.retcode != self.terminal.TRADE_RETCODE_DONE:
-            self._error_code_log(result.retcode)
             return False
 
         # self._info_log(f"Order {ticket} modified successfully!")
