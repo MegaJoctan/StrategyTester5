@@ -1,12 +1,9 @@
 from __future__ import annotations
 from typing import Optional, Union
-from strategytester5.MetaTrader5.api import OverLoadedMetaTrader5API
-import MetaTrader5
+from collections import namedtuple
 
 class CAccountInfo:
-    def __init__(self, terminal: Union[OverLoadedMetaTrader5API|MetaTrader5]):
-        
-        """
+    """
         A lightweight Python wrapper that resembles the MQL5 Standard Library class
         `CAccountInfo` and provides convenient, read-only access to the properties of
         the currently connected MetaTrader 5 trading account.
@@ -16,31 +13,32 @@ class CAccountInfo:
         (balance, equity, margin, etc.). If you need up-to-date values after trading
         activity or price changes, re-instantiate the class or implement a refresh.
 
-        [MQL5 Reference](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/caccountinfo)
+        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/caccountinfo)
+    """
 
-        Args
-        ----------
-        terminal : MetaTrader5 module-like or simulated/overloaded MetaTrader5 instance.
-
-        Raises
-        ------
-        RuntimeError
-            If account information cannot be retrieved (i.e., `account_info()` returns None).
-
-        Notes
-        -----
-        Method groups mirror the MQL5 layout:
-        - Integer properties: Login, TradeMode, Leverage, StopoutMode, MarginMode, etc.
-        - Double properties: Balance, Equity, Margin, FreeMargin, etc.
-        - String properties: Name, Server, Currency, Company
-        - Checks / calculations: MarginCheck, OrderProfitCheck, FreeMarginCheck, MaxLotCheck
+    def __init__(self, ac_info: namedtuple()):
+        
         """
-        
-        self.terminal = terminal
-        
-        self._account_info = self.terminal.account_info()
-        if self._account_info is None:
+        Instatiates the CAccountInfo object
+
+        Args:
+            ac_info : A tuple returned by `mt5.account_info()`
+
+        Raises:
+            RuntimeError : If account information cannot be retrieved (i.e., `account_info()` returns None).
+
+        Notes:
+            Method groups mirror the MQL5 layout:
+            - Integer properties: Login, TradeMode, Leverage, StopoutMode, MarginMode, etc.
+            - Double properties: Balance, Equity, Margin, FreeMargin, etc.
+            - String properties: Name, Server, Currency, Company
+            - Checks / calculations: MarginCheck, OrderProfitCheck, FreeMarginCheck, MaxLotCheck
+        """
+
+        if ac_info is None:
             raise RuntimeError("Failed to retrieve account info: ", self.terminal.last_error())
+
+        self._account_info = ac_info
 
     # --- Integer properties
     
@@ -218,13 +216,11 @@ class CAccountInfo:
     def max_lot_check(self, symbol: str, order_type: int, price: float, percent: float = 100.0) -> Optional[float]: 
         """ Estimates the maximum tradable volume based on available margin. 
         
-        Args
-        ---------- 
-        percent : float Percentage of free margin to use (0..100). 
+        Args:
+            percent : float Percentage of free margin to use (0..100).
         
-        Returns 
-        ------- 
-        Optional[float] Estimated maximum lot size, or None if margin cannot be estimated. """ 
+        Returns:
+            Estimated maximum lot size, or None if margin cannot be estimated. """
         
         required_margin_per_lot = self.margin_check(symbol, order_type, 1.0, price)
         if required_margin_per_lot in (None, 0.0): 

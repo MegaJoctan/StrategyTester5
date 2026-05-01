@@ -2,15 +2,12 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any, Optional, Union
-
-from strategytester5.MetaTrader5.api import OverLoadedMetaTrader5API
-import MetaTrader5
-from strategytester5.MetaTrader5 import TradePosition
+from .. import TradePosition
 
 class CPositionInfo:
-    def __init__(self, position: TradePosition, terminal: Union[MetaTrader5|OverLoadedMetaTrader5API]) -> None:
-        
-        """
+    """
+        CPositionInfo
+        -------------
         A lightweight Python wrapper that resembles the MQL5 Standard Library class
         `CPositionInfo` and provides convenient, read-only access to MetaTrader 5
         open position properties.
@@ -18,14 +15,19 @@ class CPositionInfo:
         This class wraps a single already-selected/open position object returned by
         the MetaTrader 5 Python API, such as from `mt5.positions_get()`.
 
-        [MQL5 Reference](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cpositioninfo)
+        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cpositioninfo)
+    """
+
+    def __init__(self, position: TradePosition) -> None:
+        
+        """
+        Instantiates a CPositionInfo object.
 
         Parameters
         ----------
         position : Any
             A position object returned by MetaTrader 5 Python API functions such as
             `mt5.positions_get()`.
-        terminal : Initialize native MetaTrader5 API or the simulated one from the StrategyTester instance
 
         Notes
         -----
@@ -40,12 +42,10 @@ class CPositionInfo:
         - String properties: Symbol, Comment
         - Generic accessors: InfoInteger, InfoDouble, InfoString
         """
-        
-        self.terminal = terminal
 
         self._position: Optional[Any] = position
         
-        if position is not None and not hasattr(position, "ticket"):
+        if position is None or not hasattr(position, "ticket"):
             raise ValueError("The provided position object does not have expected attributes.")
 
     # --------- Integer / datetime properties -----------

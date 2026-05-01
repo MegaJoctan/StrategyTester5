@@ -1,15 +1,11 @@
 from __future__ import annotations
 
 from typing import Any, Optional, Union
-
-
-from strategytester5.MetaTrader5.api import OverLoadedMetaTrader5API
-import MetaTrader5
+from . import StrategyTester
+from .. import MetaTrader5
 
 class CTerminalInfo:
-    def __init__(self, terminal: Union[OverLoadedMetaTrader5API|MetaTrader5]):
-        
-        """
+    """
         A lightweight Python wrapper that resembles the MQL5 Standard Library class
         `CTerminalInfo` and provides convenient, read-only access to the properties
         of the MetaTrader 5 terminal environment.
@@ -18,26 +14,32 @@ class CTerminalInfo:
         The returned values reflect the terminal state at the moment of initialization.
         If you need up-to-date values, create a new instance or add a refresh method.
 
-        [MQL5 Reference](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cterminalinfo)
+        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cterminalinfo)
+    """
 
-        Parameters
-        ----------
-        terminal : Initialize native MetaTrader5 API or the simulated one from the StrategyTester instance
+    def __init__(self, terminal: Union[StrategyTester|MetaTrader5]):
+        
+        """
+        Instantiates the TerminalInfo object.
 
-        Raises
-        ------
-        RuntimeError
-            If terminal information cannot be retrieved.
+        Args:
+            terminal : MetaTrader5 module-like or the StrategyTester instance
 
-        Notes
-        -----
-        Method groups mirror the MQL5 layout:
-        - Integer / boolean properties: Build, IsConnected, IsDLLsAllowed, IsTradeAllowed, etc.
-        - String properties: Language, Name, Company, Path, DataPath, CommonDataPath
-        - Generic accessors: InfoInteger, InfoString
+        Raises:
+            RuntimeError: If terminal information cannot be retrieved.
+
+        Notes:
+
+            Method groups mirror the MQL5 layout:
+            - Integer / boolean properties: Build, IsConnected, IsDLLsAllowed, IsTradeAllowed, etc.
+            - String properties: Language, Name, Company, Path, DataPath, CommonDataPath
+            - Generic accessors: InfoInteger, InfoString
         """
 
         self.terminal = terminal
+        if isinstance(terminal, StrategyTester):
+            self.terminal = terminal.mt5_instance
+
         self._info = self.terminal.terminal_info()
 
         if self._info is None:
@@ -218,14 +220,10 @@ class CTerminalInfo:
         """
         Gets the value of a property of integer type.
 
-        Parameters
-        ----------
-        prop_name : str
-            Name of the terminal info attribute.
+        Args:
+            prop_name : Name of the terminal info attribute.
 
-        Returns
-        -------
-        Optional[int]
+        Returns:
             Integer value if present, otherwise None.
         """
         if self._info is None or not hasattr(self._info, prop_name):
@@ -238,14 +236,10 @@ class CTerminalInfo:
         """
         Gets the value of a property of string type.
 
-        Parameters
-        ----------
-        prop_name : str
-            Name of the terminal info attribute.
+        Args:
+            prop_name : Name of the terminal info attribute.
 
-        Returns
-        -------
-        Optional[str]
+        Returns:
             String value if present, otherwise None.
         """
         if self._info is None or not hasattr(self._info, prop_name):

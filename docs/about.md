@@ -1,6 +1,12 @@
+---
+title: About StrategyTester5
+description: The origin of the StrategyTester5 framework.
+keywords: StrategyTester5 about, Python trading robot, MetaTrader5 backtesting, MT5 Python trading bot, algorithmic trading Python MT5
+---
+
 # About
 
-What started as a passionate project, grew up into a bigger software.
+What started as a passionate project grew into a bigger software.
 
 !!! Note "About Me"
 

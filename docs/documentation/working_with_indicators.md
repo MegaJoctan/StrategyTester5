@@ -1,3 +1,9 @@
+---
+title: Using Trading Indicators in Python with MetaTrader5 (StrategyTester5 Guide)
+description: Learn how to calculate and use trading indicators like SMA in Python with MetaTrader5 and StrategyTester5. Includes examples using pandas and the ta library for backtesting strategies.
+keywords: trading indicators python MT5, MetaTrader5 indicators python, SMA indicator python example, StrategyTester5 indicators guide, technical analysis python ta library, algorithmic trading indicators
+---
+
 Many trading strategies rely on the so-called *Trading indicators* for example the [RSI trading strategy](../documentation/rsi_strategy.md). 
 
 To calculate an indicator you can implement your custom calculations for it and use it for your trading strategies or you could use any of the available modules for the task, one of them being the [Technical Analysis framework](https://technical-analysis-library-in-python.readthedocs.io/en/latest/ta.html)

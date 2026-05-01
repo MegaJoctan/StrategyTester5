@@ -2,46 +2,40 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any, Optional, Union
-
-from strategytester5.MetaTrader5.api import OverLoadedMetaTrader5API
-import MetaTrader5
-from strategytester5.MetaTrader5 import TradeOrder
+from ..MetaTrader5.constants import MetaTrader5Constants as mt5_constants
+from .. import TradeOrder
 
 class COrderInfo:
-
-    def __init__(self, order: TradeOrder, terminal: Union[OverLoadedMetaTrader5API|MetaTrader5]) -> None:
-        
-        """
+    """
         A lightweight Python wrapper that resembles the MQL5 Standard Library class
         `COrderInfo` and provides convenient, read-only access to the currently
         selected pending/open order properties in MetaTrader 5.
-
+    
         This class acts like a cursor over one selected order stored in `self._order`.
         You may select an order directly with `select_order(order)`, by ticket using
         `select(ticket)`, or by index using `select_by_index(index)`.
+    
+        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/corderinfo)
+    """
 
-        [MQL5 Reference](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/corderinfo)
+    def __init__(self, order: TradeOrder) -> None:
+        """
+        Instantiates the COrderInfo object (class).
 
         Args:
-        order (TradeOrder):
-            A tuple representing an order, typically obtained from `mt5.history_orders_get()` or `mt5.orders_get()`. This should be a structure compatible with the MetaTrader5 Python API's order representation.
-            
-        terminal (Any): Initialize native MetaTrader5 API or the simulated one from the StrategyTester instance
+            order : A tuple representing an order, typically obtained from `mt5.history_orders_get()` or `mt5.orders_get()`. This should be a structure compatible with the MetaTrader5 Python API's order representation.
 
-        Notes
-        -----
-        - If no order is selected, properties return `None`, `0`, `0.0`, empty string, or `"N/A"` depending on the property.
-        - `time_setup`, `time_done`, and `time_expiration` are returned as timezone-aware UTC datetimes where possible.
-        - Description methods intentionally preserve your original mapping logic/style.
-        
+        Notes:
+            - If no order is selected, properties return `None`, `0`, `0.0`, empty string, or `"N/A"` depending on the property.
+            - `time_setup`, `time_done`, and `time_expiration` are returned as timezone-aware UTC datetimes where possible.
+            - Description methods intentionally preserve your original mapping logic/style.
+
         """
-        
-        self.terminal = terminal
+
+        if self.order is None:
+            raise ValueError("Order cannot be None. Please provide a valid order tuple.")
 
         self._order = order
-        
-        if self._order is None:
-            raise ValueError("Order cannot be None. Please provide a valid order tuple.")
 
     # --------- Integer / datetime properties -----------
 
@@ -82,15 +76,15 @@ class COrderInfo:
         """Gets the order type as a string."""
 
         order_type_map = {
-            self.terminal.ORDER_TYPE_BUY: "Market Buy order",
-            self.terminal.ORDER_TYPE_SELL: "Market Sell order",
-            self.terminal.ORDER_TYPE_BUY_LIMIT: "Buy Limit pending order",
-            self.terminal.ORDER_TYPE_SELL_LIMIT: "Sell Limit pending order",
-            self.terminal.ORDER_TYPE_BUY_STOP: "Buy Stop pending order",
-            self.terminal.ORDER_TYPE_SELL_STOP: "Sell Stop pending order",
-            self.terminal.ORDER_TYPE_BUY_STOP_LIMIT: "Upon reaching the order price, a pending Buy Limit order is placed at the StopLimit price",
-            self.terminal.ORDER_TYPE_SELL_STOP_LIMIT: "Upon reaching the order price, a pending Sell Limit order is placed at the StopLimit price",
-            self.terminal.ORDER_TYPE_CLOSE_BY: "Order to close a position by an opposite one"
+            mt5_constants.ORDER_TYPE_BUY: "Market Buy order",
+            mt5_constants.ORDER_TYPE_SELL: "Market Sell order",
+            mt5_constants.ORDER_TYPE_BUY_LIMIT: "Buy Limit pending order",
+            mt5_constants.ORDER_TYPE_SELL_LIMIT: "Sell Limit pending order",
+            mt5_constants.ORDER_TYPE_BUY_STOP: "Buy Stop pending order",
+            mt5_constants.ORDER_TYPE_SELL_STOP: "Sell Stop pending order",
+            mt5_constants.ORDER_TYPE_BUY_STOP_LIMIT: "Upon reaching the order price, a pending Buy Limit order is placed at the StopLimit price",
+            mt5_constants.ORDER_TYPE_SELL_STOP_LIMIT: "Upon reaching the order price, a pending Sell Limit order is placed at the StopLimit price",
+            mt5_constants.ORDER_TYPE_CLOSE_BY: "Order to close a position by an opposite one"
         }
 
         return order_type_map.get(self.order_type, "Unknown order type")
@@ -105,16 +99,16 @@ class COrderInfo:
         """Gets the order state as a string."""
 
         state_map = {
-            self.terminal.ORDER_STATE_STARTED: "Order checked, but not yet accepted by broker",
-            self.terminal.ORDER_STATE_PLACED: "Order accepted",
-            self.terminal.ORDER_STATE_CANCELED: "Order canceled by client",
-            self.terminal.ORDER_STATE_PARTIAL: "Order partially executed",
-            self.terminal.ORDER_STATE_FILLED: "Order fully executed",
-            self.terminal.ORDER_STATE_REJECTED: "Order rejected",
-            self.terminal.ORDER_STATE_EXPIRED: "Order expired",
-            self.terminal.ORDER_STATE_REQUEST_ADD: "Order is being registered (placing to the trading system)",
-            self.terminal.ORDER_STATE_REQUEST_MODIFY: "Order is being modified (changing its parameters)",
-            self.terminal.ORDER_STATE_REQUEST_CANCEL: "Order is being deleted (deleting from the trading system)"
+            mt5_constants.ORDER_STATE_STARTED: "Order checked, but not yet accepted by broker",
+            mt5_constants.ORDER_STATE_PLACED: "Order accepted",
+            mt5_constants.ORDER_STATE_CANCELED: "Order canceled by client",
+            mt5_constants.ORDER_STATE_PARTIAL: "Order partially executed",
+            mt5_constants.ORDER_STATE_FILLED: "Order fully executed",
+            mt5_constants.ORDER_STATE_REJECTED: "Order rejected",
+            mt5_constants.ORDER_STATE_EXPIRED: "Order expired",
+            mt5_constants.ORDER_STATE_REQUEST_ADD: "Order is being registered (placing to the trading system)",
+            mt5_constants.ORDER_STATE_REQUEST_MODIFY: "Order is being modified (changing its parameters)",
+            mt5_constants.ORDER_STATE_REQUEST_CANCEL: "Order is being deleted (deleting from the trading system)"
         }
 
         return state_map.get(self.state, "Unknown order state")
@@ -165,13 +159,13 @@ class COrderInfo:
 
         type_time = self._order.type_time
 
-        if type_time == self.terminal.ORDER_TIME_SPECIFIED:
+        if type_time == mt5_constants.ORDER_TIME_SPECIFIED:
             return "ORDER_TIME_SPECIFIED"
-        elif type_time == self.terminal.ORDER_TIME_SPECIFIED_DAY:
+        elif type_time == mt5_constants.ORDER_TIME_SPECIFIED_DAY:
             return "ORDER_TIME_SPECIFIED_DAY"
-        elif type_time == self.terminal.ORDER_TIME_DAY:
+        elif type_time == mt5_constants.ORDER_TIME_DAY:
             return "ORDER_TIME_DAY"
-        elif type_time == self.terminal.ORDER_TIME_GTC:
+        elif type_time == mt5_constants.ORDER_TIME_GTC:
             return "ORDER_TIME_GTC"
         else:
             return "unknown"
@@ -186,7 +180,7 @@ class COrderInfo:
         """Gets the ID of position."""
         return int(self._order.position_id) if self._order else -1
 
-    # ---------- Double properties -----------
+    #  Double properties -----------
 
     @property
     def volume_initial(self) -> float:
@@ -219,14 +213,14 @@ class COrderInfo:
         if not self._order:
             return 0.0
 
-        tick = self.terminal.symbol_info_tick(self._order.symbol)
+        tick = mt5_constants.symbol_info_tick(self._order.symbol)
         if not tick:
             return 0.0
 
         return tick.bid if self._order.type in [
-            self.terminal.ORDER_TYPE_BUY,
-            self.terminal.ORDER_TYPE_BUY_LIMIT,
-            self.terminal.ORDER_TYPE_BUY_STOP
+            mt5_constants.ORDER_TYPE_BUY,
+            mt5_constants.ORDER_TYPE_BUY_LIMIT,
+            mt5_constants.ORDER_TYPE_BUY_STOP
         ] else tick.ask
 
     @property
@@ -234,7 +228,7 @@ class COrderInfo:
         """Gets the price of a Limit order."""
         return float(self._order.price_stoplimit) if self._order else 0.0
 
-    # ---------- String properties ------------
+    #  String properties ------------
 
     @property
     def symbol(self) -> str:
@@ -258,16 +252,13 @@ class COrderInfo:
         """
         Gets the value of a specified integer type property.
 
-        Parameters
-        ----------
-        prop_name : str
-            Name of the order attribute.
+        Args:
+            prop_name : Name of the order attribute.
 
-        Returns
-        -------
-        Optional[int]
+        Returns:
             Integer value if present, otherwise None.
         """
+
         if self._order is None or not hasattr(self._order, prop_name):
             return None
         value = getattr(self._order, prop_name)
@@ -277,14 +268,10 @@ class COrderInfo:
         """
         Gets the value of a specified double type property.
 
-        Parameters
-        ----------
-        prop_name : str
-            Name of the order attribute.
+        Args:
+            prop_name : Name of the order attribute.
 
-        Returns
-        -------
-        Optional[float]
+        Returns:
             Float value if present, otherwise None.
         """
         if self._order is None or not hasattr(self._order, prop_name):
@@ -296,23 +283,20 @@ class COrderInfo:
         """
         Gets the value of a specified string type property.
 
-        Parameters
-        ----------
-        prop_name : str
-            Name of the order attribute.
+        Args:
+            prop_name: Name of the order attribute.
 
-        Returns
-        -------
-        Optional[str]
+        Returns:
             String value if present, otherwise None.
         """
+        
         if self._order is None or not hasattr(self._order, prop_name):
             return None
         value = getattr(self._order, prop_name)
         return None if value is None else str(value)
 
     # --------- Debug / utility helpers ---------
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Return all @property values from the class and its parents."""
         data: dict[str, Any] = {}
@@ -330,7 +314,7 @@ class COrderInfo:
                         data[name] = f"<error: {e}>"
 
         return data
-    
+
     def print_all(self) -> None:
         """Print all @property values of the class."""
         for name, value in self.to_dict().items():

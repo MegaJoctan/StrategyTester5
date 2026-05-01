@@ -1,3 +1,9 @@
+---
+title: StrategyTester5 Logging and Debugging Guide (Internal & External Logging)
+description: Learn how to use StrategyTester5 logging for debugging trading bots. Covers internal logging system, external logger usage, logging levels, and time-aware logs with MetaTrader5 simulation.
+keywords: StrategyTester5 logging, MetaTrader5 logging python, trading bot debugging, python logging MT5, algorithmic trading debug logs, logging levels python trading bot
+---
+
 ## Internal Logging
 
 Its normal for a program or software to contain bugs so we need a simple yet efficient way to monitor log records for efficient debugging.

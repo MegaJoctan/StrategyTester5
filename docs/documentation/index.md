@@ -1,3 +1,9 @@
+---
+title: StrategyTester5 Usage Guide – Rules, Configuration & MetaTrader5 Integration
+description: Learn how to use StrategyTester5 with MetaTrader5 in Python. Covers setup rules, configuration options, simulated MT5 API usage, and best practices for backtesting trading strategies.
+keywords: StrategyTester5 guide, MetaTrader5 Python backtesting, MT5 strategy tester rules, trading bot configuration python, algorithmic trading MT5 setup
+---
+
 The StrategyTester5 framework has the same syntax as the MetaTrader5 API, thanks to the [Simulated MetaTrader5 API](../api/metatrader5/api.md) with a few tweaks you can get your Python code for the MetaTrader5 up and running through a specified time in the past just like testing a Native trading robot made in the MetaTrader5 terminal.
 
 Below are a few things to consider:

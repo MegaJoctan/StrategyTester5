@@ -1,3 +1,9 @@
+---
+title: Installing StrategyTester5
+description: Step-by-step guide to install StrategyTester5 with MetaTrader5 in Python. Learn setup, dependencies, and how to start building trading bots quickly.
+keywords: StrategyTester5 install, MetaTrader5 Python setup, MT5 Python trading bot, install trading bot framework, algorithmic trading Python MT5
+---
+
 # Installation
 
 ## With pip (recommended)

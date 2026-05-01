@@ -2,42 +2,38 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any, Optional, Union
-
-from strategytester5.MetaTrader5.api import OverLoadedMetaTrader5API
-import MetaTrader5
-from strategytester5.MetaTrader5 import TradeDeal
+from ..MetaTrader5.constants import MetaTrader5Constants as mt5_constants
+from .. import TradeDeal
 
 class CDealInfo:
-    def __init__(self, deal: TradeDeal, terminal: Union[OverLoadedMetaTrader5API|MetaTrader5]):
-        """
+    """
         A lightweight Python wrapper that resembles the MQL5 Standard Library class
         `CDealInfo` and provides convenient, read-only access to MetaTrader 5 deal
         properties.
 
-        [MQL5 Reference](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cdealinfo)
-        
-        Parameters
-        ----------
-        
-        deal (tuple) : A deal object (e.g., from `mt5.history_deals_get()`) to wrap and provide access to.
-        
-        terminal (optional) : Native MetaTrader5 API or the simulated one.
+        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cdealinfo)
+    """
 
-        Notes
-        -----
-        - Many getters return `None` if no deal is selected.
-        - Times:
-            * `time` returns a timezone-aware UTC datetime (recommended for MT5 history).
-            * `time_msc` returns milliseconds since 1970-01-01 (UTC) when available.
-        - This wrapper does not modify terminal state; it only reads/derives properties.
+    def __init__(self, deal: TradeDeal):
+        """
+        Instantiates the CDealInfo object
+
+        Args:
+            deal: A deal object (e.g., from `mt5.history_deals_get()`) to wrap and provide access to.
+
+        Notes:
+            - Many getters return `None` if no deal is selected.
+            - Times:
+                * `time` returns a timezone-aware UTC datetime (recommended for MT5 history).
+                * `time_msc` returns milliseconds since 1970-01-01 (UTC) when available.
+            - This wrapper does not modify terminal state; it only reads/derives properties.
         """
 
-        self.terminal = terminal.mt5_instance
-        self._deal = deal
-        
-        if self._deal is None:
+        if self.deal is None:
             raise ValueError("Deal cannot be None. Please provide a valid deal tuple.")
-        
+
+        self._deal = deal
+
     @property
     def deal_type_description(self):
         """Gets the deal type as a string"""
@@ -46,21 +42,21 @@ class CDealInfo:
             return "N/A"
         
         deal_type_map = {
-            self.terminal.DEAL_TYPE_BUY: "BUY",
-            self.terminal.DEAL_TYPE_SELL: "SELL",
-            self.terminal.DEAL_TYPE_BALANCE: "BALANCE",
-            self.terminal.DEAL_TYPE_CREDIT: "CREDIT",
-            self.terminal.DEAL_TYPE_CHARGE: "CHARGE",
-            self.terminal.DEAL_TYPE_CORRECTION: "CORRECTION",
-            self.terminal.DEAL_TYPE_BONUS: "BONUS",
-            self.terminal.DEAL_TYPE_COMMISSION: "COMMISSION",
-            self.terminal.DEAL_TYPE_COMMISSION_DAILY: "COMMISSION DAILY",
-            self.terminal.DEAL_TYPE_COMMISSION_MONTHLY: "COMMISSION MONTHLY",
-            self.terminal.DEAL_TYPE_COMMISSION_AGENT_DAILY: "AGENT COMMISSION DAILY",
-            self.terminal.DEAL_TYPE_COMMISSION_AGENT_MONTHLY: "AGENT COMMISSION MONTHLY",
-            self.terminal.DEAL_TYPE_INTEREST: "INTEREST",
-            self.terminal.DEAL_TYPE_BUY_CANCELED: "BUY CANCELED",
-            self.terminal.DEAL_TYPE_SELL_CANCELED: "SELL CANCELED"
+            mt5_constants.DEAL_TYPE_BUY: "BUY",
+            mt5_constants.DEAL_TYPE_SELL: "SELL",
+            mt5_constants.DEAL_TYPE_BALANCE: "BALANCE",
+            mt5_constants.DEAL_TYPE_CREDIT: "CREDIT",
+            mt5_constants.DEAL_TYPE_CHARGE: "CHARGE",
+            mt5_constants.DEAL_TYPE_CORRECTION: "CORRECTION",
+            mt5_constants.DEAL_TYPE_BONUS: "BONUS",
+            mt5_constants.DEAL_TYPE_COMMISSION: "COMMISSION",
+            mt5_constants.DEAL_TYPE_COMMISSION_DAILY: "COMMISSION DAILY",
+            mt5_constants.DEAL_TYPE_COMMISSION_MONTHLY: "COMMISSION MONTHLY",
+            mt5_constants.DEAL_TYPE_COMMISSION_AGENT_DAILY: "AGENT COMMISSION DAILY",
+            mt5_constants.DEAL_TYPE_COMMISSION_AGENT_MONTHLY: "AGENT COMMISSION MONTHLY",
+            mt5_constants.DEAL_TYPE_INTEREST: "INTEREST",
+            mt5_constants.DEAL_TYPE_BUY_CANCELED: "BUY CANCELED",
+            mt5_constants.DEAL_TYPE_SELL_CANCELED: "SELL CANCELED"
         }
         
         return deal_type_map.get(self._deal.type, f"UNKNOWN({self._deal.type})")
@@ -73,9 +69,9 @@ class CDealInfo:
             return "N/A"
 
         entry_map = {
-            self.terminal.DEAL_ENTRY_IN: "IN",
-            self.terminal.DEAL_ENTRY_OUT: "OUT",
-            self.terminal.DEAL_ENTRY_INOUT: "INOUT"
+            mt5_constants.DEAL_ENTRY_IN: "IN",
+            mt5_constants.DEAL_ENTRY_OUT: "OUT",
+            mt5_constants.DEAL_ENTRY_INOUT: "INOUT"
         }
 
         return entry_map.get(self._deal.entry, "UNKNOWN")
@@ -97,9 +93,7 @@ class CDealInfo:
         """
         Gets the time of deal execution as a timezone-aware UTC datetime.
 
-        Returns
-        -------
-        Optional[datetime]
+        Returns:
             UTC datetime, or None if no deal is selected.
         """
         if self._deal is None:
@@ -125,21 +119,21 @@ class CDealInfo:
             return "N/A"
         
         deal_type_map ={
-            self.terminal.DEAL_TYPE_BUY: "BUY",
-            self.terminal.DEAL_TYPE_SELL: "SELL",
-            self.terminal.DEAL_TYPE_BALANCE: "BALANCE",
-            self.terminal.DEAL_TYPE_CREDIT: "CREDIT",
-            self.terminal.DEAL_TYPE_CHARGE: "CHARGE",
-            self.terminal.DEAL_TYPE_CORRECTION: "CORRECTION",
-            self.terminal.DEAL_TYPE_BONUS: "BONUS",
-            self.terminal.DEAL_TYPE_COMMISSION: "COMMISSION",
-            self.terminal.DEAL_TYPE_COMMISSION_DAILY: "COMMISSION DAILY",
-            self.terminal.DEAL_TYPE_COMMISSION_MONTHLY: "COMMISSION MONTHLY",
-            self.terminal.DEAL_TYPE_COMMISSION_AGENT_DAILY: "AGENT COMMISSION DAILY",
-            self.terminal.DEAL_TYPE_COMMISSION_AGENT_MONTHLY: "AGENT COMMISSION MONTHLY",
-            self.terminal.DEAL_TYPE_INTEREST: "INTEREST",
-            self.terminal.DEAL_TYPE_BUY_CANCELED: "BUY CANCELED",
-            self.terminal.DEAL_TYPE_SELL_CANCELED: "SELL CANCELED",
+            mt5_constants.DEAL_TYPE_BUY: "BUY",
+            mt5_constants.DEAL_TYPE_SELL: "SELL",
+            mt5_constants.DEAL_TYPE_BALANCE: "BALANCE",
+            mt5_constants.DEAL_TYPE_CREDIT: "CREDIT",
+            mt5_constants.DEAL_TYPE_CHARGE: "CHARGE",
+            mt5_constants.DEAL_TYPE_CORRECTION: "CORRECTION",
+            mt5_constants.DEAL_TYPE_BONUS: "BONUS",
+            mt5_constants.DEAL_TYPE_COMMISSION: "COMMISSION",
+            mt5_constants.DEAL_TYPE_COMMISSION_DAILY: "COMMISSION DAILY",
+            mt5_constants.DEAL_TYPE_COMMISSION_MONTHLY: "COMMISSION MONTHLY",
+            mt5_constants.DEAL_TYPE_COMMISSION_AGENT_DAILY: "AGENT COMMISSION DAILY",
+            mt5_constants.DEAL_TYPE_COMMISSION_AGENT_MONTHLY: "AGENT COMMISSION MONTHLY",
+            mt5_constants.DEAL_TYPE_INTEREST: "INTEREST",
+            mt5_constants.DEAL_TYPE_BUY_CANCELED: "BUY CANCELED",
+            mt5_constants.DEAL_TYPE_SELL_CANCELED: "SELL CANCELED",
         }
 
         return deal_type_map.get(self._deal.type, f"UNKNOWN({self._deal.type})")
@@ -214,16 +208,13 @@ class CDealInfo:
         This is a Pythonic approximation of MQL5's InfoInteger/HistoryDealGetInteger.
         In Python MT5, deal objects expose fields as attributes.
 
-        Parameters
-        ----------
-        prop_name : str
-            Attribute name on the deal object (e.g., "ticket", "order", "magic").
+        Args:
+            prop_name: Attribute name on the deal object (e.g., "ticket", "order", "magic").
 
-        Returns
-        -------
-        Optional[int]
-            The integer value, or None if no deal is selected or attribute missing.
+        Returns:
+             The integer value, or None if no deal is selected or attribute missing.
         """
+
         if self._deal is None or not hasattr(self._deal, prop_name):
             return None
         value = getattr(self._deal, prop_name)
@@ -233,14 +224,10 @@ class CDealInfo:
         """
         Gets a float property value by attribute name.
 
-        Parameters
-        ----------
-        prop_name : str
-            Attribute name on the deal object (e.g., "price", "profit", "volume").
+        Args:
+            prop_name : Attribute name on the deal object (e.g., "price", "profit", "volume").
 
-        Returns
-        -------
-        Optional[float]
+        Returns:
             The float value, or None if no deal is selected or attribute missing.
         """
         if self._deal is None or not hasattr(self._deal, prop_name):
@@ -252,14 +239,10 @@ class CDealInfo:
         """
         Gets a string property value by attribute name.
 
-        Parameters
-        ----------
-        prop_name : str
-            Attribute name on the deal object (e.g., "symbol", "comment", "external_id").
+        Args:
+            prop_name: Attribute name on the deal object (e.g., "symbol", "comment", "external_id").
 
-        Returns
-        -------
-        Optional[str]
+        Returns:
             The string value, or None if no deal is selected or attribute missing.
         """
         if self._deal is None or not hasattr(self._deal, prop_name):

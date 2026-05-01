@@ -1,3 +1,9 @@
+---
+title: RSI Trading Strategy in Python with MetaTrader5 (StrategyTester5 Tutorial)
+description: Learn how to build and backtest an RSI trading strategy using Python and MetaTrader5 with StrategyTester5. Step-by-step guide with code, signals, and backtesting setup.
+keywords: RSI trading strategy python, MetaTrader5 RSI bot, MT5 python backtesting example, StrategyTester5 tutorial, RSI indicator trading bot, algorithmic trading RSI python
+---
+
 ## Imports
 
 The first thing we do is, import all the necessary modules

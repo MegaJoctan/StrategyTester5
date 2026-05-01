@@ -3,14 +3,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Optional, Union
 
-from strategytester5.MetaTrader5.api import OverLoadedMetaTrader5API
-import MetaTrader5
+from . import StrategyTester
+from .. import MetaTrader5
 
 
 class CSymbolInfo:
-    def __init__(self, symbol: str, terminal: Union[OverLoadedMetaTrader5API|MetaTrader5]) -> None:
-        
-        """
+    """
         A lightweight Python wrapper that resembles the MQL5 Standard Library class
         `CSymbolInfo` and provides convenient, read-only access to MetaTrader 5
         symbol properties.
@@ -19,21 +17,44 @@ class CSymbolInfo:
         information. Symbol data can be refreshed via `refresh()`, while quote/tick
         data can be refreshed via `refresh_rates()`.
 
-        [MQL5 Reference](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/csymbolinfo)
+        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/csymbolinfo)
+    """
 
-        Parameters
-        ----------
-        terminal : Initialize native MetaTrader5 API or the simulated one from the StrategyTester instance
+    def __init__(self, symbol: str, terminal: Union[StrategyTester|MetaTrader5]):
+        
+        """
+        Instantiates the CSymbolInfo class (object)..
 
-        Notes
-        -----
-        - `name(symbol_name)` assigns the symbol and refreshes its static info.
-        - `refresh_rates()` updates the cached tick/quote values.
-        - If tick data is not refreshed yet, tick-related properties return their default cached values.
-        - Time values are returned as timezone-aware UTC datetimes where applicable.
+        Args:
+            terminal : MetaTrader5 module-like or the StrategyTester instance.
+
+        Notes:
+            - `name(symbol_name)` assigns the symbol and refreshes its static info.
+            - `refresh_rates()` updates the cached tick/quote values.
+            - If tick data is not refreshed yet, tick-related properties return their default cached values.
+            - Time values are returned as timezone-aware UTC datetimes where applicable.
+
+            Method groups mirror the MQL5 layout:
+            - Controlling: Refresh, RefreshRates
+            - Properties: Name, Select, IsSynchronized
+            - Volumes: Volume, VolumeHigh, VolumeLow
+            - Miscellaneous: Time, Spread, SpreadFloat, TicksBookDepth
+            - Levels: StopsLevel, FreezeLevel
+            - Bid/Ask/Last prices
+            - Trade modes
+            - Swaps
+            - Margins and flags
+            - Quantization
+            - Contract sizes
+            - Text properties
+            - Session properties
+            - Generic accessors: InfoInteger, InfoDouble, InfoString
+            - Service functions: NormalizePrice
         """
         
         self.terminal = terminal
+        if isinstance(terminal, StrategyTester):
+            self.terminal = terminal.mt5_instance
 
         self._symbol: str = symbol
         self._info: Optional[Any] = None
@@ -55,15 +76,11 @@ class CSymbolInfo:
         """
         Refreshes the symbol data by fetching symbol information from the terminal.
 
-        Returns
-        -------
-        bool
-            True if successful.
+        Returns:
+            True if successful
 
-        Raises
-        ------
-        RuntimeError
-            If symbol information could not be retrieved.
+        Raises:
+            RuntimeError: If symbol information could not be retrieved.
         """
         info = self.terminal.symbol_info(self._symbol)
         if not info:
@@ -77,9 +94,7 @@ class CSymbolInfo:
         """
         Refreshes the symbol quotes/gets the latest tick information from the market using `symbol_info_tick(symbol)`.
 
-        Returns
-        -------
-        bool
+        Returns:
             True if successful, False otherwise.
         """
         try:
@@ -111,14 +126,10 @@ class CSymbolInfo:
         """
         Gets/sets the Market Watch symbol flag.
 
-        Parameters
-        ----------
-        select : bool, optional
-            True to select the symbol in Market Watch, False to deselect.
+        Args:
+            select : True to select the symbol in Market Watch, False to deselect.
 
-        Returns
-        -------
-        bool
+        Returns:
             True if successful, otherwise False.
         """
         return self.terminal.symbol_select(self._symbol, select)
@@ -412,20 +423,15 @@ class CSymbolInfo:
             Contract size or margin value per one lot of hedged positions (oppositely directed positions of one symbol). Two margin calculation methods are possible for hedged positions. The calculation method is defined by the broker.         
 
             Basic calculation:
-            -----------------
-            
-            - If the initial margin (margin_initial) is specified for a symbol, the hedged margin is specified as an absolute value (in monetary terms).
-            - If the initial margin is not specified (equal to 0), SYMBOL_MARGIN_HEDGED is equal to the size of the contract, that will be used to calculate the margin by the appropriate formula in accordance with the type of the financial instrument (trade_calc_mode).
-
+                - If the initial margin (margin_initial) is specified for a symbol, the hedged margin is specified as an absolute value (in monetary terms).
+                - If the initial margin is not specified (equal to 0), SYMBOL_MARGIN_HEDGED is equal to the size of the contract, that will be used to calculate the margin by the appropriate formula in accordance with the type of the financial instrument (trade_calc_mode).
 
             Calculation for the largest position:
-            -------------------------
-            
-            - The SYMBOL_MARGIN_HEDGED value is not taken into account.
-            - The volume of all short and all long positions of a symbol is calculated.
-            - For each direction, a weighted average open price and a weighted average rate of conversion to the deposit currency is calculated.
-            - Next, using the appropriate formula chosen in accordance with the symbol type (trade_calc_mode) the margin is calculated for the short and the long part.
-            - The largest one of the values is used as the margin.
+                - The SYMBOL_MARGIN_HEDGED value is not taken into account.
+                - The volume of all short and all long positions of a symbol is calculated.
+                - For each direction, a weighted average open price and a weighted average rate of conversion to the deposit currency is calculated.
+                - Next, using the appropriate formula chosen in accordance with the symbol type (trade_calc_mode) the margin is calculated for the short and the long part.
+                - The largest one of the values is used as the margin.
         """
         
         return float(self._info.margin_hedged) if self._info else 0.0
@@ -632,14 +638,10 @@ class CSymbolInfo:
         """
         Gets the value of a specified integer type property.
 
-        Parameters
-        ----------
-        prop_name : str
-            Name of the symbol info attribute.
+        Args:
+            prop_name : Name of the symbol info attribute.
 
-        Returns
-        -------
-        Optional[int]
+        Returns:
             Integer value if present, otherwise None.
         """
         if self._info is None or not hasattr(self._info, prop_name):
@@ -651,14 +653,10 @@ class CSymbolInfo:
         """
         Gets the value of a specified double type property.
 
-        Parameters
-        ----------
-        prop_name : str
+        Args:
             Name of the symbol info attribute.
 
-        Returns
-        -------
-        Optional[float]
+        Returns:
             Float value if present, otherwise None.
         """
         if self._info is None or not hasattr(self._info, prop_name):
@@ -671,14 +669,10 @@ class CSymbolInfo:
         """
         Gets the value of a specified string type property.
 
-        Parameters
-        ----------
-        prop_name : str
-            Name of the symbol info attribute.
+        Args:
+            prop_name : Name of the symbol info attribute.
 
-        Returns
-        -------
-        Optional[str]
+        Returns:
             String value if present, otherwise None.
         """
         if self._info is None or not hasattr(self._info, prop_name):
@@ -692,14 +686,10 @@ class CSymbolInfo:
         """
         Returns the value of price normalized using the symbol properties.
 
-        Parameters
-        ----------
-        price : float
-            Price to normalize.
+        Args:
+            price : Price to normalize.
 
-        Returns
-        -------
-        float
+        Returns:
             Normalized price based on symbol digits.
         """
         return round(float(price), self.digits)

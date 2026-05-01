@@ -1,3 +1,9 @@
+---
+title: StrategyTester5 Quick Start
+description: An easy way to start building and testing Python-based trading robots for the MetaTrader5 platform
+keywords: StrategyTester5 quickstart, Python trading robot, MetaTrader5 backtesting, MT5 Python trading bot, algorithmic trading Python MT5
+---
+
 # Quick Start | Build & Test your First Trading Robot
 
 Every trading robot project needs atleast two files. The main Python file and a JSON configuration file.
