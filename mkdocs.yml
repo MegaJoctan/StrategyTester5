@@ -25,7 +25,7 @@ theme:
     - navigation.top
     - navigation.instant
     - navigation.instant.progress
-    - navigation.instant.prefetch
+    # - navigation.instant.prefetch
     - navigation.tracking
     - navigation.sections
     - navigation.expand
@@ -42,16 +42,16 @@ nav:
   - Getting Started:
       - Installation: installation.md
       - Quick Start | Make your first Bot: quickstart.md
-  - Documentation: 
+  - Documentation:
       - Overview: documentation/index.md
       - Working With Indicators: documentation/working_with_indicators.md
       - RSI Strategy Example: documentation/rsi_strategy.md
       - Logging and Debugging: documentation/logging_debugging.md
   - Tutorials: tutorials.md
 
-  - API Reference: 
+  - API Reference:
       - Overview: api/index.md
-      - MetaTrader5: 
+      - MetaTrader5:
         - API: api/metatrader5/api.md
         - Constants: api/metatrader5/constants.md
         - Data: api/metatrader5/data.md
@@ -75,8 +75,9 @@ nav:
   - About: about.md
 
 plugins:
-  - mkdocstrings 
-  - search 
+  - mkdocstrings
+  - search
+  - meta-descriptions
   - privacy:
       enabled: true
       cache: true
@@ -93,9 +94,10 @@ markdown_extensions:
   - pymdownx.superfences
   - admonition
   - pymdownx.details
-  
+
 
 repo_url: https://github.com/MegaJoctan/StrategyTester5
+use_directory_urls: true
 
 extra:
   social:
@@ -116,6 +118,7 @@ extra:
       as to measure the effectiveness of our documentation and whether users
       find what they're searching for. With your consent, you're helping us to
       make our documentation better.
+  generator: false
     
 copyright: >
   © 2026 Omega Joctan — StrategyTester5. All rights reserved.
