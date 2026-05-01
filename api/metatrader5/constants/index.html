@@ -4351,7 +4351,17 @@
 <span class="normal">484</span>
 <span class="normal">485</span>
 <span class="normal">486</span>
-<span class="normal">487</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="normal">487</span>
+<span class="normal">488</span>
+<span class="normal">489</span>
+<span class="normal">490</span>
+<span class="normal">491</span>
+<span class="normal">492</span>
+<span class="normal">493</span>
+<span class="normal">494</span>
+<span class="normal">495</span>
+<span class="normal">496</span>
+<span class="normal">497</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MetaTrader5Constants</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;MetaTrader 5 constants, such as timeframes, order types, deal types, etc.&quot;&quot;&quot;</span>
     <span class="c1"># timeframes</span>
@@ -4744,6 +4754,16 @@
         <span class="n">TRADE_RETCODE_ONLY_REAL</span><span class="p">:</span> <span class="s2">&quot;Operation is allowed only for live accounts&quot;</span><span class="p">,</span>
         <span class="n">TRADE_RETCODE_LIMIT_ORDERS</span><span class="p">:</span> <span class="s2">&quot;The number of pending orders has reached the limit&quot;</span><span class="p">,</span>
         <span class="n">TRADE_RETCODE_LIMIT_VOLUME</span><span class="p">:</span> <span class="s2">&quot;The volume of orders and positions for the symbol has reached the limit&quot;</span><span class="p">,</span>
+        <span class="n">TRADE_RETCODE_INVALID_ORDER</span><span class="p">:</span> <span class="s2">&quot;Invalid order&quot;</span><span class="p">,</span>
+        <span class="n">TRADE_RETCODE_POSITION_CLOSED</span><span class="p">:</span> <span class="s2">&quot;Position is closed&quot;</span><span class="p">,</span>
+        <span class="n">TRADE_RETCODE_INVALID_CLOSE_VOLUME</span><span class="p">:</span> <span class="s2">&quot;Invalid close volume&quot;</span><span class="p">,</span>
+        <span class="n">TRADE_RETCODE_CLOSE_ORDER_EXIST</span><span class="p">:</span> <span class="s2">&quot;A close order already exists&quot;</span><span class="p">,</span>
+        <span class="n">TRADE_RETCODE_LIMIT_POSITIONS</span><span class="p">:</span> <span class="s2">&quot;The number of positions has reached the limit&quot;</span><span class="p">,</span>
+        <span class="n">TRADE_RETCODE_REJECT_CANCEL</span><span class="p">:</span> <span class="s2">&quot;Order cancel request rejected&quot;</span><span class="p">,</span>
+        <span class="n">TRADE_RETCODE_LONG_ONLY</span><span class="p">:</span> <span class="s2">&quot;Symbol supports only long positions&quot;</span><span class="p">,</span>
+        <span class="n">TRADE_RETCODE_SHORT_ONLY</span><span class="p">:</span> <span class="s2">&quot;Symbol supports only short positions&quot;</span><span class="p">,</span>
+        <span class="n">TRADE_RETCODE_CLOSE_ONLY</span><span class="p">:</span> <span class="s2">&quot;Only closing of positions is allowed&quot;</span><span class="p">,</span>
+        <span class="n">TRADE_RETCODE_FIFO_CLOSE</span><span class="p">:</span> <span class="s2">&quot;FIFO close restriction applies&quot;</span><span class="p">,</span>
     <span class="p">}</span>
 
     <span class="n">DEAL_TYPE_MAP</span> <span class="o">=</span> <span class="p">{</span>

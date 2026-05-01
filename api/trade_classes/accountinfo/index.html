@@ -1449,45 +1449,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="__init__">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#strategytester5.trade_classes.AccountInfo.CAccountInfo.__init__--args" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Args
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#strategytester5.trade_classes.AccountInfo.CAccountInfo.__init__--raises" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Raises
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#strategytester5.trade_classes.AccountInfo.CAccountInfo.__init__--notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Notes
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
           <li class="md-nav__item">
@@ -1520,34 +1481,6 @@
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="max_lot_check">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#strategytester5.trade_classes.AccountInfo.CAccountInfo.max_lot_check--args" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Args
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#strategytester5.trade_classes.AccountInfo.CAccountInfo.max_lot_check--returns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Returns
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -2322,45 +2255,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="__init__">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#strategytester5.trade_classes.AccountInfo.CAccountInfo.__init__--args" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Args
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#strategytester5.trade_classes.AccountInfo.CAccountInfo.__init__--raises" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Raises
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#strategytester5.trade_classes.AccountInfo.CAccountInfo.__init__--notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Notes
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
           <li class="md-nav__item">
@@ -2393,34 +2287,6 @@
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="max_lot_check">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#strategytester5.trade_classes.AccountInfo.CAccountInfo.max_lot_check--args" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Args
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#strategytester5.trade_classes.AccountInfo.CAccountInfo.max_lot_check--returns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Returns
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -2514,6 +2380,15 @@
 
 
 
+        <p>A lightweight Python wrapper that resembles the MQL5 Standard Library class
+<code>CAccountInfo</code> and provides convenient, read-only access to the properties of
+the currently connected MetaTrader 5 trading account.</p>
+<p>This class caches the result of <code>mt5.account_info()</code> at construction time.
+The returned values reflect the account state at the time of initialization
+(balance, equity, margin, etc.). If you need up-to-date values after trading
+activity or price changes, re-instantiate the class or implement a refresh.</p>
+<p><a href="https://www.mql5.com/en/docs/standardlibrary/tradeclasses/caccountinfo">Reference (MQL5)</a></p>
+
 
 
 
@@ -2523,7 +2398,8 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>strategytester5\trade_classes\AccountInfo.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">  6</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">  5</span>
+<span class="normal">  6</span>
 <span class="normal">  7</span>
 <span class="normal">  8</span>
 <span class="normal">  9</span>
@@ -2760,14 +2636,8 @@
 <span class="normal">240</span>
 <span class="normal">241</span>
 <span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span>
-<span class="normal">247</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CAccountInfo</span><span class="p">:</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">terminal</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">OverLoadedMetaTrader5API</span><span class="o">|</span><span class="n">MetaTrader5</span><span class="p">]):</span>
-
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="normal">243</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CAccountInfo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        A lightweight Python wrapper that resembles the MQL5 Standard Library class</span>
 <span class="sd">        `CAccountInfo` and provides convenient, read-only access to the properties of</span>
 <span class="sd">        the currently connected MetaTrader 5 trading account.</span>
@@ -2777,31 +2647,32 @@
 <span class="sd">        (balance, equity, margin, etc.). If you need up-to-date values after trading</span>
 <span class="sd">        activity or price changes, re-instantiate the class or implement a refresh.</span>
 
-<span class="sd">        [MQL5 Reference](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/caccountinfo)</span>
+<span class="sd">        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/caccountinfo)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-<span class="sd">        Args</span>
-<span class="sd">        ----------</span>
-<span class="sd">        terminal : MetaTrader5 module-like or simulated/overloaded MetaTrader5 instance.</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ac_info</span><span class="p">:</span> <span class="n">namedtuple</span><span class="p">()):</span>
 
-<span class="sd">        Raises</span>
-<span class="sd">        ------</span>
-<span class="sd">        RuntimeError</span>
-<span class="sd">            If account information cannot be retrieved (i.e., `account_info()` returns None).</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Instatiates the CAccountInfo object</span>
 
-<span class="sd">        Notes</span>
-<span class="sd">        -----</span>
-<span class="sd">        Method groups mirror the MQL5 layout:</span>
-<span class="sd">        - Integer properties: Login, TradeMode, Leverage, StopoutMode, MarginMode, etc.</span>
-<span class="sd">        - Double properties: Balance, Equity, Margin, FreeMargin, etc.</span>
-<span class="sd">        - String properties: Name, Server, Currency, Company</span>
-<span class="sd">        - Checks / calculations: MarginCheck, OrderProfitCheck, FreeMarginCheck, MaxLotCheck</span>
+<span class="sd">        Args:</span>
+<span class="sd">            ac_info : A tuple returned by `mt5.account_info()`</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError : If account information cannot be retrieved (i.e., `account_info()` returns None).</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            Method groups mirror the MQL5 layout:</span>
+<span class="sd">            - Integer properties: Login, TradeMode, Leverage, StopoutMode, MarginMode, etc.</span>
+<span class="sd">            - Double properties: Balance, Equity, Margin, FreeMargin, etc.</span>
+<span class="sd">            - String properties: Name, Server, Currency, Company</span>
+<span class="sd">            - Checks / calculations: MarginCheck, OrderProfitCheck, FreeMarginCheck, MaxLotCheck</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span> <span class="o">=</span> <span class="n">terminal</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_account_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">account_info</span><span class="p">()</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_account_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ac_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Failed to retrieve account info: &quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">last_error</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_account_info</span> <span class="o">=</span> <span class="n">ac_info</span>
 
     <span class="c1"># --- Integer properties</span>
 
@@ -2979,13 +2850,11 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">max_lot_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">percent</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span> 
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Estimates the maximum tradable volume based on available margin. </span>
 
-<span class="sd">        Args</span>
-<span class="sd">        ---------- </span>
-<span class="sd">        percent : float Percentage of free margin to use (0..100). </span>
+<span class="sd">        Args:</span>
+<span class="sd">            percent : float Percentage of free margin to use (0..100).</span>
 
-<span class="sd">        Returns </span>
-<span class="sd">        ------- </span>
-<span class="sd">        Optional[float] Estimated maximum lot size, or None if margin cannot be estimated. &quot;&quot;&quot;</span> 
+<span class="sd">        Returns:</span>
+<span class="sd">            Estimated maximum lot size, or None if margin cannot be estimated. &quot;&quot;&quot;</span>
 
         <span class="n">required_margin_per_lot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">margin_check</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">order_type</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">price</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">required_margin_per_lot</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">):</span> 
@@ -3554,49 +3423,81 @@
 
 
 <h3 id="strategytester5.trade_classes.AccountInfo.CAccountInfo.__init__" class="doc doc-heading">
-            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">terminal</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">ac_info</span><span class="p">)</span></code>
 
 </h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>A lightweight Python wrapper that resembles the MQL5 Standard Library class
-<code>CAccountInfo</code> and provides convenient, read-only access to the properties of
-the currently connected MetaTrader 5 trading account.</p>
-<p>This class caches the result of <code>mt5.account_info()</code> at construction time.
-The returned values reflect the account state at the time of initialization
-(balance, equity, margin, etc.). If you need up-to-date values after trading
-activity or price changes, re-instantiate the class or implement a refresh.</p>
-<p><a href="https://www.mql5.com/en/docs/standardlibrary/tradeclasses/caccountinfo">MQL5 Reference</a></p>
-<h5 id="strategytester5.trade_classes.AccountInfo.CAccountInfo.__init__--args">Args</h5>
-<p>terminal : MetaTrader5 module-like or simulated/overloaded MetaTrader5 instance.</p>
-<h5 id="strategytester5.trade_classes.AccountInfo.CAccountInfo.__init__--raises">Raises</h5>
-<p>RuntimeError
-    If account information cannot be retrieved (i.e., <code>account_info()</code> returns None).</p>
-<h5 id="strategytester5.trade_classes.AccountInfo.CAccountInfo.__init__--notes">Notes</h5>
-<p>Method groups mirror the MQL5 layout:
+        <p>Instatiates the CAccountInfo object</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>ac_info </code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A tuple returned by <code>mt5.account_info()</code></p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="RuntimeError">RuntimeError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If account information cannot be retrieved (i.e., <code>account_info()</code> returns None).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="notes" open>
+  <summary>Notes</summary>
+  <p>Method groups mirror the MQL5 layout:
 - Integer properties: Login, TradeMode, Leverage, StopoutMode, MarginMode, etc.
 - Double properties: Balance, Equity, Margin, FreeMargin, etc.
 - String properties: Name, Server, Currency, Company
 - Checks / calculations: MarginCheck, OrderProfitCheck, FreeMarginCheck, MaxLotCheck</p>
-
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\AccountInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">19</span>
 <span class="normal">20</span>
 <span class="normal">21</span>
 <span class="normal">22</span>
@@ -3618,45 +3519,29 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
 <span class="normal">38</span>
 <span class="normal">39</span>
 <span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">terminal</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">OverLoadedMetaTrader5API</span><span class="o">|</span><span class="n">MetaTrader5</span><span class="p">]):</span>
+<span class="normal">41</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ac_info</span><span class="p">:</span> <span class="n">namedtuple</span><span class="p">()):</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A lightweight Python wrapper that resembles the MQL5 Standard Library class</span>
-<span class="sd">    `CAccountInfo` and provides convenient, read-only access to the properties of</span>
-<span class="sd">    the currently connected MetaTrader 5 trading account.</span>
+<span class="sd">    Instatiates the CAccountInfo object</span>
 
-<span class="sd">    This class caches the result of `mt5.account_info()` at construction time.</span>
-<span class="sd">    The returned values reflect the account state at the time of initialization</span>
-<span class="sd">    (balance, equity, margin, etc.). If you need up-to-date values after trading</span>
-<span class="sd">    activity or price changes, re-instantiate the class or implement a refresh.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        ac_info : A tuple returned by `mt5.account_info()`</span>
 
-<span class="sd">    [MQL5 Reference](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/caccountinfo)</span>
+<span class="sd">    Raises:</span>
+<span class="sd">        RuntimeError : If account information cannot be retrieved (i.e., `account_info()` returns None).</span>
 
-<span class="sd">    Args</span>
-<span class="sd">    ----------</span>
-<span class="sd">    terminal : MetaTrader5 module-like or simulated/overloaded MetaTrader5 instance.</span>
-
-<span class="sd">    Raises</span>
-<span class="sd">    ------</span>
-<span class="sd">    RuntimeError</span>
-<span class="sd">        If account information cannot be retrieved (i.e., `account_info()` returns None).</span>
-
-<span class="sd">    Notes</span>
-<span class="sd">    -----</span>
-<span class="sd">    Method groups mirror the MQL5 layout:</span>
-<span class="sd">    - Integer properties: Login, TradeMode, Leverage, StopoutMode, MarginMode, etc.</span>
-<span class="sd">    - Double properties: Balance, Equity, Margin, FreeMargin, etc.</span>
-<span class="sd">    - String properties: Name, Server, Currency, Company</span>
-<span class="sd">    - Checks / calculations: MarginCheck, OrderProfitCheck, FreeMarginCheck, MaxLotCheck</span>
+<span class="sd">    Notes:</span>
+<span class="sd">        Method groups mirror the MQL5 layout:</span>
+<span class="sd">        - Integer properties: Login, TradeMode, Leverage, StopoutMode, MarginMode, etc.</span>
+<span class="sd">        - Double properties: Balance, Equity, Margin, FreeMargin, etc.</span>
+<span class="sd">        - String properties: Name, Server, Currency, Company</span>
+<span class="sd">        - Checks / calculations: MarginCheck, OrderProfitCheck, FreeMarginCheck, MaxLotCheck</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span> <span class="o">=</span> <span class="n">terminal</span>
-
-    <span class="bp">self</span><span class="o">.</span><span class="n">_account_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">account_info</span><span class="p">()</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_account_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">ac_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Failed to retrieve account info: &quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">last_error</span><span class="p">())</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_account_info</span> <span class="o">=</span> <span class="n">ac_info</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3679,12 +3564,12 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\AccountInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">204</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
 <span class="normal">205</span>
 <span class="normal">206</span>
-<span class="normal">207</span>
-<span class="normal">208</span>
-<span class="normal">209</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">free_margin_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="normal">207</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">free_margin_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns free margin left after opening the position, or None if margin check fails.&quot;&quot;&quot;</span>
 
@@ -3712,12 +3597,12 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\AccountInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">211</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
 <span class="normal">212</span>
 <span class="normal">213</span>
-<span class="normal">214</span>
-<span class="normal">215</span>
-<span class="normal">216</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">margin_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="normal">214</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">margin_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Gets the amount of margin required to execute trade operation&quot;&quot;&quot;</span>
 
@@ -3741,15 +3626,66 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
     <div class="doc doc-contents ">
 
         <p>Estimates the maximum tradable volume based on available margin. </p>
-<h5 id="strategytester5.trade_classes.AccountInfo.CAccountInfo.max_lot_check--args">Args</h5>
-<p>percent : float Percentage of free margin to use (0..100). </p>
-<h5 id="strategytester5.trade_classes.AccountInfo.CAccountInfo.max_lot_check--returns">Returns</h5>
-<p>Optional[float] Estimated maximum lot size, or None if margin cannot be estimated.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>percent </code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>float Percentage of free margin to use (0..100).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="float">float</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Estimated maximum lot size, or None if margin cannot be estimated.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\AccountInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">218</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
 <span class="normal">219</span>
 <span class="normal">220</span>
 <span class="normal">221</span>
@@ -3761,20 +3697,14 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
 <span class="normal">227</span>
 <span class="normal">228</span>
 <span class="normal">229</span>
-<span class="normal">230</span>
-<span class="normal">231</span>
-<span class="normal">232</span>
-<span class="normal">233</span>
-<span class="normal">234</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">max_lot_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">percent</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span> 
+<span class="normal">230</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">max_lot_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">percent</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span> 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Estimates the maximum tradable volume based on available margin. </span>
 
-<span class="sd">    Args</span>
-<span class="sd">    ---------- </span>
-<span class="sd">    percent : float Percentage of free margin to use (0..100). </span>
+<span class="sd">    Args:</span>
+<span class="sd">        percent : float Percentage of free margin to use (0..100).</span>
 
-<span class="sd">    Returns </span>
-<span class="sd">    ------- </span>
-<span class="sd">    Optional[float] Estimated maximum lot size, or None if margin cannot be estimated. &quot;&quot;&quot;</span> 
+<span class="sd">    Returns:</span>
+<span class="sd">        Estimated maximum lot size, or None if margin cannot be estimated. &quot;&quot;&quot;</span>
 
     <span class="n">required_margin_per_lot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">margin_check</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">order_type</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">price</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">required_margin_per_lot</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">):</span> 
@@ -3804,12 +3734,12 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\AccountInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">197</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
 <span class="normal">198</span>
 <span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
-<span class="normal">202</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">order_profit_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price_open</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price_close</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">200</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">order_profit_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price_open</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price_close</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluates profit for the given open/close prices (approximate, ignores commissions/swaps).&quot;&quot;&quot;</span>
 
@@ -3837,17 +3767,17 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\AccountInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">237</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
 <span class="normal">238</span>
 <span class="normal">239</span>
 <span class="normal">240</span>
 <span class="normal">241</span>
 <span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span>
-<span class="normal">247</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">print_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">243</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">print_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Print all @property values of the class.&quot;&quot;&quot;</span>
 
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>

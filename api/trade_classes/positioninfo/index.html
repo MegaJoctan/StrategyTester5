@@ -1289,6 +1289,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#strategytester5.trade_classes.PositionInfo.CPositionInfo--cpositioninfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CPositionInfo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#strategytester5.trade_classes.PositionInfo.CPositionInfo.comment" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2040,6 +2051,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#strategytester5.trade_classes.PositionInfo.CPositionInfo--cpositioninfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CPositionInfo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#strategytester5.trade_classes.PositionInfo.CPositionInfo.comment" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2494,6 +2516,14 @@
 
 
 
+        <h4 id="strategytester5.trade_classes.PositionInfo.CPositionInfo--cpositioninfo">CPositionInfo</h4>
+<p>A lightweight Python wrapper that resembles the MQL5 Standard Library class
+<code>CPositionInfo</code> and provides convenient, read-only access to MetaTrader 5
+open position properties.</p>
+<p>This class wraps a single already-selected/open position object returned by
+the MetaTrader 5 Python API, such as from <code>mt5.positions_get()</code>.</p>
+<p><a href="https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cpositioninfo">Reference (MQL5)</a></p>
+
 
 
 
@@ -2503,7 +2533,10 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>strategytester5\trade_classes\PositionInfo.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 10</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">  7</span>
+<span class="normal">  8</span>
+<span class="normal">  9</span>
+<span class="normal"> 10</span>
 <span class="normal"> 11</span>
 <span class="normal"> 12</span>
 <span class="normal"> 13</span>
@@ -2741,9 +2774,9 @@
 <span class="normal">245</span>
 <span class="normal">246</span>
 <span class="normal">247</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CPositionInfo</span><span class="p">:</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">TradePosition</span><span class="p">,</span> <span class="n">terminal</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">MetaTrader5</span><span class="o">|</span><span class="n">OverLoadedMetaTrader5API</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        CPositionInfo</span>
+<span class="sd">        -------------</span>
 <span class="sd">        A lightweight Python wrapper that resembles the MQL5 Standard Library class</span>
 <span class="sd">        `CPositionInfo` and provides convenient, read-only access to MetaTrader 5</span>
 <span class="sd">        open position properties.</span>
@@ -2751,14 +2784,19 @@
 <span class="sd">        This class wraps a single already-selected/open position object returned by</span>
 <span class="sd">        the MetaTrader 5 Python API, such as from `mt5.positions_get()`.</span>
 
-<span class="sd">        [MQL5 Reference](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cpositioninfo)</span>
+<span class="sd">        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cpositioninfo)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">TradePosition</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Instantiates a CPositionInfo object.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        position : Any</span>
 <span class="sd">            A position object returned by MetaTrader 5 Python API functions such as</span>
 <span class="sd">            `mt5.positions_get()`.</span>
-<span class="sd">        terminal : Initialize native MetaTrader5 API or the simulated one from the StrategyTester instance</span>
 
 <span class="sd">        Notes</span>
 <span class="sd">        -----</span>
@@ -2774,11 +2812,9 @@
 <span class="sd">        - Generic accessors: InfoInteger, InfoDouble, InfoString</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span> <span class="o">=</span> <span class="n">terminal</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">_position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">position</span>
 
-        <span class="k">if</span> <span class="n">position</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="s2">&quot;ticket&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">position</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="s2">&quot;ticket&quot;</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The provided position object does not have expected attributes.&quot;</span><span class="p">)</span>
 
     <span class="c1"># --------- Integer / datetime properties -----------</span>
@@ -3416,24 +3452,18 @@
 
 
 <h3 id="strategytester5.trade_classes.PositionInfo.CPositionInfo.__init__" class="doc doc-heading">
-            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">terminal</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">position</span><span class="p">)</span></code>
 
 </h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>A lightweight Python wrapper that resembles the MQL5 Standard Library class
-<code>CPositionInfo</code> and provides convenient, read-only access to MetaTrader 5
-open position properties.</p>
-<p>This class wraps a single already-selected/open position object returned by
-the MetaTrader 5 Python API, such as from <code>mt5.positions_get()</code>.</p>
-<p><a href="https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cpositioninfo">MQL5 Reference</a></p>
+        <p>Instantiates a CPositionInfo object.</p>
 <h5 id="strategytester5.trade_classes.PositionInfo.CPositionInfo.__init__--parameters">Parameters</h5>
 <p>position : Any
     A position object returned by MetaTrader 5 Python API functions such as
-    <code>mt5.positions_get()</code>.
-terminal : Initialize native MetaTrader5 API or the simulated one from the StrategyTester instance</p>
+    <code>mt5.positions_get()</code>.</p>
 <h5 id="strategytester5.trade_classes.PositionInfo.CPositionInfo.__init__--notes">Notes</h5>
 <ul>
 <li>This wrapper does not implement selection methods by design.</li>
@@ -3450,17 +3480,7 @@ terminal : Initialize native MetaTrader5 API or the simulated one from the Strat
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\PositionInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">21</span>
 <span class="normal">22</span>
 <span class="normal">23</span>
 <span class="normal">24</span>
@@ -3488,24 +3508,16 @@ terminal : Initialize native MetaTrader5 API or the simulated one from the Strat
 <span class="normal">46</span>
 <span class="normal">47</span>
 <span class="normal">48</span>
-<span class="normal">49</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">TradePosition</span><span class="p">,</span> <span class="n">terminal</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">MetaTrader5</span><span class="o">|</span><span class="n">OverLoadedMetaTrader5API</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">49</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">TradePosition</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A lightweight Python wrapper that resembles the MQL5 Standard Library class</span>
-<span class="sd">    `CPositionInfo` and provides convenient, read-only access to MetaTrader 5</span>
-<span class="sd">    open position properties.</span>
-
-<span class="sd">    This class wraps a single already-selected/open position object returned by</span>
-<span class="sd">    the MetaTrader 5 Python API, such as from `mt5.positions_get()`.</span>
-
-<span class="sd">    [MQL5 Reference](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cpositioninfo)</span>
+<span class="sd">    Instantiates a CPositionInfo object.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    position : Any</span>
 <span class="sd">        A position object returned by MetaTrader 5 Python API functions such as</span>
 <span class="sd">        `mt5.positions_get()`.</span>
-<span class="sd">    terminal : Initialize native MetaTrader5 API or the simulated one from the StrategyTester instance</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
@@ -3521,11 +3533,9 @@ terminal : Initialize native MetaTrader5 API or the simulated one from the Strat
 <span class="sd">    - Generic accessors: InfoInteger, InfoDouble, InfoString</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span> <span class="o">=</span> <span class="n">terminal</span>
-
     <span class="bp">self</span><span class="o">.</span><span class="n">_position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">position</span>
 
-    <span class="k">if</span> <span class="n">position</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="s2">&quot;ticket&quot;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">position</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="s2">&quot;ticket&quot;</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The provided position object does not have expected attributes.&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>

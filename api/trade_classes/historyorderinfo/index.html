@@ -1241,34 +1241,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="__init__">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#strategytester5.trade_classes.HistoryOrderInfo.CHistoryOrderInfo.__init__--parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Parameters
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#strategytester5.trade_classes.HistoryOrderInfo.CHistoryOrderInfo.__init__--notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Notes
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
       </ul>
@@ -1700,34 +1672,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="__init__">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#strategytester5.trade_classes.HistoryOrderInfo.CHistoryOrderInfo.__init__--parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Parameters
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#strategytester5.trade_classes.HistoryOrderInfo.CHistoryOrderInfo.__init__--notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Notes
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
       </ul>
@@ -1796,9 +1740,17 @@
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="COrderInfo (strategytester5.trade_classes.OrderInfo.COrderInfo)" href="../orderinfo/#strategytester5.trade_classes.OrderInfo.COrderInfo">COrderInfo</a></code></p>
+              Bases: <code><span title="COrderInfo">COrderInfo</span></code></p>
 
 
+
+        <p>A lightweight Python wrapper that resembles the MQL5 Standard Library class
+<code>CHistoryOrderInfo</code> and provides convenient, read-only access to MetaTrader 5
+history order properties.</p>
+<p>This class acts like a cursor over a single selected historical order stored in
+<code>self._order</code>. The selected order can be supplied at construction time or later
+via <code>select_order()</code> / <code>select_by_index()</code>.</p>
+<p><a href="https://www.mql5.com/en/docs/standardlibrary/tradeclasses/chistoryorderinfo">Reference (MQL5)</a></p>
 
 
 
@@ -1809,7 +1761,13 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>strategytester5\trade_classes\HistoryOrderInfo.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">11</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
 <span class="normal">12</span>
 <span class="normal">13</span>
 <span class="normal">14</span>
@@ -1839,16 +1797,8 @@
 <span class="normal">38</span>
 <span class="normal">39</span>
 <span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CHistoryOrderInfo</span><span class="p">(</span><span class="n">COrderInfo</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n">TradeOrder</span><span class="p">,</span> <span class="n">terminal</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">OverLoadedMetaTrader5API</span><span class="o">|</span><span class="n">MetaTrader5</span><span class="p">]):</span>
-
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="normal">41</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CHistoryOrderInfo</span><span class="p">(</span><span class="n">COrderInfo</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        A lightweight Python wrapper that resembles the MQL5 Standard Library class</span>
 <span class="sd">        `CHistoryOrderInfo` and provides convenient, read-only access to MetaTrader 5</span>
 <span class="sd">        history order properties.</span>
@@ -1857,31 +1807,33 @@
 <span class="sd">        `self._order`. The selected order can be supplied at construction time or later</span>
 <span class="sd">        via `select_order()` / `select_by_index()`.</span>
 
-<span class="sd">        [MQL5 Reference](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/chistoryorderinfo)</span>
+<span class="sd">        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/chistoryorderinfo)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        order : Any, optional</span>
-<span class="sd">            A history order object returned by MetaTrader 5 Python history functions</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n">TradeOrder</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Instantiates a CHistoryOrderInfo object.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            order : A history order object returned by MetaTrader 5 Python history functions</span>
 <span class="sd">            such as `mt5.history_orders_get()`.</span>
-<span class="sd">        terminal : Initialize native MetaTrader5 API or the simulated one from the StrategyTester instance</span>
 
-<span class="sd">        Notes</span>
-<span class="sd">        -----</span>
-<span class="sd">        - If no order is selected, properties return `None` or `&quot;N/A&quot;`.</span>
-<span class="sd">        - `time_setup`, `time_done`, and `time_expiration` are returned as timezone-aware</span>
-<span class="sd">        UTC datetimes where possible.</span>
-<span class="sd">        - This wrapper does not modify terminal state; it only reads history order data.</span>
+<span class="sd">        Notes:</span>
+<span class="sd">            - If no order is selected, properties return `None` or `&quot;N/A&quot;`.</span>
+<span class="sd">            - `time_setup`, `time_done`, and `time_expiration` are returned as timezone-aware</span>
+<span class="sd">            UTC datetimes where possible.</span>
+<span class="sd">            - This wrapper does not modify terminal state; it only reads history order data.</span>
 
-<span class="sd">        Method groups mirror the MQL5 layout:</span>
-<span class="sd">        - Integer properties: TimeSetup, OrderType, State, TypeFilling, TypeTime, Magic, etc.</span>
-<span class="sd">        - Double properties: VolumeInitial, VolumeCurrent, PriceOpen, StopLoss, TakeProfit, etc.</span>
-<span class="sd">        - String properties: Symbol, Comment, ExternalId</span>
-<span class="sd">        - Generic accessors: InfoInteger, InfoDouble, InfoString</span>
-<span class="sd">        - Selection helpers: Ticket, SelectByIndex</span>
+<span class="sd">            Method groups mirror the MQL5 layout:&lt;br&gt;</span>
+
+<span class="sd">            - Integer properties: TimeSetup, OrderType, State, TypeFilling, TypeTime, Magic, etc.</span>
+<span class="sd">            - Double properties: VolumeInitial, VolumeCurrent, PriceOpen, StopLoss, TakeProfit, etc.</span>
+<span class="sd">            - String properties: Symbol, Comment, ExternalId</span>
+<span class="sd">            - Generic accessors: InfoInteger, InfoDouble, InfoString</span>
+<span class="sd">            - Selection helpers: Ticket, SelectByIndex</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">terminal</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -1902,49 +1854,67 @@
 
 
 <h3 id="strategytester5.trade_classes.HistoryOrderInfo.CHistoryOrderInfo.__init__" class="doc doc-heading">
-            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">terminal</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">order</span><span class="p">)</span></code>
 
 </h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>A lightweight Python wrapper that resembles the MQL5 Standard Library class
-<code>CHistoryOrderInfo</code> and provides convenient, read-only access to MetaTrader 5
-history order properties.</p>
-<p>This class acts like a cursor over a single selected historical order stored in
-<code>self._order</code>. The selected order can be supplied at construction time or later
-via <code>select_order()</code> / <code>select_by_index()</code>.</p>
-<p><a href="https://www.mql5.com/en/docs/standardlibrary/tradeclasses/chistoryorderinfo">MQL5 Reference</a></p>
-<h5 id="strategytester5.trade_classes.HistoryOrderInfo.CHistoryOrderInfo.__init__--parameters">Parameters</h5>
-<p>order : Any, optional
-    A history order object returned by MetaTrader 5 Python history functions
-    such as <code>mt5.history_orders_get()</code>.
-terminal : Initialize native MetaTrader5 API or the simulated one from the StrategyTester instance</p>
-<h5 id="strategytester5.trade_classes.HistoryOrderInfo.CHistoryOrderInfo.__init__--notes">Notes</h5>
-<ul>
+        <p>Instantiates a CHistoryOrderInfo object.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>order </code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A history order object returned by MetaTrader 5 Python history functions</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="notes" open>
+  <summary>Notes</summary>
+  <ul>
 <li>If no order is selected, properties return <code>None</code> or <code>"N/A"</code>.</li>
 <li><code>time_setup</code>, <code>time_done</code>, and <code>time_expiration</code> are returned as timezone-aware
 UTC datetimes where possible.</li>
 <li>This wrapper does not modify terminal state; it only reads history order data.</li>
 </ul>
-<p>Method groups mirror the MQL5 layout:
-- Integer properties: TimeSetup, OrderType, State, TypeFilling, TypeTime, Magic, etc.
-- Double properties: VolumeInitial, VolumeCurrent, PriceOpen, StopLoss, TakeProfit, etc.
-- String properties: Symbol, Comment, ExternalId
-- Generic accessors: InfoInteger, InfoDouble, InfoString
-- Selection helpers: Ticket, SelectByIndex</p>
-
+<p>Method groups mirror the MQL5 layout:<br></p>
+<ul>
+<li>Integer properties: TimeSetup, OrderType, State, TypeFilling, TypeTime, Magic, etc.</li>
+<li>Double properties: VolumeInitial, VolumeCurrent, PriceOpen, StopLoss, TakeProfit, etc.</li>
+<li>String properties: Symbol, Comment, ExternalId</li>
+<li>Generic accessors: InfoInteger, InfoDouble, InfoString</li>
+<li>Selection helpers: Ticket, SelectByIndex</li>
+</ul>
+</details>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\HistoryOrderInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">18</span>
 <span class="normal">19</span>
 <span class="normal">20</span>
 <span class="normal">21</span>
@@ -1967,48 +1937,30 @@ UTC datetimes where possible.</li>
 <span class="normal">38</span>
 <span class="normal">39</span>
 <span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n">TradeOrder</span><span class="p">,</span> <span class="n">terminal</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">OverLoadedMetaTrader5API</span><span class="o">|</span><span class="n">MetaTrader5</span><span class="p">]):</span>
-
+<span class="normal">41</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n">TradeOrder</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A lightweight Python wrapper that resembles the MQL5 Standard Library class</span>
-<span class="sd">    `CHistoryOrderInfo` and provides convenient, read-only access to MetaTrader 5</span>
-<span class="sd">    history order properties.</span>
+<span class="sd">    Instantiates a CHistoryOrderInfo object.</span>
 
-<span class="sd">    This class acts like a cursor over a single selected historical order stored in</span>
-<span class="sd">    `self._order`. The selected order can be supplied at construction time or later</span>
-<span class="sd">    via `select_order()` / `select_by_index()`.</span>
-
-<span class="sd">    [MQL5 Reference](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/chistoryorderinfo)</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    order : Any, optional</span>
-<span class="sd">        A history order object returned by MetaTrader 5 Python history functions</span>
+<span class="sd">    Args:</span>
+<span class="sd">        order : A history order object returned by MetaTrader 5 Python history functions</span>
 <span class="sd">        such as `mt5.history_orders_get()`.</span>
-<span class="sd">    terminal : Initialize native MetaTrader5 API or the simulated one from the StrategyTester instance</span>
 
-<span class="sd">    Notes</span>
-<span class="sd">    -----</span>
-<span class="sd">    - If no order is selected, properties return `None` or `&quot;N/A&quot;`.</span>
-<span class="sd">    - `time_setup`, `time_done`, and `time_expiration` are returned as timezone-aware</span>
-<span class="sd">    UTC datetimes where possible.</span>
-<span class="sd">    - This wrapper does not modify terminal state; it only reads history order data.</span>
+<span class="sd">    Notes:</span>
+<span class="sd">        - If no order is selected, properties return `None` or `&quot;N/A&quot;`.</span>
+<span class="sd">        - `time_setup`, `time_done`, and `time_expiration` are returned as timezone-aware</span>
+<span class="sd">        UTC datetimes where possible.</span>
+<span class="sd">        - This wrapper does not modify terminal state; it only reads history order data.</span>
 
-<span class="sd">    Method groups mirror the MQL5 layout:</span>
-<span class="sd">    - Integer properties: TimeSetup, OrderType, State, TypeFilling, TypeTime, Magic, etc.</span>
-<span class="sd">    - Double properties: VolumeInitial, VolumeCurrent, PriceOpen, StopLoss, TakeProfit, etc.</span>
-<span class="sd">    - String properties: Symbol, Comment, ExternalId</span>
-<span class="sd">    - Generic accessors: InfoInteger, InfoDouble, InfoString</span>
-<span class="sd">    - Selection helpers: Ticket, SelectByIndex</span>
+<span class="sd">        Method groups mirror the MQL5 layout:&lt;br&gt;</span>
+
+<span class="sd">        - Integer properties: TimeSetup, OrderType, State, TypeFilling, TypeTime, Magic, etc.</span>
+<span class="sd">        - Double properties: VolumeInitial, VolumeCurrent, PriceOpen, StopLoss, TakeProfit, etc.</span>
+<span class="sd">        - String properties: Symbol, Comment, ExternalId</span>
+<span class="sd">        - Generic accessors: InfoInteger, InfoDouble, InfoString</span>
+<span class="sd">        - Selection helpers: Ticket, SelectByIndex</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">terminal</span><span class="p">)</span>
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
