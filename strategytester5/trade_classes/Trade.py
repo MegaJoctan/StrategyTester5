@@ -88,6 +88,11 @@ class CTrade:
             self.logger.error(message)
         else:
             print(f"ERROR: {message}")
+
+    def _error_code_log(self, ret_code: int):
+        ret_code_description = self.terminal.RETCODE_MAP.get(ret_code, f"Unknown")
+        error_message = f"Trade operation failed with retcode {ret_code}: {ret_code_description}"
+        return self._error_log(error_message)
     
     def _warning_log(self, message: str):
         if self.logger:
@@ -153,6 +158,7 @@ class CTrade:
 
         result = self.terminal.order_send(request)
         if result.retcode != self.terminal.TRADE_RETCODE_DONE:
+            self._error_code_log(result.retcode)
             return False
         
         self._info_log(f"Position #{result.deal} Opened successfully!")
@@ -215,6 +221,7 @@ class CTrade:
         # Send order
         result = self.terminal.order_send(request)
         if result.retcode != self.terminal.TRADE_RETCODE_DONE:
+            self._error_code_log(result.retcode)
             return False
 
         # self._info_log(f"Order opened successfully!")
@@ -549,6 +556,7 @@ class CTrade:
 
         result = self.terminal.order_send(request=request)
         if result.retcode != self.terminal.TRADE_RETCODE_DONE:
+            self._error_code_log(result.retcode)
             return False
 
         # self._info_log(f"Order {ticket} modified successfully!")

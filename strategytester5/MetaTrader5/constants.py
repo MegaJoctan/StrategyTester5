@@ -394,6 +394,16 @@ class MetaTrader5Constants:
         TRADE_RETCODE_ONLY_REAL: "Operation is allowed only for live accounts",
         TRADE_RETCODE_LIMIT_ORDERS: "The number of pending orders has reached the limit",
         TRADE_RETCODE_LIMIT_VOLUME: "The volume of orders and positions for the symbol has reached the limit",
+        TRADE_RETCODE_INVALID_ORDER: "Invalid order",
+        TRADE_RETCODE_POSITION_CLOSED: "Position is closed",
+        TRADE_RETCODE_INVALID_CLOSE_VOLUME: "Invalid close volume",
+        TRADE_RETCODE_CLOSE_ORDER_EXIST: "A close order already exists",
+        TRADE_RETCODE_LIMIT_POSITIONS: "The number of positions has reached the limit",
+        TRADE_RETCODE_REJECT_CANCEL: "Order cancel request rejected",
+        TRADE_RETCODE_LONG_ONLY: "Symbol supports only long positions",
+        TRADE_RETCODE_SHORT_ONLY: "Symbol supports only short positions",
+        TRADE_RETCODE_CLOSE_ONLY: "Only closing of positions is allowed",
+        TRADE_RETCODE_FIFO_CLOSE: "FIFO close restriction applies",
     }
 
     DEAL_TYPE_MAP = {
