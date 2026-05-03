@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from .. import TradeOrder
+from ..MetaTrader5 import TradeOrder
+from .OrderInfo import COrderInfo
 
 class CHistoryOrderInfo(COrderInfo):
     """

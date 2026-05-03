@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from typing import Any, Optional, Union
-from . import StrategyTester
-from .. import MetaTrader5
 
 class CTerminalInfo:
     """
@@ -17,7 +15,7 @@ class CTerminalInfo:
         [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cterminalinfo)
     """
 
-    def __init__(self, terminal: Union[StrategyTester|MetaTrader5]):
+    def __init__(self, terminal: Any):
         
         """
         Instantiates the TerminalInfo object.
@@ -37,9 +35,6 @@ class CTerminalInfo:
         """
 
         self.terminal = terminal
-        if isinstance(terminal, StrategyTester):
-            self.terminal = terminal.mt5_instance
-
         self._info = self.terminal.terminal_info()
 
         if self._info is None:

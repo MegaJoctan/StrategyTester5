@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any, Optional, Union
-from .. import TradePosition
+from ..MetaTrader5 import TradePosition
 
 class CPositionInfo:
     """

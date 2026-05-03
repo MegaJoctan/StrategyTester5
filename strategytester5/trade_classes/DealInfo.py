@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Optional, Union
 from ..MetaTrader5.constants import MetaTrader5Constants as mt5_constants
-from .. import TradeDeal
+from ..MetaTrader5 import TradeDeal
 
 class CDealInfo:
     """

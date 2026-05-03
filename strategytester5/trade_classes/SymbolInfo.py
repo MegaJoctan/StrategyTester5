@@ -3,9 +3,6 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Optional, Union
 
-from . import StrategyTester
-from .. import MetaTrader5
-
 
 class CSymbolInfo:
     """
@@ -20,10 +17,10 @@ class CSymbolInfo:
         [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/csymbolinfo)
     """
 
-    def __init__(self, symbol: str, terminal: Union[StrategyTester|MetaTrader5]):
-        
+    def __init__(self, symbol: str, terminal: Any):
+
         """
-        Instantiates the CSymbolInfo class (object)..
+        Instantiates the CSymbolInfo class (object).
 
         Args:
             terminal : MetaTrader5 module-like or the StrategyTester instance.
@@ -34,7 +31,8 @@ class CSymbolInfo:
             - If tick data is not refreshed yet, tick-related properties return their default cached values.
             - Time values are returned as timezone-aware UTC datetimes where applicable.
 
-            Method groups mirror the MQL5 layout:
+            Method groups mirror the MQL5 layout:<br>
+
             - Controlling: Refresh, RefreshRates
             - Properties: Name, Select, IsSynchronized
             - Volumes: Volume, VolumeHigh, VolumeLow
@@ -51,11 +49,8 @@ class CSymbolInfo:
             - Generic accessors: InfoInteger, InfoDouble, InfoString
             - Service functions: NormalizePrice
         """
-        
-        self.terminal = terminal
-        if isinstance(terminal, StrategyTester):
-            self.terminal = terminal.mt5_instance
 
+        self.terminal = terminal
         self._symbol: str = symbol
         self._info: Optional[Any] = None
 
@@ -67,8 +62,8 @@ class CSymbolInfo:
             "volume": 0,
             "time_msc": 0,
             "volume_real": 0.0,
-        }   
-        
+        }
+
         self.check_market_watch()
         self.refresh()
 
@@ -136,15 +131,15 @@ class CSymbolInfo:
 
     def check_market_watch(self) -> bool:
         """Checks if the symbol is selected in Market Watch and adds it to the Market Watch if necessary."""
-        
+
         if not self.select():
             raise ValueError(f"Failed to select a symbol {self._symbol}")
-        
+
         if not self.select(True):
             raise ValueError(f"Failed to add a symbol {self._symbol} in Market Watch")
-        
+
         return True
-    
+
     @property
     def is_synchronized(self) -> bool:
         """Checks the symbol synchronization with server."""
@@ -275,7 +270,7 @@ class CSymbolInfo:
     @property
     def trade_calc_mode_description(self) -> str:
         """A description of contract price calculation modes."""
-        
+
         calc_mode_map = {
             self.terminal.SYMBOL_CALC_MODE_FOREX: "Calculation of profit and margin for Forex",
             self.terminal.SYMBOL_CALC_MODE_FUTURES: "Calculation of margin and profit for futures",
@@ -317,7 +312,7 @@ class CSymbolInfo:
     @property
     def trade_execution_description(self) -> str:
         """A description of possible deal execution modes for a given symbol."""
-        
+
         exec_mode_map = {
             self.terminal.SYMBOL_TRADE_EXECUTION_REQUEST: "Execution by request",
             self.terminal.SYMBOL_TRADE_EXECUTION_INSTANT: "Instant execution",
@@ -341,7 +336,7 @@ class CSymbolInfo:
     @property
     def swap_mode_description(self) -> str:
         """A description of methods of swap calculation at position transfer."""
-        
+
         swap_mode_map = {
             self.terminal.SYMBOL_SWAP_MODE_DISABLED: "No swaps",
             self.terminal.SYMBOL_SWAP_MODE_POINTS: "Swaps are calculated in points",
@@ -363,7 +358,7 @@ class CSymbolInfo:
     @property
     def swap_rollover_3days_description(self) -> str:
         """A description (string) of the day of week to charge 3-day swap rollover"""
-        
+
         swap_rollover_map = {
             0: "Sunday",
             1: "Monday",
@@ -400,7 +395,7 @@ class CSymbolInfo:
 
     @property
     def margin_initial(self) -> float:
-        """        
+        """
             Initial margin means the amount in the margin currency required for opening a position with the volume of one lot. It is used for checking a client's assets when he or she enters the market.
 
             The SymbolInfoMarginRate() function provides data on the amount of charged margin depending on the order type and direction.
@@ -418,9 +413,9 @@ class CSymbolInfo:
 
     @property
     def margin_hedged(self) -> float:
-        
+
         """
-            Contract size or margin value per one lot of hedged positions (oppositely directed positions of one symbol). Two margin calculation methods are possible for hedged positions. The calculation method is defined by the broker.         
+            Contract size or margin value per one lot of hedged positions (oppositely directed positions of one symbol). Two margin calculation methods are possible for hedged positions. The calculation method is defined by the broker.
 
             Basic calculation:
                 - If the initial margin (margin_initial) is specified for a symbol, the hedged margin is specified as an absolute value (in monetary terms).
@@ -433,18 +428,18 @@ class CSymbolInfo:
                 - Next, using the appropriate formula chosen in accordance with the symbol type (trade_calc_mode) the margin is calculated for the short and the long part.
                 - The largest one of the values is used as the margin.
         """
-        
+
         return float(self._info.margin_hedged) if self._info else 0.0
 
     @property
     def margin_hedged_use_leg(self) -> bool:
         """
             Boolean flag to enable (true) or disable (false) the hedged margin calculation mode for the largest of the overlapped positions (buy and sell
-            positions of the same symbol). 
-            
+            positions of the same symbol).
+
             If the flag is enabled, the margin for the largest position is calculated using the SYMBOL_MARGIN_HEDGED value. If the flag is disabled, the margin for the largest position is calculated using the SYMBOL_MARGIN_INITIAL value.
         """
-        
+
         return bool(self._info.margin_hedged_use_leg) if self._info else False
 
     # -------------------------
@@ -518,7 +513,7 @@ class CSymbolInfo:
         """
             Maximum allowed aggregate volume of an open position and pending orders in one direction (buy or sell) for the symbol. For example, with the limitation of 5 lots, you can have an open buy position with the volume of 5 lots and place a pending order Sell Limit with the volume of 5 lots. But in this case you cannot place a Buy Limit pending order (since the total volume in one direction will exceed the limitation) or place Sell Limit with the volume more than 5 lots.
         """
-        
+
         return float(self._info.volume_limit) if self._info else 0.0
 
     # -------------- Currency / text properties ------------
@@ -557,10 +552,10 @@ class CSymbolInfo:
     def page(self) -> str:
         """
         The address of the web page containing symbol information.
-        
+
         This address will be displayed as a link when viewing symbol properties in the terminal
         """
-        
+
         return str(self._info.page) if self._info else ""
 
     # -------------------------
@@ -662,7 +657,7 @@ class CSymbolInfo:
         if self._info is None or not hasattr(self._info, prop_name):
             return None
         value = getattr(self._info, prop_name)
-        
+
         return None if value is None else float(value)
 
     def info_string(self, prop_name: str) -> Optional[str]:

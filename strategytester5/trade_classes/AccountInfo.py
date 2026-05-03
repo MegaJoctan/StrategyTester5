@@ -16,7 +16,7 @@ class CAccountInfo:
         [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/caccountinfo)
     """
 
-    def __init__(self, ac_info: namedtuple()):
+    def __init__(self, ac_info: namedtuple):
         
         """
         Instatiates the CAccountInfo object
