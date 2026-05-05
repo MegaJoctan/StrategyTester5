@@ -14,6 +14,7 @@ from strategytester5.MetaTrader5.constants import MetaTrader5Constants
 # import MetaTrader5 as mt5
 import polars as pl
 import numpy as np
+import pandas as pd
 from datetime import datetime, timedelta
 import json
 from strategytester5 import config
@@ -135,6 +136,8 @@ class HistoryManager:
             year (int) : A year which a specified `month` belongs
         """
 
+        tf_str = MetaTrader5Constants.TIMEFRAME2STRING_MAP[timeframe]
+
         if self.mt5_instance is None:
             log = ("Cannot synchronize Bars from MetaTrader5, due to an invalid MetaTrader5 instance.\n"
                    "If the default MetaTrader5 wasn't installed initially, run `pip install strategytester5[mt5]`")
@@ -151,23 +154,29 @@ class HistoryManager:
             self._error_log(err)
             return None
 
-        self._info_log(f"Fetching bars from MetaTrader5 from {symbol} for: {year:04d}-{month:02d}")
+        self._info_log(f"Fetching bars from MetaTrader5 on: {tf_str} from {symbol} for: {year:04d}-{month:02d}")
 
         # with self._mt5_lock:
         rates = self.mt5_instance.copy_rates_range(symbol, timeframe, start, end)
         if rates is None or len(rates) == 0:
-            warn = f"No bars were received from MetaTrader5 from {symbol} for: {year:04d}-{month:02d}"
+            warn = f"No bars were received from MetaTrader5 on: {tf_str} from {symbol} for: {year:04d}-{month:02d} : start = {start}, end = {end}"
             self._warning_log(warn)
             return None
 
         # rates dataframe
-        df = pl.DataFrame(rates)
 
-        file = self.bars_file_path(symbol=symbol, timeframe_str=MetaTrader5Constants.TIMEFRAME2STRING_MAP[timeframe],
+        pd_df = pd.DataFrame(rates)
+        df = pl.DataFrame(pd_df)
+        # df = pl.DataFrame(rates)
+
+        file = self.bars_file_path(symbol=symbol, timeframe_str=tf_str,
                                    year=year, month=month,
                                    broker_data_dir=self.broker_data_dir)
+
         file.parent.mkdir(parents=True, exist_ok=True)
         df.write_parquet(file)
+
+        self._info_log(f"---> {tf_str} Synchronized!")
 
         return df
 
@@ -887,7 +896,7 @@ class HistoryManager:
             lazy_frames.append(lf)
 
         if not lazy_frames:
-            err = "No bars data found"
+            err = f"No bars data found on: {tf_str} timeframe"
             self.logger.critical(err)
             raise RuntimeError(err)
 
