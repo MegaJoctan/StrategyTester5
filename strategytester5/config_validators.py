@@ -4,6 +4,7 @@ from typing import Dict
 from strategytester5.MetaTrader5.api import OverLoadedMetaTrader5API
 from . import config
 from datetime import datetime
+from dateutil import parser
 
 
 class TesterConfigValidators:
@@ -64,6 +65,13 @@ class TesterConfigValidators:
         raise RuntimeError(f"Invalid modelling type: {type(value)}")
 
     @staticmethod
+    def parse_date(date_str: str) -> datetime:
+        try:
+            return parser.parse(date_str, dayfirst=True)
+        except Exception:
+            raise RuntimeError(f"Invalid date format: '{date_str}'")
+
+    @staticmethod
     def parse_tester_configs(raw_config: Dict) -> Dict:
 
         """ Validates and normalizes raw tester configuration dictionary. """
@@ -93,15 +101,9 @@ class TesterConfigValidators:
         cfg["modelling"] = TesterConfigValidators._parse_modelling(raw_config["modelling"])
 
         # --- DATE PARSING ---
-        try:
-            start_date = datetime.strptime(
-                raw_config["start_date"], "%d.%m.%Y %H:%M"
-            )
-            end_date = datetime.strptime(
-                raw_config["end_date"], "%d.%m.%Y %H:%M"
-            )
-        except ValueError:
-            raise RuntimeError("Date format must be: DD.MM.YYYY HH:MM")
+
+        start_date = TesterConfigValidators.parse_date(raw_config["start_date"])
+        end_date = TesterConfigValidators.parse_date(raw_config["end_date"])
 
         if start_date >= end_date:
             raise RuntimeError("start_date must be earlier than end_date")
