@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "strategytester5"
-version = "2.0.7"
+version = "2.0.8"
 description = "A Python-based MetaTrader strategy tester for the MetaTrader5 module"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -25,6 +25,7 @@ dependencies = [
   "plotly",
   "kaleido",
   "nbformat",
+  "python-dateutil",
   "metatrader5"
 ]
 
