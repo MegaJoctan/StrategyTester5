@@ -19,7 +19,7 @@ class CTrade:
     def __init__(
             self,
             magic_number: int,
-            filling_type_symbol: str,
+            symbol: str,
             deviation_points: int,
             terminal: Union[OverLoadedMetaTrader5API|MetaTrader5],
             logger: logging.Logger | None = None
@@ -30,13 +30,14 @@ class CTrade:
         Args:
             terminal : MetaTrader5 module-like or the overloaded/simulated MetaTrader5 instance
             magic_number : Expert Advisor identifier used to tag and track orders and positions created by this trade object.
-            filling_type_symbol : Symbol name used to determine the appropriate order filling policy through the internal `_get_type_filling()` helper.
+            symbol : Trading symbol e.g., EURUSD, USDJPY.
             deviation_points : Maximum allowed price deviation, in points, when executing market orders.
             logger : Logger instance used for diagnostic and error messages. If None, logging output is handled only by the class' internal logic.
 
         Notes:
             - The constructor resolves and stores the filling type for the provided
               symbol at initialization time.
+            - Symbol name used to determine the appropriate order filling policy through the internal `_get_type_filling()` helper.
             - If the filling type cannot be resolved, initialization logs a critical
               error and returns early.
             - This class is intended to act similarly to MQL5's `CTrade`, where trade
@@ -50,7 +51,8 @@ class CTrade:
 
         self.magic_number = magic_number
         self.deviation_points = deviation_points
-        self.filling_type = self._get_type_filling(filling_type_symbol)
+        self.symbol = symbol
+        self.filling_type = self._get_type_filling(self.symbol)
         
         if self.filling_type == -1:
             self._critical_log("Failed to initialize the class, Invalid filling type. Check your symbol")
@@ -58,25 +60,25 @@ class CTrade:
     
     def _critical_log(self, message: str):
         if self.logger:
-            self.logger.critical(message)
+            self.logger.critical(message, stacklevel=3)
         else:
             print(f"CRITICAL: {message}")
             
     def _info_log(self, message: str):
         if self.logger:
-            self.logger.info(message)
+            self.logger.info(message, stacklevel=3)
         else:
             print(f"INFO: {message}")
     
     def _error_log(self, message: str):
         if self.logger:
-            self.logger.error(message)
+            self.logger.error(message, stacklevel=3)
         else:
             print(f"ERROR: {message}")
     
     def _warning_log(self, message: str):
         if self.logger:
-            self.logger.warning(message)
+            self.logger.warning(message, stacklevel=3)
         else:
             print(f"WARNING: {message}")
     
@@ -95,7 +97,7 @@ class CTrade:
         
         return filling_map.get(symbol_info.filling_mode, f"Unknown Filling type")
     
-    def position_open(self, symbol: str, volume: float, order_type: int, price: float, sl: float=0.0, tp: float=0.0, comment: str="") -> bool:
+    def position_open(self, volume: float, order_type: int, price: float, sl: float=0.0, tp: float=0.0, comment: str="") -> bool:
         
         """
         Open a market position (instant execution).
@@ -104,7 +106,6 @@ class CTrade:
         position opening, not pending orders.
         
         Args:
-            symbol: Trading symbol (e.g., "EURUSD", "GBPUSD")
             volume: Trade volume in lots (e.g., 0.1 for micro lot)
             order_type: Trade direction (either ORDER_TYPE_BUY or ORDER_TYPE_SELL)
             price: Execution price. For market orders, this should be the current:
@@ -120,7 +121,7 @@ class CTrade:
         
         request = {
             "action": self.terminal.TRADE_ACTION_DEAL,
-            "symbol": symbol,
+            "symbol": self.symbol,
             "volume": volume,
             "type": order_type,
             "price": price,
@@ -144,13 +145,12 @@ class CTrade:
         return True
     
     
-    def order_open(self, symbol: str, volume: float, order_type: int, price: float, sl: float = 0.0, tp: float = 0.0, type_time: int = 0, expiration: datetime = None, comment: str = "") -> bool:
+    def order_open(self, volume: float, order_type: int, price: float, sl: float = 0.0, tp: float = 0.0, type_time: int = 0, expiration: datetime = None, comment: str = "") -> bool:
         
         """
         Opens a pending order with full control over order parameters.
         
         Args:
-            symbol: Trading symbol (e.g., "EURUSD")
             volume: Order volume in lots
             order_type: Order type (ORDER_TYPE_BUY_LIMIT, ORDER_TYPE_SELL_STOP, etc.)
             price: Activation price for pending order
@@ -175,7 +175,7 @@ class CTrade:
         
         request = {
             "action": self.terminal.TRADE_ACTION_PENDING,
-            "symbol": symbol,
+            "symbol": self.symbol,
             "volume": volume,
             "type": order_type,
             "price": price,
@@ -206,14 +206,13 @@ class CTrade:
         return True
     
     
-    def buy(self, volume: float, symbol: str, price: float, sl: float=0.0, tp: float=0.0, comment: str="") -> bool:
+    def buy(self, volume: float, price: float, sl: float=0.0, tp: float=0.0, comment: str="") -> bool:
         
         """
         Opens a buy (market) position.
         
         Args:
             volume: Trade volume (lot size)
-            symbol: Trading symbol (e.g., "EURUSD")
             price: Execution price
             sl: Stop loss price (optional, default=0.0)
             tp: Take profit price (optional, default=0.0)
@@ -223,16 +222,15 @@ class CTrade:
             bool: True if order was sent successfully, False otherwise
         """
     
-        return self.position_open(symbol=symbol, volume=volume, order_type=self.terminal.ORDER_TYPE_BUY, price=price, sl=sl, tp=tp, comment=comment)
+        return self.position_open(volume=volume, order_type=self.terminal.ORDER_TYPE_BUY, price=price, sl=sl, tp=tp, comment=comment)
 
-    def sell(self, volume: float, symbol: str, price: float, sl: float=0.0, tp: float=0.0, comment: str="") -> bool:
+    def sell(self, volume: float, price: float, sl: float=0.0, tp: float=0.0, comment: str="") -> bool:
         
         """
         Opens a sell (market) position.
         
         Args:
             volume: Trade volume (lot size)
-            symbol: Trading symbol (e.g., "EURUSD")
             price: Execution price
             sl: Stop loss price (optional, default=0.0)
             tp: Take profit price (optional, default=0.0)
@@ -242,9 +240,9 @@ class CTrade:
             bool: True if order was sent successfully, False otherwise
         """
         
-        return self.position_open(symbol=symbol, volume=volume, order_type=self.terminal.ORDER_TYPE_SELL, price=price, sl=sl, tp=tp, comment=comment)
+        return self.position_open(volume=volume, order_type=self.terminal.ORDER_TYPE_SELL, price=price, sl=sl, tp=tp, comment=comment)
     
-    def buy_limit(self, volume: float, price: float, symbol: str, sl: float=0.0, tp: float=0.0, type_time: int=0, expiration: datetime=None, comment: str="") -> bool:
+    def buy_limit(self, volume: float, price: float, sl: float=0.0, tp: float=0.0, type_time: int=0, expiration: datetime=None, comment: str="") -> bool:
         
         """
         Places a buy limit pending order.
@@ -252,7 +250,6 @@ class CTrade:
         Args:
             volume: Trade volume (lot size)
             price: Execution price
-            symbol: Trading symbol (e.g., "EURUSD")
             sl: Stop loss price (optional, default=0.0)
             tp: Take profit price (optional, default=0.0)
             type_time: Order expiration type (default: ORDER_TIME_GTC). Possible values:
@@ -267,9 +264,9 @@ class CTrade:
             bool: True if order was placed successfully, False otherwise
         """
         
-        return self.order_open(symbol=symbol, volume=volume, order_type=self.terminal.ORDER_TYPE_BUY_LIMIT, price=price, sl=sl, tp=tp, type_time=type_time, expiration=expiration, comment=comment)
+        return self.order_open(volume=volume, order_type=self.terminal.ORDER_TYPE_BUY_LIMIT, price=price, sl=sl, tp=tp, type_time=type_time, expiration=expiration, comment=comment)
         
-    def sell_limit(self, volume: float, price: float, symbol: str, sl: float=0.0, tp: float=0.0, type_time: int=0, expiration: datetime=None, comment: str="") -> bool:
+    def sell_limit(self, volume: float, price: float, sl: float=0.0, tp: float=0.0, type_time: int=0, expiration: datetime=None, comment: str="") -> bool:
             
         """
         Places a sell limit pending order.
@@ -277,7 +274,6 @@ class CTrade:
         Args:
             volume: Trade volume (lot size)
             price: Execution price
-            symbol: Trading symbol (e.g., "EURUSD")
             sl: Stop loss price (optional, default=0.0)
             tp: Take profit price (optional, default=0.0)
             type_time: Order expiration type (default: ORDER_TIME_GTC). Possible values:
@@ -292,9 +288,9 @@ class CTrade:
             bool: True if order was placed successfully, False otherwise
         """
 
-        return self.order_open(symbol=symbol, volume=volume, order_type=self.terminal.ORDER_TYPE_SELL_LIMIT, price=price, sl=sl, tp=tp, type_time=type_time, expiration=expiration, comment=comment)
+        return self.order_open(volume=volume, order_type=self.terminal.ORDER_TYPE_SELL_LIMIT, price=price, sl=sl, tp=tp, type_time=type_time, expiration=expiration, comment=comment)
         
-    def buy_stop(self, volume: float, price: float, symbol: str, sl: float=0.0, tp: float=0.0, type_time: int=0, expiration: datetime=None, comment: str="") -> bool:
+    def buy_stop(self, volume: float, price: float, sl: float=0.0, tp: float=0.0, type_time: int=0, expiration: datetime=None, comment: str="") -> bool:
 
         """
         Places a buy stop pending order.
@@ -302,7 +298,6 @@ class CTrade:
         Args:
             volume: Trade volume (lot size)
             price: Execution price
-            symbol: Trading symbol (e.g., "EURUSD")
             sl: Stop loss price (optional, default=0.0)
             tp: Take profit price (optional, default=0.0)
             type_time: Order expiration type (default: ORDER_TIME_GTC). Possible values:
@@ -317,9 +312,9 @@ class CTrade:
             bool: True if order was placed successfully, False otherwise
         """
         
-        return self.order_open(symbol=symbol, volume=volume, order_type=self.terminal.ORDER_TYPE_BUY_STOP, price=price, sl=sl, tp=tp, type_time=type_time, expiration=expiration, comment=comment)
+        return self.order_open(volume=volume, order_type=self.terminal.ORDER_TYPE_BUY_STOP, price=price, sl=sl, tp=tp, type_time=type_time, expiration=expiration, comment=comment)
         
-    def sell_stop(self, volume: float, price: float, symbol: str, sl: float=0.0, tp: float=0.0, type_time: int=0, expiration: datetime=None, comment: str="") -> bool:
+    def sell_stop(self, volume: float, price: float, sl: float=0.0, tp: float=0.0, type_time: int=0, expiration: datetime=None, comment: str="") -> bool:
         
         """
         Places a sell stop pending order.
@@ -327,7 +322,6 @@ class CTrade:
         Args:
             volume: Trade volume (lot size)
             price: Execution price
-            symbol: Trading symbol (e.g., "EURUSD")
             sl: Stop loss price (optional, default=0.0)
             tp: Take profit price (optional, default=0.0)
             type_time: Order expiration type (default: ORDER_TIME_GTC). Possible values:
@@ -342,7 +336,7 @@ class CTrade:
             bool: True if order was placed successfully, False otherwise
         """
         
-        return self.order_open(symbol=symbol, volume=volume, order_type=self.terminal.ORDER_TYPE_SELL_STOP, price=price, sl=sl, tp=tp, type_time=type_time, expiration=expiration, comment=comment)
+        return self.order_open(volume=volume, order_type=self.terminal.ORDER_TYPE_SELL_STOP, price=price, sl=sl, tp=tp, type_time=type_time, expiration=expiration, comment=comment)
         
     def position_close(self, ticket: int, deviation: float=float("nan")) -> bool:
         
