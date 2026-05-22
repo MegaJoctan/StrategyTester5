@@ -7,10 +7,6 @@ theme:
   custom_dir: docs/overrides
   favicon: images/favicon.png
 
-  analytics:
-    provider: google
-    property: G-N15H4QFWFE
-
   palette:
     - scheme: default
       primary: indigo
@@ -24,6 +20,7 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+
   features:
     - navigation.tabs
     - navigation.top
@@ -82,6 +79,7 @@ plugins:
   - mkdocstrings
   - search
   - meta-descriptions
+
   - privacy:
       enabled: true
       cache: true
@@ -111,6 +109,10 @@ extra:
       link: https://www.youtube.com/@omegafx-co
     - icon: fontawesome/brands/telegram
       link: https://t.me/omegafx_co
+
+  analytics:
+    provider: google
+    property: G-N15H4QFWFE
 
   consent:
     title: Cookie consent
