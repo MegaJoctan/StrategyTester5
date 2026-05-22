@@ -2544,13 +2544,7 @@ the MetaTrader 5 Python API.</p>
 <span class="normal">531</span>
 <span class="normal">532</span>
 <span class="normal">533</span>
-<span class="normal">534</span>
-<span class="normal">535</span>
-<span class="normal">536</span>
-<span class="normal">537</span>
-<span class="normal">538</span>
-<span class="normal">539</span>
-<span class="normal">540</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CTrade</span><span class="p">:</span>
+<span class="normal">534</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CTrade</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This class resembles the MQL5 Standard Library class `CTrade` and provides</span>
 <span class="sd">        a convenient Python interface for sending and managing trade requests through</span>
@@ -2562,7 +2556,7 @@ the MetaTrader 5 Python API.</p>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
             <span class="n">magic_number</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-            <span class="n">filling_type_symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
             <span class="n">deviation_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
             <span class="n">terminal</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">OverLoadedMetaTrader5API</span><span class="o">|</span><span class="n">MetaTrader5</span><span class="p">],</span>
             <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -2573,13 +2567,14 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">        Args:</span>
 <span class="sd">            terminal : MetaTrader5 module-like or the overloaded/simulated MetaTrader5 instance</span>
 <span class="sd">            magic_number : Expert Advisor identifier used to tag and track orders and positions created by this trade object.</span>
-<span class="sd">            filling_type_symbol : Symbol name used to determine the appropriate order filling policy through the internal `_get_type_filling()` helper.</span>
+<span class="sd">            symbol : Trading symbol e.g., EURUSD, USDJPY.</span>
 <span class="sd">            deviation_points : Maximum allowed price deviation, in points, when executing market orders.</span>
 <span class="sd">            logger : Logger instance used for diagnostic and error messages. If None, logging output is handled only by the class&#39; internal logic.</span>
 
 <span class="sd">        Notes:</span>
 <span class="sd">            - The constructor resolves and stores the filling type for the provided</span>
 <span class="sd">              symbol at initialization time.</span>
+<span class="sd">            - Symbol name used to determine the appropriate order filling policy through the internal `_get_type_filling()` helper.</span>
 <span class="sd">            - If the filling type cannot be resolved, initialization logs a critical</span>
 <span class="sd">              error and returns early.</span>
 <span class="sd">            - This class is intended to act similarly to MQL5&#39;s `CTrade`, where trade</span>
@@ -2593,7 +2588,8 @@ the MetaTrader 5 Python API.</p>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">magic_number</span> <span class="o">=</span> <span class="n">magic_number</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">deviation_points</span> <span class="o">=</span> <span class="n">deviation_points</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">filling_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_type_filling</span><span class="p">(</span><span class="n">filling_type_symbol</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">symbol</span> <span class="o">=</span> <span class="n">symbol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filling_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_type_filling</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">symbol</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filling_type</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_critical_log</span><span class="p">(</span><span class="s2">&quot;Failed to initialize the class, Invalid filling type. Check your symbol&quot;</span><span class="p">)</span>
@@ -2601,25 +2597,25 @@ the MetaTrader 5 Python API.</p>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_critical_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CRITICAL: </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_info_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;INFO: </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_error_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ERROR: </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_warning_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;WARNING: </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
@@ -2638,7 +2634,7 @@ the MetaTrader 5 Python API.</p>
 
         <span class="k">return</span> <span class="n">filling_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">symbol_info</span><span class="o">.</span><span class="n">filling_mode</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Unknown Filling type&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">position_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">position_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Open a market position (instant execution).</span>
@@ -2647,7 +2643,6 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">        position opening, not pending orders.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            symbol: Trading symbol (e.g., &quot;EURUSD&quot;, &quot;GBPUSD&quot;)</span>
 <span class="sd">            volume: Trade volume in lots (e.g., 0.1 for micro lot)</span>
 <span class="sd">            order_type: Trade direction (either ORDER_TYPE_BUY or ORDER_TYPE_SELL)</span>
 <span class="sd">            price: Execution price. For market orders, this should be the current:</span>
@@ -2663,7 +2658,7 @@ the MetaTrader 5 Python API.</p>
 
         <span class="n">request</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">TRADE_ACTION_DEAL</span><span class="p">,</span>
-            <span class="s2">&quot;symbol&quot;</span><span class="p">:</span> <span class="n">symbol</span><span class="p">,</span>
+            <span class="s2">&quot;symbol&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">symbol</span><span class="p">,</span>
             <span class="s2">&quot;volume&quot;</span><span class="p">:</span> <span class="n">volume</span><span class="p">,</span>
             <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">order_type</span><span class="p">,</span>
             <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="n">price</span><span class="p">,</span>
@@ -2687,13 +2682,12 @@ the MetaTrader 5 Python API.</p>
         <span class="k">return</span> <span class="kc">True</span>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">order_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">order_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Opens a pending order with full control over order parameters.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            symbol: Trading symbol (e.g., &quot;EURUSD&quot;)</span>
 <span class="sd">            volume: Order volume in lots</span>
 <span class="sd">            order_type: Order type (ORDER_TYPE_BUY_LIMIT, ORDER_TYPE_SELL_STOP, etc.)</span>
 <span class="sd">            price: Activation price for pending order</span>
@@ -2718,7 +2712,7 @@ the MetaTrader 5 Python API.</p>
 
         <span class="n">request</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">TRADE_ACTION_PENDING</span><span class="p">,</span>
-            <span class="s2">&quot;symbol&quot;</span><span class="p">:</span> <span class="n">symbol</span><span class="p">,</span>
+            <span class="s2">&quot;symbol&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">symbol</span><span class="p">,</span>
             <span class="s2">&quot;volume&quot;</span><span class="p">:</span> <span class="n">volume</span><span class="p">,</span>
             <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">order_type</span><span class="p">,</span>
             <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="n">price</span><span class="p">,</span>
@@ -2749,14 +2743,13 @@ the MetaTrader 5 Python API.</p>
         <span class="k">return</span> <span class="kc">True</span>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">buy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">buy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Opens a buy (market) position.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            volume: Trade volume (lot size)</span>
-<span class="sd">            symbol: Trading symbol (e.g., &quot;EURUSD&quot;)</span>
 <span class="sd">            price: Execution price</span>
 <span class="sd">            sl: Stop loss price (optional, default=0.0)</span>
 <span class="sd">            tp: Take profit price (optional, default=0.0)</span>
@@ -2766,16 +2759,15 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">            bool: True if order was sent successfully, False otherwise</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_open</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_BUY</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_open</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_BUY</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">sell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Opens a sell (market) position.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            volume: Trade volume (lot size)</span>
-<span class="sd">            symbol: Trading symbol (e.g., &quot;EURUSD&quot;)</span>
 <span class="sd">            price: Execution price</span>
 <span class="sd">            sl: Stop loss price (optional, default=0.0)</span>
 <span class="sd">            tp: Take profit price (optional, default=0.0)</span>
@@ -2785,9 +2777,9 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">            bool: True if order was sent successfully, False otherwise</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_open</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_SELL</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_open</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_SELL</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">buy_limit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">buy_limit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Places a buy limit pending order.</span>
@@ -2795,7 +2787,6 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">        Args:</span>
 <span class="sd">            volume: Trade volume (lot size)</span>
 <span class="sd">            price: Execution price</span>
-<span class="sd">            symbol: Trading symbol (e.g., &quot;EURUSD&quot;)</span>
 <span class="sd">            sl: Stop loss price (optional, default=0.0)</span>
 <span class="sd">            tp: Take profit price (optional, default=0.0)</span>
 <span class="sd">            type_time: Order expiration type (default: ORDER_TIME_GTC). Possible values:</span>
@@ -2810,9 +2801,9 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">            bool: True if order was placed successfully, False otherwise</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_open</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_BUY_LIMIT</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="n">type_time</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_open</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_BUY_LIMIT</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="n">type_time</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">sell_limit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sell_limit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Places a sell limit pending order.</span>
@@ -2820,7 +2811,6 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">        Args:</span>
 <span class="sd">            volume: Trade volume (lot size)</span>
 <span class="sd">            price: Execution price</span>
-<span class="sd">            symbol: Trading symbol (e.g., &quot;EURUSD&quot;)</span>
 <span class="sd">            sl: Stop loss price (optional, default=0.0)</span>
 <span class="sd">            tp: Take profit price (optional, default=0.0)</span>
 <span class="sd">            type_time: Order expiration type (default: ORDER_TIME_GTC). Possible values:</span>
@@ -2835,9 +2825,9 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">            bool: True if order was placed successfully, False otherwise</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_open</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_SELL_LIMIT</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="n">type_time</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_open</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_SELL_LIMIT</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="n">type_time</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">buy_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">buy_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Places a buy stop pending order.</span>
@@ -2845,7 +2835,6 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">        Args:</span>
 <span class="sd">            volume: Trade volume (lot size)</span>
 <span class="sd">            price: Execution price</span>
-<span class="sd">            symbol: Trading symbol (e.g., &quot;EURUSD&quot;)</span>
 <span class="sd">            sl: Stop loss price (optional, default=0.0)</span>
 <span class="sd">            tp: Take profit price (optional, default=0.0)</span>
 <span class="sd">            type_time: Order expiration type (default: ORDER_TIME_GTC). Possible values:</span>
@@ -2860,9 +2849,9 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">            bool: True if order was placed successfully, False otherwise</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_open</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_BUY_STOP</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="n">type_time</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_open</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_BUY_STOP</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="n">type_time</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">sell_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sell_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Places a sell stop pending order.</span>
@@ -2870,7 +2859,6 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">        Args:</span>
 <span class="sd">            volume: Trade volume (lot size)</span>
 <span class="sd">            price: Execution price</span>
-<span class="sd">            symbol: Trading symbol (e.g., &quot;EURUSD&quot;)</span>
 <span class="sd">            sl: Stop loss price (optional, default=0.0)</span>
 <span class="sd">            tp: Take profit price (optional, default=0.0)</span>
 <span class="sd">            type_time: Order expiration type (default: ORDER_TIME_GTC). Possible values:</span>
@@ -2885,7 +2873,7 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">            bool: True if order was placed successfully, False otherwise</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_open</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_SELL_STOP</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="n">type_time</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_open</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_SELL_STOP</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="n">type_time</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">position_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ticket</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">deviation</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
@@ -3101,7 +3089,7 @@ the MetaTrader 5 Python API.</p>
 
 
 <h3 id="strategytester5.trade_classes.Trade.CTrade.__init__" class="doc doc-heading">
-            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">magic_number</span><span class="p">,</span> <span class="n">filling_type_symbol</span><span class="p">,</span> <span class="n">deviation_points</span><span class="p">,</span> <span class="n">terminal</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">magic_number</span><span class="p">,</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">deviation_points</span><span class="p">,</span> <span class="n">terminal</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
@@ -3154,13 +3142,13 @@ the MetaTrader 5 Python API.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>filling_type_symbol </code>
+                <code>symbol </code>
             </td>
             <td>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Symbol name used to determine the appropriate order filling policy through the internal <code>_get_type_filling()</code> helper.</p>
+                <p>Trading symbol e.g., EURUSD, USDJPY.</p>
               </div>
             </td>
             <td>
@@ -3206,6 +3194,7 @@ the MetaTrader 5 Python API.</p>
   <ul>
 <li>The constructor resolves and stores the filling type for the provided
   symbol at initialization time.</li>
+<li>Symbol name used to determine the appropriate order filling policy through the internal <code>_get_type_filling()</code> helper.</li>
 <li>If the filling type cannot be resolved, initialization logs a critical
   error and returns early.</li>
 <li>This class is intended to act similarly to MQL5's <code>CTrade</code>, where trade
@@ -3254,10 +3243,12 @@ the MetaTrader 5 Python API.</p>
 <span class="normal">54</span>
 <span class="normal">55</span>
 <span class="normal">56</span>
-<span class="normal">57</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">magic_number</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">filling_type_symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">deviation_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">terminal</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">OverLoadedMetaTrader5API</span><span class="o">|</span><span class="n">MetaTrader5</span><span class="p">],</span>
         <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -3268,13 +3259,14 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">    Args:</span>
 <span class="sd">        terminal : MetaTrader5 module-like or the overloaded/simulated MetaTrader5 instance</span>
 <span class="sd">        magic_number : Expert Advisor identifier used to tag and track orders and positions created by this trade object.</span>
-<span class="sd">        filling_type_symbol : Symbol name used to determine the appropriate order filling policy through the internal `_get_type_filling()` helper.</span>
+<span class="sd">        symbol : Trading symbol e.g., EURUSD, USDJPY.</span>
 <span class="sd">        deviation_points : Maximum allowed price deviation, in points, when executing market orders.</span>
 <span class="sd">        logger : Logger instance used for diagnostic and error messages. If None, logging output is handled only by the class&#39; internal logic.</span>
 
 <span class="sd">    Notes:</span>
 <span class="sd">        - The constructor resolves and stores the filling type for the provided</span>
 <span class="sd">          symbol at initialization time.</span>
+<span class="sd">        - Symbol name used to determine the appropriate order filling policy through the internal `_get_type_filling()` helper.</span>
 <span class="sd">        - If the filling type cannot be resolved, initialization logs a critical</span>
 <span class="sd">          error and returns early.</span>
 <span class="sd">        - This class is intended to act similarly to MQL5&#39;s `CTrade`, where trade</span>
@@ -3288,7 +3280,8 @@ the MetaTrader 5 Python API.</p>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">magic_number</span> <span class="o">=</span> <span class="n">magic_number</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">deviation_points</span> <span class="o">=</span> <span class="n">deviation_points</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">filling_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_type_filling</span><span class="p">(</span><span class="n">filling_type_symbol</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">symbol</span> <span class="o">=</span> <span class="n">symbol</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">filling_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_type_filling</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">symbol</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filling_type</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_critical_log</span><span class="p">(</span><span class="s2">&quot;Failed to initialize the class, Invalid filling type. Check your symbol&quot;</span><span class="p">)</span>
@@ -3303,7 +3296,7 @@ the MetaTrader 5 Python API.</p>
 
 
 <h3 id="strategytester5.trade_classes.Trade.CTrade.buy" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">buy</span><span class="p">(</span><span class="n">volume</span><span class="p">,</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">buy</span><span class="p">(</span><span class="n">volume</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
 
 </h3>
 
@@ -3334,22 +3327,6 @@ the MetaTrader 5 Python API.</p>
             <td>
               <div class="doc-md-description">
                 <p>Trade volume (lot size)</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>symbol</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Trading symbol (e.g., "EURUSD")</p>
               </div>
             </td>
             <td>
@@ -3465,15 +3442,13 @@ the MetaTrader 5 Python API.</p>
 <span class="normal">222</span>
 <span class="normal">223</span>
 <span class="normal">224</span>
-<span class="normal">225</span>
-<span class="normal">226</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">buy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">225</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">buy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Opens a buy (market) position.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        volume: Trade volume (lot size)</span>
-<span class="sd">        symbol: Trading symbol (e.g., &quot;EURUSD&quot;)</span>
 <span class="sd">        price: Execution price</span>
 <span class="sd">        sl: Stop loss price (optional, default=0.0)</span>
 <span class="sd">        tp: Take profit price (optional, default=0.0)</span>
@@ -3483,7 +3458,7 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">        bool: True if order was sent successfully, False otherwise</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_open</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_BUY</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_open</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_BUY</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3494,7 +3469,7 @@ the MetaTrader 5 Python API.</p>
 
 
 <h3 id="strategytester5.trade_classes.Trade.CTrade.buy_limit" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">buy_limit</span><span class="p">(</span><span class="n">volume</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">buy_limit</span><span class="p">(</span><span class="n">volume</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
 
 </h3>
 
@@ -3549,22 +3524,6 @@ the MetaTrader 5 Python API.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>symbol</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Trading symbol (e.g., "EURUSD")</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
                 <code>sl</code>
             </td>
             <td>
@@ -3676,7 +3635,9 @@ the MetaTrader 5 Python API.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\Trade.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">247</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
 <span class="normal">248</span>
 <span class="normal">249</span>
 <span class="normal">250</span>
@@ -3696,10 +3657,7 @@ the MetaTrader 5 Python API.</p>
 <span class="normal">264</span>
 <span class="normal">265</span>
 <span class="normal">266</span>
-<span class="normal">267</span>
-<span class="normal">268</span>
-<span class="normal">269</span>
-<span class="normal">270</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">buy_limit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">267</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">buy_limit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Places a buy limit pending order.</span>
@@ -3707,7 +3665,6 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">    Args:</span>
 <span class="sd">        volume: Trade volume (lot size)</span>
 <span class="sd">        price: Execution price</span>
-<span class="sd">        symbol: Trading symbol (e.g., &quot;EURUSD&quot;)</span>
 <span class="sd">        sl: Stop loss price (optional, default=0.0)</span>
 <span class="sd">        tp: Take profit price (optional, default=0.0)</span>
 <span class="sd">        type_time: Order expiration type (default: ORDER_TIME_GTC). Possible values:</span>
@@ -3722,7 +3679,7 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">        bool: True if order was placed successfully, False otherwise</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_open</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_BUY_LIMIT</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="n">type_time</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_open</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_BUY_LIMIT</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="n">type_time</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3733,7 +3690,7 @@ the MetaTrader 5 Python API.</p>
 
 
 <h3 id="strategytester5.trade_classes.Trade.CTrade.buy_stop" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">buy_stop</span><span class="p">(</span><span class="n">volume</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">buy_stop</span><span class="p">(</span><span class="n">volume</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
 
 </h3>
 
@@ -3788,22 +3745,6 @@ the MetaTrader 5 Python API.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>symbol</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Trading symbol (e.g., "EURUSD")</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
                 <code>sl</code>
             </td>
             <td>
@@ -3915,7 +3856,11 @@ the MetaTrader 5 Python API.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\Trade.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">297</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
 <span class="normal">298</span>
 <span class="normal">299</span>
 <span class="normal">300</span>
@@ -3933,12 +3878,7 @@ the MetaTrader 5 Python API.</p>
 <span class="normal">312</span>
 <span class="normal">313</span>
 <span class="normal">314</span>
-<span class="normal">315</span>
-<span class="normal">316</span>
-<span class="normal">317</span>
-<span class="normal">318</span>
-<span class="normal">319</span>
-<span class="normal">320</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">buy_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">315</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">buy_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Places a buy stop pending order.</span>
@@ -3946,7 +3886,6 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">    Args:</span>
 <span class="sd">        volume: Trade volume (lot size)</span>
 <span class="sd">        price: Execution price</span>
-<span class="sd">        symbol: Trading symbol (e.g., &quot;EURUSD&quot;)</span>
 <span class="sd">        sl: Stop loss price (optional, default=0.0)</span>
 <span class="sd">        tp: Take profit price (optional, default=0.0)</span>
 <span class="sd">        type_time: Order expiration type (default: ORDER_TIME_GTC). Possible values:</span>
@@ -3961,7 +3900,7 @@ the MetaTrader 5 Python API.</p>
 <span class="sd">        bool: True if order was placed successfully, False otherwise</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_open</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_BUY_STOP</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="n">type_time</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_open</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_BUY_STOP</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="n">type_time</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4038,7 +3977,13 @@ the MetaTrader 5 Python API.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\Trade.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">402</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
 <span class="normal">403</span>
 <span class="normal">404</span>
 <span class="normal">405</span>
@@ -4064,13 +4009,7 @@ the MetaTrader 5 Python API.</p>
 <span class="normal">425</span>
 <span class="normal">426</span>
 <span class="normal">427</span>
-<span class="normal">428</span>
-<span class="normal">429</span>
-<span class="normal">430</span>
-<span class="normal">431</span>
-<span class="normal">432</span>
-<span class="normal">433</span>
-<span class="normal">434</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">order_delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ticket</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">428</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">order_delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ticket</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Deletes a pending order by ticket number.</span>
@@ -4275,7 +4214,13 @@ the MetaTrader 5 Python API.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\Trade.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">479</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span>
+<span class="normal">479</span>
 <span class="normal">480</span>
 <span class="normal">481</span>
 <span class="normal">482</span>
@@ -4330,13 +4275,7 @@ the MetaTrader 5 Python API.</p>
 <span class="normal">531</span>
 <span class="normal">532</span>
 <span class="normal">533</span>
-<span class="normal">534</span>
-<span class="normal">535</span>
-<span class="normal">536</span>
-<span class="normal">537</span>
-<span class="normal">538</span>
-<span class="normal">539</span>
-<span class="normal">540</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">order_modify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ticket</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">stoplimit</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">534</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">order_modify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ticket</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">stoplimit</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Modify parameters of a pending order with full control similar to MQL5&#39;s OrderModify.</span>
@@ -4408,7 +4347,7 @@ the MetaTrader 5 Python API.</p>
 
 
 <h3 id="strategytester5.trade_classes.Trade.CTrade.order_open" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">order_open</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">order_open</span><span class="p">(</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
 
 </h3>
 
@@ -4429,22 +4368,6 @@ the MetaTrader 5 Python API.</p>
         </tr>
       </thead>
       <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>symbol</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Trading symbol (e.g., "EURUSD")</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
           <tr class="doc-section-item">
             <td>
                 <code>volume</code>
@@ -4606,8 +4529,7 @@ the MetaTrader 5 Python API.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\Trade.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">147</span>
-<span class="normal">148</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">148</span>
 <span class="normal">149</span>
 <span class="normal">150</span>
 <span class="normal">151</span>
@@ -4665,13 +4587,12 @@ the MetaTrader 5 Python API.</p>
 <span class="normal">203</span>
 <span class="normal">204</span>
 <span class="normal">205</span>
-<span class="normal">206</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">order_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">206</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">order_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Opens a pending order with full control over order parameters.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        symbol: Trading symbol (e.g., &quot;EURUSD&quot;)</span>
 <span class="sd">        volume: Order volume in lots</span>
 <span class="sd">        order_type: Order type (ORDER_TYPE_BUY_LIMIT, ORDER_TYPE_SELL_STOP, etc.)</span>
 <span class="sd">        price: Activation price for pending order</span>
@@ -4696,7 +4617,7 @@ the MetaTrader 5 Python API.</p>
 
     <span class="n">request</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">TRADE_ACTION_PENDING</span><span class="p">,</span>
-        <span class="s2">&quot;symbol&quot;</span><span class="p">:</span> <span class="n">symbol</span><span class="p">,</span>
+        <span class="s2">&quot;symbol&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">symbol</span><span class="p">,</span>
         <span class="s2">&quot;volume&quot;</span><span class="p">:</span> <span class="n">volume</span><span class="p">,</span>
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">order_type</span><span class="p">,</span>
         <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="n">price</span><span class="p">,</span>
@@ -4817,7 +4738,13 @@ the MetaTrader 5 Python API.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\Trade.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">347</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
 <span class="normal">348</span>
 <span class="normal">349</span>
 <span class="normal">350</span>
@@ -4864,13 +4791,7 @@ the MetaTrader 5 Python API.</p>
 <span class="normal">391</span>
 <span class="normal">392</span>
 <span class="normal">393</span>
-<span class="normal">394</span>
-<span class="normal">395</span>
-<span class="normal">396</span>
-<span class="normal">397</span>
-<span class="normal">398</span>
-<span class="normal">399</span>
-<span class="normal">400</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">position_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ticket</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">deviation</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">394</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">position_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ticket</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">deviation</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Closes an open position by ticket number.</span>
@@ -5032,7 +4953,13 @@ the MetaTrader 5 Python API.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\Trade.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">437</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
 <span class="normal">438</span>
 <span class="normal">439</span>
 <span class="normal">440</span>
@@ -5066,13 +4993,7 @@ the MetaTrader 5 Python API.</p>
 <span class="normal">468</span>
 <span class="normal">469</span>
 <span class="normal">470</span>
-<span class="normal">471</span>
-<span class="normal">472</span>
-<span class="normal">473</span>
-<span class="normal">474</span>
-<span class="normal">475</span>
-<span class="normal">476</span>
-<span class="normal">477</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">position_modify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ticket</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">471</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">position_modify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ticket</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Modifies stop loss and take profit of an open position.</span>
@@ -5123,7 +5044,7 @@ the MetaTrader 5 Python API.</p>
 
 
 <h3 id="strategytester5.trade_classes.Trade.CTrade.position_open" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">position_open</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">position_open</span><span class="p">(</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
 
 </h3>
 
@@ -5146,22 +5067,6 @@ position opening, not pending orders.</p>
         </tr>
       </thead>
       <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>symbol</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Trading symbol (e.g., "EURUSD", "GBPUSD")</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
           <tr class="doc-section-item">
             <td>
                 <code>volume</code>
@@ -5289,9 +5194,7 @@ position opening, not pending orders.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\Trade.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 98</span>
-<span class="normal"> 99</span>
-<span class="normal">100</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">100</span>
 <span class="normal">101</span>
 <span class="normal">102</span>
 <span class="normal">103</span>
@@ -5335,7 +5238,8 @@ position opening, not pending orders.</p>
 <span class="normal">141</span>
 <span class="normal">142</span>
 <span class="normal">143</span>
-<span class="normal">144</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">position_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">144</span>
+<span class="normal">145</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">position_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Open a market position (instant execution).</span>
@@ -5344,7 +5248,6 @@ position opening, not pending orders.</p>
 <span class="sd">    position opening, not pending orders.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        symbol: Trading symbol (e.g., &quot;EURUSD&quot;, &quot;GBPUSD&quot;)</span>
 <span class="sd">        volume: Trade volume in lots (e.g., 0.1 for micro lot)</span>
 <span class="sd">        order_type: Trade direction (either ORDER_TYPE_BUY or ORDER_TYPE_SELL)</span>
 <span class="sd">        price: Execution price. For market orders, this should be the current:</span>
@@ -5360,7 +5263,7 @@ position opening, not pending orders.</p>
 
     <span class="n">request</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">TRADE_ACTION_DEAL</span><span class="p">,</span>
-        <span class="s2">&quot;symbol&quot;</span><span class="p">:</span> <span class="n">symbol</span><span class="p">,</span>
+        <span class="s2">&quot;symbol&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">symbol</span><span class="p">,</span>
         <span class="s2">&quot;volume&quot;</span><span class="p">:</span> <span class="n">volume</span><span class="p">,</span>
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">order_type</span><span class="p">,</span>
         <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="n">price</span><span class="p">,</span>
@@ -5392,7 +5295,7 @@ position opening, not pending orders.</p>
 
 
 <h3 id="strategytester5.trade_classes.Trade.CTrade.sell" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">sell</span><span class="p">(</span><span class="n">volume</span><span class="p">,</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">sell</span><span class="p">(</span><span class="n">volume</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
 
 </h3>
 
@@ -5423,22 +5326,6 @@ position opening, not pending orders.</p>
             <td>
               <div class="doc-md-description">
                 <p>Trade volume (lot size)</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>symbol</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Trading symbol (e.g., "EURUSD")</p>
               </div>
             </td>
             <td>
@@ -5538,7 +5425,8 @@ position opening, not pending orders.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\Trade.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">228</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">227</span>
+<span class="normal">228</span>
 <span class="normal">229</span>
 <span class="normal">230</span>
 <span class="normal">231</span>
@@ -5553,16 +5441,13 @@ position opening, not pending orders.</p>
 <span class="normal">240</span>
 <span class="normal">241</span>
 <span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">sell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">243</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">sell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Opens a sell (market) position.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        volume: Trade volume (lot size)</span>
-<span class="sd">        symbol: Trading symbol (e.g., &quot;EURUSD&quot;)</span>
 <span class="sd">        price: Execution price</span>
 <span class="sd">        sl: Stop loss price (optional, default=0.0)</span>
 <span class="sd">        tp: Take profit price (optional, default=0.0)</span>
@@ -5572,7 +5457,7 @@ position opening, not pending orders.</p>
 <span class="sd">        bool: True if order was sent successfully, False otherwise</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_open</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_SELL</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_open</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_SELL</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -5583,7 +5468,7 @@ position opening, not pending orders.</p>
 
 
 <h3 id="strategytester5.trade_classes.Trade.CTrade.sell_limit" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">sell_limit</span><span class="p">(</span><span class="n">volume</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">sell_limit</span><span class="p">(</span><span class="n">volume</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
 
 </h3>
 
@@ -5630,22 +5515,6 @@ position opening, not pending orders.</p>
             <td>
               <div class="doc-md-description">
                 <p>Execution price</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>symbol</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Trading symbol (e.g., "EURUSD")</p>
               </div>
             </td>
             <td>
@@ -5765,7 +5634,10 @@ position opening, not pending orders.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\Trade.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">272</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
 <span class="normal">273</span>
 <span class="normal">274</span>
 <span class="normal">275</span>
@@ -5784,11 +5656,7 @@ position opening, not pending orders.</p>
 <span class="normal">288</span>
 <span class="normal">289</span>
 <span class="normal">290</span>
-<span class="normal">291</span>
-<span class="normal">292</span>
-<span class="normal">293</span>
-<span class="normal">294</span>
-<span class="normal">295</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">sell_limit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">291</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">sell_limit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Places a sell limit pending order.</span>
@@ -5796,7 +5664,6 @@ position opening, not pending orders.</p>
 <span class="sd">    Args:</span>
 <span class="sd">        volume: Trade volume (lot size)</span>
 <span class="sd">        price: Execution price</span>
-<span class="sd">        symbol: Trading symbol (e.g., &quot;EURUSD&quot;)</span>
 <span class="sd">        sl: Stop loss price (optional, default=0.0)</span>
 <span class="sd">        tp: Take profit price (optional, default=0.0)</span>
 <span class="sd">        type_time: Order expiration type (default: ORDER_TIME_GTC). Possible values:</span>
@@ -5811,7 +5678,7 @@ position opening, not pending orders.</p>
 <span class="sd">        bool: True if order was placed successfully, False otherwise</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_open</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_SELL_LIMIT</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="n">type_time</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_open</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_SELL_LIMIT</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="n">type_time</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -5822,7 +5689,7 @@ position opening, not pending orders.</p>
 
 
 <h3 id="strategytester5.trade_classes.Trade.CTrade.sell_stop" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">sell_stop</span><span class="p">(</span><span class="n">volume</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">sell_stop</span><span class="p">(</span><span class="n">volume</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
 
 </h3>
 
@@ -5869,22 +5736,6 @@ position opening, not pending orders.</p>
             <td>
               <div class="doc-md-description">
                 <p>Execution price</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>symbol</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Trading symbol (e.g., "EURUSD")</p>
               </div>
             </td>
             <td>
@@ -6004,7 +5855,12 @@ position opening, not pending orders.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\Trade.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">322</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
 <span class="normal">323</span>
 <span class="normal">324</span>
 <span class="normal">325</span>
@@ -6021,13 +5877,7 @@ position opening, not pending orders.</p>
 <span class="normal">336</span>
 <span class="normal">337</span>
 <span class="normal">338</span>
-<span class="normal">339</span>
-<span class="normal">340</span>
-<span class="normal">341</span>
-<span class="normal">342</span>
-<span class="normal">343</span>
-<span class="normal">344</span>
-<span class="normal">345</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">sell_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="normal">339</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">sell_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sl</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">type_time</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">expiration</span><span class="p">:</span> <span class="n">datetime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Places a sell stop pending order.</span>
@@ -6035,7 +5885,6 @@ position opening, not pending orders.</p>
 <span class="sd">    Args:</span>
 <span class="sd">        volume: Trade volume (lot size)</span>
 <span class="sd">        price: Execution price</span>
-<span class="sd">        symbol: Trading symbol (e.g., &quot;EURUSD&quot;)</span>
 <span class="sd">        sl: Stop loss price (optional, default=0.0)</span>
 <span class="sd">        tp: Take profit price (optional, default=0.0)</span>
 <span class="sd">        type_time: Order expiration type (default: ORDER_TIME_GTC). Possible values:</span>
@@ -6050,7 +5899,7 @@ position opening, not pending orders.</p>
 <span class="sd">        bool: True if order was placed successfully, False otherwise</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_open</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_SELL_STOP</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="n">type_time</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_open</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">,</span> <span class="n">order_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">terminal</span><span class="o">.</span><span class="n">ORDER_TYPE_SELL_STOP</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">price</span><span class="p">,</span> <span class="n">sl</span><span class="o">=</span><span class="n">sl</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span> <span class="n">type_time</span><span class="o">=</span><span class="n">type_time</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">comment</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
