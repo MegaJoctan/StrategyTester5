@@ -27,6 +27,8 @@ class CTrade:
         """
         Initializes a CTrade wrapper for MetaTrader 5 trade operations.
 
+        Full documentation: https://strategytester5.com/api/trade_classes/trade/
+
         Args:
             terminal : MetaTrader5 module-like or the overloaded/simulated MetaTrader5 instance
             magic_number : Expert Advisor identifier used to tag and track orders and positions created by this trade object.
@@ -104,7 +106,9 @@ class CTrade:
         
         Executes either a buy or sell order at the current market price. This is for immediate
         position opening, not pending orders.
-        
+
+        Full documentation: https://strategytester5.com/api/trade_classes/trade/
+
         Args:
             volume: Trade volume in lots (e.g., 0.1 for micro lot)
             order_type: Trade direction (either ORDER_TYPE_BUY or ORDER_TYPE_SELL)
@@ -149,7 +153,9 @@ class CTrade:
         
         """
         Opens a pending order with full control over order parameters.
-        
+
+        Full documentation: https://strategytester5.com/api/trade_classes/trade/
+
         Args:
             volume: Order volume in lots
             order_type: Order type (ORDER_TYPE_BUY_LIMIT, ORDER_TYPE_SELL_STOP, etc.)
@@ -210,7 +216,9 @@ class CTrade:
         
         """
         Opens a buy (market) position.
-        
+
+        Full documentation: https://strategytester5.com/api/trade_classes/trade/
+
         Args:
             volume: Trade volume (lot size)
             price: Execution price
@@ -228,7 +236,9 @@ class CTrade:
         
         """
         Opens a sell (market) position.
-        
+
+        Full documentation: https://strategytester5.com/api/trade_classes/trade/
+
         Args:
             volume: Trade volume (lot size)
             price: Execution price
@@ -246,7 +256,9 @@ class CTrade:
         
         """
         Places a buy limit pending order.
-        
+
+        Full documentation: https://strategytester5.com/api/trade_classes/trade/
+
         Args:
             volume: Trade volume (lot size)
             price: Execution price
@@ -270,7 +282,9 @@ class CTrade:
             
         """
         Places a sell limit pending order.
-        
+
+        Full documentation: https://strategytester5.com/api/trade_classes/trade/
+
         Args:
             volume: Trade volume (lot size)
             price: Execution price
@@ -294,7 +308,9 @@ class CTrade:
 
         """
         Places a buy stop pending order.
-        
+
+        Full documentation: https://strategytester5.com/api/trade_classes/trade/
+
         Args:
             volume: Trade volume (lot size)
             price: Execution price
@@ -318,7 +334,9 @@ class CTrade:
         
         """
         Places a sell stop pending order.
-        
+
+        Full documentation: https://strategytester5.com/api/trade_classes/trade/
+
         Args:
             volume: Trade volume (lot size)
             price: Execution price
@@ -342,7 +360,9 @@ class CTrade:
         
         """
         Closes an open position by ticket number.
-        
+
+        Full documentation: https://strategytester5.com/api/trade_classes/trade/
+
         Args:
             ticket: Position ticket number
             deviation: Maximum price deviation in points (optional)
@@ -397,7 +417,9 @@ class CTrade:
         
         """
         Deletes a pending order by ticket number.
-        
+
+        Full documentation: https://strategytester5.com/api/trade_classes/trade/
+
         Args:
             ticket: Order ticket number
         
@@ -432,7 +454,9 @@ class CTrade:
         
         """
         Modifies stop loss and take profit of an open position.
-        
+
+        Full documentation: https://strategytester5.com/api/trade_classes/trade/
+
         Args:
             ticket: Position ticket number
             sl: New stop loss price
@@ -474,7 +498,9 @@ class CTrade:
         
         """
         Modify parameters of a pending order with full control similar to MQL5's OrderModify.
-        
+
+        Full documentation: https://strategytester5.com/api/trade_classes/trade/
+
         Args:
             ticket: Order ticket number
             price: New activation price for the pending order
