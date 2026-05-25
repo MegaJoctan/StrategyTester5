@@ -15,7 +15,9 @@ class CPositionInfo:
         This class wraps a single already-selected/open position object returned by
         the MetaTrader 5 Python API, such as from `mt5.positions_get()`.
 
-        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cpositioninfo)
+        [Reference (MQL5.com)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cpositioninfo)
+
+        See full documentation: https://strategytester5.com/api/trade_classes/positioninfo/
     """
 
     def __init__(self, position: TradePosition) -> None:

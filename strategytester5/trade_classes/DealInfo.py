@@ -11,7 +11,9 @@ class CDealInfo:
         `CDealInfo` and provides convenient, read-only access to MetaTrader 5 deal
         properties.
 
-        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cdealinfo)
+        [Reference (MQL5.com)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cdealinfo)
+
+        See full documentation: https://strategytester5.com/api/trade_classes/dealinfo/
     """
 
     def __init__(self, deal: TradeDeal):

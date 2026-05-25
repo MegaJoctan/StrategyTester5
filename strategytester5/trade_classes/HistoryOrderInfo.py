@@ -13,7 +13,9 @@ class CHistoryOrderInfo(COrderInfo):
         `self._order`. The selected order can be supplied at construction time or later
         via `select_order()` / `select_by_index()`.
 
-        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/chistoryorderinfo)
+        [Reference (MQL5.com)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/chistoryorderinfo)
+
+        See full documentation: https://strategytester5.com/api/trade_classes/historyorderinfo/
     """
 
     def __init__(self, order: TradeOrder):

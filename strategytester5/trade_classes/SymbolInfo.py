@@ -14,7 +14,9 @@ class CSymbolInfo:
         information. Symbol data can be refreshed via `refresh()`, while quote/tick
         data can be refreshed via `refresh_rates()`.
 
-        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/csymbolinfo)
+        [Reference (MQL5.com)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/csymbolinfo)
+
+        See full documentation: https://strategytester5.com/api/trade_classes/symbolinfo/
     """
 
     def __init__(self, symbol: str, terminal: Any):

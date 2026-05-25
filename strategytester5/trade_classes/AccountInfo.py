@@ -13,7 +13,9 @@ class CAccountInfo:
         (balance, equity, margin, etc.). If you need up-to-date values after trading
         activity or price changes, re-instantiate the class or implement a refresh.
 
-        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/caccountinfo)
+        [Reference (mql5.com)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/caccountinfo)
+
+        Full documentation: https://strategytester5.com/api/trade_classes/accountinfo/
     """
 
     def __init__(self, ac_info: namedtuple):

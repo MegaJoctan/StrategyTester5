@@ -12,7 +12,9 @@ class CTerminalInfo:
         The returned values reflect the terminal state at the moment of initialization.
         If you need up-to-date values, create a new instance or add a refresh method.
 
-        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cterminalinfo)
+        [Reference (MQL5.com)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cterminalinfo)
+
+        See full documentation: https://strategytester5.com/api/trade_classes/terminalinfo/
     """
 
     def __init__(self, terminal: Any):

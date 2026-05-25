@@ -16,6 +16,8 @@ class COrderInfo:
         `select(ticket)`, or by index using `select_by_index(index)`.
     
         [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/corderinfo)
+
+        See full documentation: https://strategytester5.com/api/trade_classes/orderinfo/
     """
 
     def __init__(self, order: TradeOrder) -> None:
