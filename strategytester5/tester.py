@@ -2,7 +2,14 @@ from __future__ import annotations
 from typing import Any, Literal, Optional
 
 import pandas as pd
+import numpy as np
 import polars as pl
+
+import threading
+import time
+
+from flask import Flask, jsonify, render_template
+import webbrowser
 
 from strategytester5.MetaTrader5 import evaluate_margin_state, TradeDeal, Tick
 from strategytester5.MetaTrader5.api import OverLoadedMetaTrader5API
@@ -28,6 +35,30 @@ from pathlib import Path
 mpl.rcParams["agg.path.chunksize"] = 10000
 mpl.rcParams["path.simplify"] = True
 mpl.rcParams["path.simplify_threshold"] = 0.9
+
+dashboard_data = {
+    "time": np.nan,
+    "balance": np.nan,
+    "equity": np.nan,
+    "free_margin": np.nan,
+    "trades": [],
+}
+
+app = Flask(
+    __name__,
+    template_folder="../strategytester5/templates"
+)
+
+# ------------- FLASK ROUTES ---------------
+
+@app.route("/")
+def index():
+    return render_template("dashboard.html")
+
+
+@app.route("/dashboard")
+def dashboard():
+    return jsonify(dashboard_data)
 
 
 class StrategyTester:
@@ -129,6 +160,11 @@ class StrategyTester:
             name="John Doe",
             server="MetaTrader5-Simulator",
         )
+
+        dashboard_data["time"] = start_dt_ts
+        dashboard_data["balance"] = deposit
+        dashboard_data["equity"] = deposit
+        dashboard_data["free_margin"] = deposit
 
         self.logger.debug(f"Simulated account info: {self.simulated_mt5.ACCOUNT}")
 
@@ -453,6 +489,24 @@ class StrategyTester:
                 t = row["time"]
                 self._monitor_mt5(time=t)
 
+                # update dashboard's data
+
+                ac = self.simulated_mt5.ACCOUNT
+
+                dashboard_data["balance"] = ac.balance
+                dashboard_data["equity"] = ac.equity
+                dashboard_data["free_margin"] = ac.margin_free
+
+                dashboard_data["positions"] = [
+                    pos._asdict()
+                    for pos in self.simulated_mt5.POSITIONS
+                ]
+
+                dashboard_data["orders"] = [
+                    order._asdict()
+                    for order in self.simulated_mt5.ORDERS
+                ]
+
                 # update progress AFTER processing group
                 processed += n
                 self.TESTER_IDX += 1  # increment tester progress
@@ -508,6 +562,60 @@ class StrategyTester:
 
                 self._monitor_mt5(time=t)
 
+                # update dashboard's data
+
+                ac = self.simulated_mt5.ACCOUNT
+
+                dashboard_data["time"] = t
+                dashboard_data["balance"] = ac.balance
+                dashboard_data["equity"] = ac.equity
+                dashboard_data["free_margin"] = ac.margin_free
+
+                order_type_map = {
+                    self.simulated_mt5.ORDER_TYPE_BUY: "Buy",
+                    self.simulated_mt5.ORDER_TYPE_SELL: "Sell",
+                    self.simulated_mt5.ORDER_TYPE_BUY_LIMIT: "Buy Limit",
+                    self.simulated_mt5.ORDER_TYPE_SELL_LIMIT: "Sell Limit",
+                    self.simulated_mt5.ORDER_TYPE_BUY_STOP: "Buy Stop",
+                    self.simulated_mt5.ORDER_TYPE_SELL_STOP: "Sell Stop"
+                }
+
+                positions = [
+                    {
+                        **pos._asdict(),
+
+                        "time": datetime
+                        .fromtimestamp(pos.time)
+                        .strftime("%Y-%m-%d %H:%M:%S"),
+                        "type": order_type_map[pos.type]
+                    }
+
+                    for pos in self.simulated_mt5.POSITIONS
+                ]
+
+                orders = [
+                    {
+                        **order._asdict(),
+
+                        "time_setup": datetime
+                        .fromtimestamp(order.time_setup)
+                        .strftime("%Y-%m-%d %H:%M:%S"),
+                        "type": order_type_map[order.type]
+                    }
+
+                    for order in self.simulated_mt5.ORDERS
+                ]
+
+                # combine
+                trades = positions + orders
+
+                # sort so positions first, pending orders last
+                trades.sort(key=lambda x: x["type"])
+
+                dashboard_data["trades"] = trades
+
+                # print(dashboard_data)
+
                 # update progress AFTER processing group
                 processed += n
                 self.TESTER_IDX += 1  # increment tester progress
@@ -517,16 +625,47 @@ class StrategyTester:
                 # call strategy AFTER all symbols updated
                 on_tick_function()
 
-    def run(self, on_tick_function: Any) -> stats.TesterStats:
+    def run(self,
+            on_tick_function: Any,
+            dashboard_host: str="localhost",
+            dashboard_port: int=5000) -> stats.TesterStats:
 
         """Main function to run the strategy tester simulation. It initializes the tester, processes historical data according to the specified modelling mode, and generates a report at the end.
 
         Args:
             on_tick_function: A callback function that executes the strategy logic on each tick. This function is called after all ticks for a given timestamp are processed and the simulated MetaTrader5 instance is updated with the latest tick information.
+            dashboard_host : The local server host
+            dashboard_port : The local server port
 
         Returns:
             TesterStats: An object containing various statistics computed from the tester results, including trade performance metrics, drawdowns, and more. This is the same stats object that is used to generate the final HTML report.
         """
+
+        # ---------------- START SERVER ----------------
+
+        def start_dashboard():
+
+            # open browser automatically
+            webbrowser.open(f"http://{dashboard_host}:{dashboard_port}")
+
+            # use_reloader=False avoids double execution
+            app.run(
+                host=dashboard_host,
+                port=dashboard_port,
+                debug=False,
+                use_reloader=False
+            )
+
+        # ---------- Run a live dashboard ---------------
+
+        # run flask in background
+        threading.Thread(
+            target=start_dashboard,
+            daemon=True
+        ).start()
+
+        # small delay so server starts first
+        time.sleep(2)
 
         start_date = self.tester_config["start_date"]
         end_date = self.tester_config["end_date"]
@@ -705,23 +844,6 @@ class StrategyTester:
             mode="lines",
             name="Equity (raw)",
             visible="legendonly",
-            hovertemplate="Time: %{x}<br>Equity: %{y:.2f}<extra></extra>",
-        ))
-
-        # ---- SMOOTHED curves (visible by default) ----
-        fig.add_trace(go.Scatter(
-            x=times,
-            y=pd.Series(bal).rolling(window=20).mean(),
-            mode="lines",
-            name="Balance (smoothed)",
-            hovertemplate="Time: %{x}<br>Balance: %{y:.2f}<extra></extra>",
-        ))
-
-        fig.add_trace(go.Scatter(
-            x=times,
-            y=pd.Series(eq).rolling(window=50).mean(),
-            mode="lines",
-            name="Equity (smoothed)",
             hovertemplate="Time: %{x}<br>Equity: %{y:.2f}<extra></extra>",
         ))
 
