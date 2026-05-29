@@ -1,0 +1,62 @@
+<div class="analytics-card">
+
+<!--    <div class="stats-title">-->
+<!--        Holding Time Analysis-->
+<!--    </div>-->
+
+    <div class="holding-grid">
+
+        <div class="holding-chart">
+            {{ holding_plot | safe }}
+        </div>
+
+        <div class="holding-stats">
+
+            <table class="report-table">
+
+                <tbody>
+
+                    <tr>
+                        <th>Mean</th>
+                        <td>{{ holding_stats.mean }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Std</th>
+                        <td>{{ holding_stats.std }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Min</th>
+                        <td>{{ holding_stats.min }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>25%</th>
+                        <td>{{ holding_stats.q25 }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Median</th>
+                        <td>{{ holding_stats.median }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>75%</th>
+                        <td>{{ holding_stats.q75 }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Max</th>
+                        <td>{{ holding_stats.max }}</td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
