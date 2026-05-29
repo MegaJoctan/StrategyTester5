@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+    <title>StrategyTester5 Dashboard</title>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../static/styles.css">
+
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- HEADER -->
+    <div class="header">
+
+        <div class="title">
+            STRATEGYTESTER5
+        </div>
+
+        <div class="metrics">
+
+            <div class="metric-card">
+                <div class="metric-label">BALANCE</div>
+                <div class="metric-value" id="balance">$0</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">EQUITY</div>
+                <div class="metric-value" id="equity">$0</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">FREE MARGIN</div>
+                <div class="metric-value" id="free_margin">$0</div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- CHART -->
+    <div class="chart-container">
+        <div id="equityChart"></div>
+    </div>
+
+    {% if simulation_running %}
+
+        {% include 'components/trades_table.html' %}
+
+    {% else %}
+
+        {% include 'components/stats_table.html' %}
+
+        {% include 'components/entries_dashboard.html' %}
+
+    {% endif %}
+
+</div>
+
+    <!-- Chart.js -->
+    <!--    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>-->
+    <script src="../static/plotly-2.35.2.min.js"></script>
+    <script src="../static/script.js"></script>
+</body>
+</html>
