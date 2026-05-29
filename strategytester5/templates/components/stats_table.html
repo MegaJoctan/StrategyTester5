@@ -1,0 +1,229 @@
+<div class="stats-card">
+
+    <div class="stats-title">
+        Tester Stats
+    </div>
+
+    <table class="report-table">
+
+        <tbody>
+
+            <tr>
+                <th>Initial Deposit</th><td class="number">{{ tester_stats.initial_deposit }}</td>
+                <th>Ticks</th><td class="number">{{ tester_stats.ticks }}</td>
+                <th>Symbols</th><td class="number">{{ tester_stats.symbols }}</td>
+            </tr>
+
+            <tr>
+                <th>Total Net Profit</th><td class="number">{{ "%.2f"|format(tester_stats.net_profit) }}</td>
+                <th>Balance Drawdown Absolute</th><td class="number">{{ "%.2f"|format(tester_stats.balance_drawdown_absolute) }}</td>
+                <th>Equity Drawdown Absolute</th><td class="number">{{ "%.2f"|format(tester_stats.equity_drawdown_absolute) }}</td>
+            </tr>
+
+            <tr>
+                <th>Gross Profit</th><td class="number">{{ "%.2f"|format(tester_stats.gross_profit) }}</td>
+                <th>Balance Drawdown Maximal</th>
+                <td class="number">
+                    {{ "%.2f"|format(tester_stats.balance_drawdown_maximal) }}
+                    ({{ "%.2f"|format(tester_stats.balance_drawdown_maximal / 100) }}%)
+                </td>
+
+                <th>Equity Drawdown Maximal</th>
+                <td class="number">
+                    {{ "%.2f"|format(tester_stats.equity_drawdown_maximal) }}
+                    ({{ "%.2f"|format(tester_stats.equity_drawdown_maximal / 100) }}%)
+                </td>
+            </tr>
+
+            <tr>
+                <th>Gross Loss</th><td class="number">{{ "%.2f"|format(tester_stats.gross_loss) }}</td>
+
+                <th>Balance Drawdown Relative</th>
+                <td class="number">
+                    {{ "%.2f"|format(tester_stats.balance_drawdown_relative) }}%
+                    ({{ "%.2f"|format(tester_stats.balance_drawdown_relative * 100) }})
+                </td>
+
+                <th>Equity Drawdown Relative</th>
+                <td class="number">
+                    {{ "%.2f"|format(tester_stats.equity_drawdown_relative) }}%
+                    ({{ "%.2f"|format(tester_stats.equity_drawdown_relative * 100) }})
+                </td>
+            </tr>
+
+            <tr>
+                <th>Profit Factor</th>
+                <td class="number">{{ "%.2f"|format(tester_stats.profit_factor) }}</td>
+
+                <th>Expected Payoff</th>
+                <td class="number">{{ "%.2f"|format(tester_stats.expected_payoff) }}</td>
+
+                <th>Margin Level</th>
+                <td class="number">{{ "%.2f"|format(tester_stats.margin_level) }}%</td>
+            </tr>
+
+            <tr>
+                <th>Recovery Factor</th>
+                <td class="number">{{ "%.2f"|format(tester_stats.recovery_factor) }}</td>
+
+                <th>Sharpe Ratio</th>
+                <td class="number">{{ "%.2f"|format(tester_stats.sharpe_ratio) }}</td>
+
+                <th>Z-Score</th>
+                <td class="number">{{ "%.2f"|format(tester_stats.z_score) }}</td>
+            </tr>
+
+            <tr>
+                <th>AHPR</th>
+                <td class="number">
+                    {{ "%.4f"|format(tester_stats.ahpr_factor) }}
+                    ({{ "%.2f"|format(tester_stats.ahpr_percent) }}%)
+                </td>
+
+                <th>LR Correlation</th>
+                <td class="number">{{ "%.2f"|format(tester_stats.lr_correlation) }}</td>
+
+                <th>OnTester Result</th>
+                <td class="number">{{ tester_stats.on_tester_results }}</td>
+            </tr>
+
+            <tr>
+                <th>GHPR</th>
+                <td class="number">
+                    {{ "%.4f"|format(tester_stats.ghpr_factor) }}
+                    ({{ "%.2f"|format(tester_stats.ghpr_percent) }}%)
+                </td>
+
+                <th>LR Standard Error</th>
+                <td class="number">{{ "%.2f"|format(tester_stats.lr_standard_error) }}</td>
+
+                <td></td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <th>Total Trades</th>
+                <td class="number">{{ tester_stats.total_trades }}</td>
+
+                <th>Short Trades (won %)</th>
+                <td class="number">
+                    {{ tester_stats.short_trades_won }}
+                    (
+                    {{ "%.2f"|format(
+                        100 * tester_stats.short_trades_won /
+                        [tester_stats.total_short_trades,1]|max
+                    ) }}
+                    %)
+                </td>
+
+                <th>Long Trades (won %)</th>
+                <td class="number">
+                    {{ tester_stats.long_trades_won }}
+                    (
+                    {{ "%.2f"|format(
+                        100 * tester_stats.long_trades_won /
+                        [tester_stats.total_long_trades,1]|max
+                    ) }}
+                    %)
+                </td>
+            </tr>
+
+            <tr>
+                <th>Total Deals</th>
+                <td class="number">{{ tester_stats.total_deals }}</td>
+
+                <th>Profit Trades (% of total)</th>
+                <td class="number">
+                    {{ tester_stats.profit_trades }}
+                    (
+                    {{ "%.2f"|format(
+                        100 * tester_stats.profit_trades /
+                        [tester_stats.total_trades,1]|max
+                    ) }}
+                    %)
+                </td>
+
+                <th>Loss Trades (% of total)</th>
+                <td class="number">
+                    {{ tester_stats.loss_trades }}
+                    (
+                    {{ "%.2f"|format(
+                        100 * tester_stats.loss_trades /
+                        [tester_stats.total_trades,1]|max
+                    ) }}
+                    %)
+                </td>
+            </tr>
+
+            <tr>
+                <th>Largest Profit Trade</th>
+                <td class="number">{{ "%.2f"|format(tester_stats.largest_profit_trade) }}</td>
+
+                <th>Largest Loss Trade</th>
+                <td class="number">{{ "%.2f"|format(tester_stats.largest_loss_trade) }}</td>
+
+                <td></td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <th>Average Profit Trade</th>
+                <td class="number">{{ "%.2f"|format(tester_stats.average_profit_trade) }}</td>
+
+                <th>Average Loss Trade</th>
+                <td class="number">{{ "%.2f"|format(tester_stats.average_loss_trade) }}</td>
+
+                <td></td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <th>Max Consecutive Wins ($)</th>
+                <td class="number">
+                    {{ tester_stats.maximum_consecutive_wins_count }}
+                    ({{ "%.2f"|format(tester_stats.maximum_consecutive_wins_money) }})
+                </td>
+
+                <th>Max Consecutive Losses ($)</th>
+                <td class="number">
+                    {{ tester_stats.maximum_consecutive_losses_count }}
+                    ({{ "%.2f"|format(tester_stats.maximum_consecutive_losses_money) }})
+                </td>
+
+                <td></td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <th>Maximal Consecutive Profit (count)</th>
+                <td class="number">
+                    {{ tester_stats.maximal_consecutive_profit_count }}
+                    ({{ "%.2f"|format(tester_stats.maximal_consecutive_profit_money) }})
+                </td>
+
+                <th>Maximal Consecutive Loss (count)</th>
+                <td class="number">
+                    {{ tester_stats.maximal_consecutive_loss_count }}
+                    ({{ "%.2f"|format(tester_stats.maximal_consecutive_loss_money) }})
+                </td>
+
+                <td></td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <th>Average Consecutive Wins</th>
+                <td class="number">{{ "%.2f"|format(tester_stats.average_consecutive_wins) }}</td>
+
+                <th>Average Consecutive Losses</th>
+                <td class="number">{{ "%.2f"|format(tester_stats.average_consecutive_losses) }}</td>
+
+                <td></td>
+                <td></td>
+            </tr>
+
+        </tbody>
+
+    </table>
+
+</div>
