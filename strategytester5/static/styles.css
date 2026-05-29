@@ -187,63 +187,47 @@ tbody tr:hover {
 }
 
 /*------------- stats table------------------*/
+
 .stats-card {
 
     background: rgba(15, 25, 45, 0.75);
-
     border-radius: 25px;
-
     padding: 25px;
-
     margin-top: 30px;
-
     border: 1px solid rgba(30, 144, 255, 0.2);
-
     box-shadow:
         0 0 25px rgba(30, 144, 255, 0.08);
-
     backdrop-filter: blur(20px);
 }
 
 .stats-title {
 
+    text-align: center;
     font-size: 24px;
-
     font-weight: 700;
-
     color: dodgerblue;
-
     margin-bottom: 20px;
 }
 
 .report-table {
 
     width: 100%;
-
     border-collapse: collapse;
 }
 
 .report-table th {
 
     background: rgba(30, 144, 255, 0.08);
-
     color: #8ec8ff;
-
     padding: 10px;
-
     text-align: left;
-
     font-weight: 600;
-
     border: 1px solid rgba(255,255,255,0.06);
 }
 
 .report-table td {
-
     padding: 10px;
-
     color: white;
-
     border: 1px solid rgba(255,255,255,0.04);
 }
 
@@ -265,6 +249,38 @@ tbody tr:hover {
         monospace;
 }
 
+.analytics-card {
+    background: rgba(15, 25, 45, 0.75);
+    border-radius: 25px;
+    padding: 20px;
+    margin-top: 30px;
+    border: 1px solid rgba(30, 144, 255, 0.2);
+    backdrop-filter: blur(20px);
+    box-shadow:
+        0 0 25px rgba(30,144,255,0.08);
+}
+
+.holding-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 25px;
+    align-items: stretch;
+    width: 100%;
+}
+
+.holding-chart {
+    min-width: 0;
+}
+
+.holding-stats {
+    display: flex;
+    align-items: center;
+}
+
+.holding-stats table {
+    width: 100%;
+}
+
 /* ---------------- RESPONSIVE ---------------- */
 
 @media(max-width: 1100px) {
@@ -278,5 +294,9 @@ tbody tr:hover {
 
     .metrics {
         flex-wrap: wrap;
+    }
+
+    .holding-grid {
+        grid-template-columns: 1fr;
     }
 }
