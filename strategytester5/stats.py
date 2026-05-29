@@ -563,6 +563,25 @@ class EntriesCalculator:
         self.deals_df = deals_df.query(
             f"entry=={MetaTrader5Constants.DEAL_ENTRY_IN} and (type=={MetaTrader5Constants.DEAL_TYPE_SELL} or type=={MetaTrader5Constants.DEAL_TYPE_BUY})").copy()
 
+        time_col = self.deals_df["time"]
+
+        # Convert only if not already datetime
+        if not pd.api.types.is_datetime64_any_dtype(time_col):
+
+            # If timestamps are seconds since epoch
+            if pd.api.types.is_integer_dtype(time_col):
+                self.deals_df["time"] = pd.to_datetime(
+                    time_col,
+                    unit="s",
+                    errors="coerce"
+                )
+
+            else:
+                self.deals_df["time"] = pd.to_datetime(
+                    time_col,
+                    errors="coerce"
+                )
+
         self.deals_df["hour"] = self.deals_df["time"].dt.hour
         self.deals_df["weekday"] = self.deals_df["time"].dt.weekday
         self.deals_df["month"] = self.deals_df["time"].dt.month
@@ -591,6 +610,25 @@ class PLCalculator:
 
         self.deals_df = deals_df.query(
             f"entry == {MetaTrader5Constants.DEAL_ENTRY_OUT} and (type=={MetaTrader5Constants.DEAL_TYPE_BUY} | type=={MetaTrader5Constants.DEAL_TYPE_SELL})").copy()
+
+        time_col = self.deals_df["time"]
+
+        # Convert only if not already datetime
+        if not pd.api.types.is_datetime64_any_dtype(time_col):
+
+            # If timestamps are seconds since epoch
+            if pd.api.types.is_integer_dtype(time_col):
+                self.deals_df["time"] = pd.to_datetime(
+                    time_col,
+                    unit="s",
+                    errors="coerce"
+                )
+
+            else:
+                self.deals_df["time"] = pd.to_datetime(
+                    time_col,
+                    errors="coerce"
+                )
 
         self.deals_df["hour"] = self.deals_df["time"].dt.hour
         self.deals_df["weekday"] = self.deals_df["time"].dt.weekday
