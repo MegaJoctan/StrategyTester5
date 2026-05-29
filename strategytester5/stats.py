@@ -220,6 +220,10 @@ class TesterStats:
             self._loss_streaks.append(cur_loss_count)
 
     @property
+    def initial_deposit(self):
+        return self.initial_deposit
+
+    @property
     def total_trades(self) -> int:
         """ Total number of trades opened and closed during the test. """
         return self._total_trades
