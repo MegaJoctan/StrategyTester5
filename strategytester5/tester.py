@@ -41,7 +41,7 @@ dashboard_data = {
     "balance": np.nan,
     "equity": np.nan,
     "free_margin": np.nan,
-    "trades": [],
+    "trades": []
 }
 
 app = Flask(
@@ -49,17 +49,22 @@ app = Flask(
     template_folder="../strategytester5/templates"
 )
 
+TESTER_STATS = None
+SIMULATION_RUNNING = True
+
 # ------------- FLASK ROUTES ---------------
 
 @app.route("/")
 def index():
-    return render_template("dashboard.html")
-
+    return render_template("dashboard.html",
+                           simulation_running=SIMULATION_RUNNING,
+                           live_data=dashboard_data,
+                           tester_stats=TESTER_STATS,
+                           )
 
 @app.route("/dashboard")
 def dashboard():
     return jsonify(dashboard_data)
-
 
 class StrategyTester:
     """
@@ -184,8 +189,6 @@ class StrategyTester:
         self.CURVES_IDX = 0
         self.IS_STOPPED = False
         # self._engine_lock = threading.RLock()   # re-entrant lock (safe if functions call other locked functions)
-
-        self.report_stats = None
 
         # ---------------------- others ------------------------------
 
@@ -727,23 +730,38 @@ class StrategyTester:
             )
 
         self._tester_deinit()
-        return self.report_stats
 
-    def _record_curve_point(self):
+        # update the dashboard
 
-        idx = self.CURVES_IDX
+        global TESTER_STATS, SIMULATION_RUNNING
 
-        if idx >= len(self.tester_curves["time"]):
-            return  # safety guard
+        SIMULATION_RUNNING = False
+        TESTER_STATS = self.generate_tester_stats()
 
-        acct = self.simulated_mt5.ACCOUNT
+        return TESTER_STATS
 
-        self.tester_curves["time"][idx] = self.simulated_mt5.current_time()
-        self.tester_curves["balance"][idx] = acct.balance
-        self.tester_curves["equity"][idx] = acct.equity
-        self.tester_curves["margin_level"][idx] = acct.margin_level
+    def generate_tester_stats(self):
 
-        self.CURVES_IDX += 1
+        curves = self.tester_curves
+        n = int(self.CURVES_IDX)
+
+        if n <= 0:
+            return None
+
+        # t = curves["time"][:n]
+        bal = curves["balance"][:n]
+        eq = curves["equity"][:n]
+        margin_level = curves["margin_level"][:n]
+
+        return stats.TesterStats(
+                    deals=self.simulated_mt5.DEALS,
+                    initial_deposit=self.tester_config.get("deposit"),
+                    symbols=len(self.tester_config.get("symbols")),
+                    balance_curve=bal,
+                    equity_curve=eq,
+                    margin_level_curve=margin_level,
+                    ticks=self.TESTER_IDX,
+                )
 
     def _make_balance_deal(self, time: datetime) -> TradeDeal:
 
@@ -804,135 +822,24 @@ class StrategyTester:
         # generate a report at the end
 
         os.makedirs(self.reports_dir, exist_ok=True)
-        self._gen_tester_report(
-            output_file=os.path.join(self.reports_dir, f"{self.tester_config['bot_name']}-report.html"))
 
         self._save_trading_history(self.trading_history_dir)
 
-    def _plot_tester_curves_plotly(self) -> str | None:
+    def _record_curve_point(self):
 
-        curves = self.tester_curves
-        n = int(self.CURVES_IDX)
+        idx = self.CURVES_IDX
 
-        if n <= 0:
-            return None
+        if idx >= len(self.tester_curves["time"]):
+            return  # safety guard
 
-        t = curves["time"][:n]
-        bal = curves["balance"][:n]
-        eq = curves["equity"][:n]
+        acct = self.simulated_mt5.ACCOUNT
 
-        order = np.argsort(t)
-        t = t[order]
-        bal = bal[order]
-        eq = eq[order]
+        self.tester_curves["time"][idx] = self.simulated_mt5.current_time()
+        self.tester_curves["balance"][idx] = acct.balance
+        self.tester_curves["equity"][idx] = acct.equity
+        self.tester_curves["margin_level"][idx] = acct.margin_level
 
-        times = [datetime.fromtimestamp(x, tz=timezone.utc) for x in t]
-
-        fig = go.Figure()
-
-        # ---- RAW curves (hidden by default) ----
-        fig.add_trace(go.Scatter(
-            x=times, y=bal,
-            mode="lines",
-            name="Balance (raw)",
-            visible="legendonly",
-            hovertemplate="Time: %{x}<br>Balance: %{y:.2f}<extra></extra>",
-        ))
-
-        fig.add_trace(go.Scatter(
-            x=times, y=eq,
-            mode="lines",
-            name="Equity (raw)",
-            visible="legendonly",
-            hovertemplate="Time: %{x}<br>Equity: %{y:.2f}<extra></extra>",
-        ))
-
-        fig.update_layout(
-            xaxis_title="Time (UTC)",
-            yaxis_title="Account Value",
-            hovermode="x unified",
-            legend=dict(
-                title="Click to toggle",
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="left",
-                x=0
-            ),
-            margin=dict(l=40, r=20, t=40, b=40),
-        )
-
-        return fig.to_html(
-            full_html=False,
-            # include_plotlyjs="cdn",
-            config={"responsive": True}
-        )
-
-    def _gen_tester_report(self, output_file="StrategyTester report.html"):
-
-        curve_block_html = ""  # <-- what we inject into {{CURVE_IMAGE}}
-        try:
-            curve_block_html = self._plot_tester_curves_plotly() or ""
-        except Exception as e:
-            self.logger.warning(f"Failed to generate interactive curve (plotly): {e!r}")
-
-        # ---- Render report ----
-        base_template = templates.html_report_template()
-
-        curves = self.tester_curves
-        n = int(self.CURVES_IDX)
-
-        if n <= 0:
-            return None
-
-        # t = curves["time"][:n]
-        bal = curves["balance"][:n]
-        eq = curves["equity"][:n]
-        margin_level = curves["margin_level"][:n]
-
-        self.report_stats = \
-            stats.TesterStats(
-                deals=self.simulated_mt5.DEALS,
-                initial_deposit=self.tester_config.get("deposit"),
-                symbols=len(self.tester_config.get("symbols")),
-                balance_curve=bal,
-                equity_curve=eq,
-                margin_level_curve=margin_level,
-                ticks=self.TESTER_IDX,
-            )
-
-        stats_table = templates.render_stats_table(stats=self.report_stats)
-
-        order_rows_html = templates.render_order_rows(self.simulated_mt5.ORDERS_HISTORY)
-        deal_rows_html = templates.render_deal_rows(self.simulated_mt5.DEALS)
-
-        deals_df = pd.DataFrame(self.simulated_mt5.DEALS)
-
-        positions_stats_html = ""
-        if not deals_df.empty:
-            deals_df["time"] = pd.to_datetime(deals_df["time"], unit="s", errors="coerce")
-            positions_stats_html = self._entries_and_pl_plotly(deals_df)
-
-        orders_df = pd.DataFrame(self.simulated_mt5.ORDERS_HISTORY)
-
-        holding_dashboard_html = ""
-        if not orders_df.empty:
-            holding_dashboard_html = StrategyTester._holding_time_dashboard_figure(orders_df=orders_df)
-
-        html = (
-            base_template
-            .replace("{{STATS_TABLE}}", stats_table)
-            .replace("{{ORDER_ROWS}}", order_rows_html)
-            .replace("{{DEAL_ROWS}}", deal_rows_html)
-            .replace("{{CURVE_IMAGE}}", curve_block_html)
-            .replace("{{POSITION_STATS_IMAGE}}", positions_stats_html)
-            .replace("{{POS_HOLDING_DASHBOARD}}", holding_dashboard_html)
-        )
-
-        with open(output_file, "w", encoding="utf-8") as f:
-            f.write(html)
-
-        self.logger.info(f"Strategy tester report saved at: {output_file}")
+        self.CURVES_IDX += 1
 
     def _save_trading_history(self, path: str):
 
