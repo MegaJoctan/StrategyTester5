@@ -4,7 +4,7 @@ from .MetaTrader5.api import MetaTrader5Constants
 from scipy.stats import linregress
 import pandas as pd
 import warnings
-
+import inspect
 
 # np.seterr(all="raise")  # turn numpy warnings into exceptions
 # warnings.filterwarnings("error")
@@ -517,6 +517,29 @@ class TesterStats:
             "avg": durations.mean(),
         }
 
+    def to_dict(self) -> dict:
+        """
+            Converts all non-protected methods in this class to a dictionary.
+
+            Returns:
+                   A dictionary object (dict).
+        """
+        result = {}
+
+        for name, obj in inspect.getmembers(type(self)):
+
+            # skip private/protected
+            if name.startswith("_"):
+                continue
+
+            # collect @property values
+            if isinstance(obj, property):
+                try:
+                    result[name] = getattr(self, name)
+                except Exception:
+                    result[name] = None
+
+        return result
 
 class EntriesCalculator:
     """ Calculates entry counts by hour, weekday, and month based on the deals data. """
