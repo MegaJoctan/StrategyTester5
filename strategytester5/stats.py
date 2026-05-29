@@ -98,12 +98,12 @@ class TesterStats:
         """
 
         self.deals = deals
-        self.initial_deposit = float(initial_deposit)
+        self.initial_deposit_ = float(initial_deposit)
         self.balance_curve = np.ascontiguousarray(np.asarray(balance_curve, dtype=np.float64)).reshape(-1)
         self.equity_curve = np.ascontiguousarray(np.asarray(equity_curve, dtype=np.float64)).reshape(-1)
         self.margin_level_curve = np.ascontiguousarray(np.asarray(margin_level_curve, dtype=np.float64)).reshape(-1)
-        self.ticks = ticks
-        self.symbols = symbols
+        self.ticks_ = ticks
+        self.symbols_ = symbols
 
         self._profits: list[float] = []
         self._losses: list[float] = []  # negative profits (losses)
@@ -221,7 +221,18 @@ class TesterStats:
 
     @property
     def initial_deposit(self):
-        return self.initial_deposit
+        """The initial trading capital for the backtest"""
+        return self.initial_deposit_
+
+    @property
+    def ticks(self):
+        """The number of ticks seen during the backtest"""
+        return self.ticks_
+
+    @property
+    def symbols(self):
+        """The number of symbols seen during the backtest"""
+        return self.symbols_
 
     @property
     def total_trades(self) -> int:
@@ -379,12 +390,12 @@ class TesterStats:
     def balance_drawdown_absolute(self) -> float:
         """ Absolute drawdown for balance curve. """
         # AbsoluteDrawDown = InitialDeposit - MinimalBalance (below initial) :contentReference[oaicite:12]{index=12}
-        return self._abs_drawdown(self.initial_deposit, self.balance_curve)
+        return self._abs_drawdown(self.initial_deposit_, self.balance_curve)
 
     @property
     def equity_drawdown_absolute(self) -> float:
         """ Absolute drawdown for equity curve. """
-        return self._abs_drawdown(self.initial_deposit, self.equity_curve)
+        return self._abs_drawdown(self.initial_deposit_, self.equity_curve)
 
     @property
     def balance_drawdown_maximal(self) -> float:
@@ -392,7 +403,7 @@ class TesterStats:
         return float(_max_dd_money_and_pct_nb(self.balance_curve)[0])
 
     def _validate_baleq_values(self, value: float) -> float:
-        if abs(value) > self.initial_deposit:
+        if abs(value) > self.initial_deposit_:
             return np.nan
 
         return value
