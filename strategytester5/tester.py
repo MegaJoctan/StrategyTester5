@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, Tuple, Dict
 
 import pandas as pd
 import numpy as np
@@ -861,8 +861,13 @@ class StrategyTester:
             self.logger.warning(f"Failed to save trading history: {e!r}")
 
     @staticmethod
-    def _entries_and_pl_plotly(deals_df: pd.DataFrame):
+    def generate_entries_pl_html(deals_df: pd.DataFrame) -> str:
+        """
+         Generates plots for entries and profit & Loss by hours, weekdays, etc.
 
+         Returns:
+            HTML reports.
+        """
         weekday_order = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
         month_order = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
@@ -901,6 +906,7 @@ class StrategyTester:
         )
 
         # Row 1: Entries
+
         fig.add_trace(go.Bar(x=list(entries_hour.index), y=entries_hour.values, name="Entries"),
                       row=1, col=1)
 
@@ -911,6 +917,7 @@ class StrategyTester:
                       row=1, col=3)
 
         # Row 2: Profit & Loss (side-by-side like matplotlib version)
+
         fig.add_trace(go.Bar(x=[str(i) for i in range(24)], y=p_hour.values, name="Profit"),
                       row=2, col=1)
         fig.add_trace(go.Bar(x=[str(i) for i in range(24)], y=l_hour.values, name="Loss"),
@@ -927,9 +934,41 @@ class StrategyTester:
                       row=2, col=3)
 
         fig.update_layout(
-            barmode="group",  # side-by-side exactly like your matplotlib version
-            margin=dict(l=80, r=20, t=30, b=40),
+
+            barmode="group",
+
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+
+            font=dict(
+                color="white",
+                family="Inter"
+            ),
+
+            margin=dict(
+                l=40,
+                r=20,
+                t=60,
+                b=40
+            ),
+
             showlegend=False,
+        )
+
+        fig.update_xaxes(
+            gridcolor="rgba(255,255,255,0.05)",
+            zerolinecolor="rgba(255,255,255,0.08)",
+            tickfont=dict(
+                color="#8ec8ff"
+            )
+        )
+
+        fig.update_yaxes(
+            gridcolor="rgba(255,255,255,0.05)",
+            zerolinecolor="rgba(255,255,255,0.08)",
+            tickfont=dict(
+                color="#8ec8ff"
+            )
         )
 
         return fig.to_html(
@@ -939,82 +978,131 @@ class StrategyTester:
         )
 
     @staticmethod
-    def _holding_time_dashboard_figure(orders_df: pd.DataFrame) -> str:
-        # --- build durations in minutes (numeric) ---
+    def generate_holding_time_html(orders_df: pd.DataFrame) -> Dict:
 
         if orders_df.empty:
-            return ""
+            return {}
 
-        entry = orders_df["time_setup"]
-        exit_ = orders_df["time_done"]
+        try:
+            entry = orders_df["time_setup"]
+            exit_ = orders_df["time_done"]
+        except KeyError as e:
+            print(e)
+            return {}
 
-        # keep only closed rows (avoid time_done == 0)
-        m = entry.notna() & exit_.notna() & (entry > 0) & (exit_ > 0)
-        durations_minutes = (exit_[m] - entry[m]).abs() / 60.0
+        mask = (
+                entry.notna()
+                & exit_.notna()
+                & (entry > 0)
+                & (exit_ > 0)
+        )
+
+        durations_minutes = (exit_[mask] - entry[mask]).abs() / 60.0
 
         if durations_minutes.empty:
-            fig = go.Figure()
-            fig.update_layout(title="No valid closed positions to compute holding time.")
-            return ""
+            return {}
 
-        # --- pie buckets ---
-        bins = [0, 5, 15, 60, 240, 1440, 10080, 43200, np.inf]  # minutes
-        labels = ["0-5m", "5-15m", "15m-1h", "1-4h", "4-24h", "1-7d", "7d-1mon", ">1mon"]
-
-        bucket = pd.cut(durations_minutes, bins=bins, labels=labels, right=False)
-        counts = bucket.value_counts().reindex(labels, fill_value=0)
-
-        # --- describe stats for the table ---
-        desc = durations_minutes.describe()  # count, mean, std, min, 25%, 50%, 75%, max
-
-        # format values (you can adjust)
-        table_header = ["mean", "std", "min", "25%", "50%", "75%", "max"]
-        table_values = [
-            f"{pd.to_timedelta(desc['mean'], unit='m')}",
-            f"{pd.to_timedelta(desc['std'], unit='m')}",
-            f"{pd.to_timedelta(desc['min'], unit='m')}",
-            f"{pd.to_timedelta(desc['25%'], unit='m')}",
-            f"{pd.to_timedelta(desc['50%'], unit='m')}",
-            f"{pd.to_timedelta(desc['75%'], unit='m')}",
-            f"{pd.to_timedelta(desc['max'], unit='m')}",
+        bins = [
+            0,
+            5,
+            15,
+            60,
+            240,
+            1440,
+            10080,
+            43200,
+            np.inf
         ]
 
-        # --- figure layout: pie (top) + table (bottom) ---
-        fig = make_subplots(
-            rows=1, cols=2,
-            specs=[[{"type": "pie"}, {"type": "table"}]],
-            column_widths=[0.6, 0.4],
-            vertical_spacing=0.10,
-            subplot_titles=("Positions by holding-time bucket", "Holding time summary"),
-            horizontal_spacing=0.15  # increase this (default ~0.05)
+        labels = [
+            "0-5m",
+            "5-15m",
+            "15m-1h",
+            "1-4h",
+            "4-24h",
+            "1-7d",
+            "7d-1mon",
+            ">1mon"
+        ]
+
+        bucket = pd.cut(
+            durations_minutes,
+            bins=bins,
+            labels=labels,
+            right=False
         )
+
+        counts = (
+            bucket
+            .value_counts()
+            .reindex(labels, fill_value=0)
+        )
+
+        desc = durations_minutes.describe()
+
+        fig = go.Figure()
 
         fig.add_trace(
+
             go.Pie(
                 labels=labels,
-                values=counts.values,  # ensure it's an array
-                hole=0.35,
-                textinfo="percent+label"
-            ),
-            row=1, col=1
-        )
+                values=counts.values,
+                hole=0.55,
+                textinfo="percent+label",
 
-        # column x rows format: header across top, ONE row of values
-
-        fig.add_trace(go.Table(
-            header=dict(values=['Parameter', 'Time']),
-            cells=dict(values=[table_header, table_values])
-        ),
-            row=1, col=2
+                marker=dict(
+                    colors=[
+                        "#1e90ff",
+                        "#3ea0ff",
+                        "#62b4ff",
+                        "#7cc4ff",
+                        "#4dff88",
+                        "#ffc857",
+                        "#ff9966",
+                        "#ff5e7d"
+                    ]
+                )
+            )
         )
 
         fig.update_layout(
-            margin=dict(l=40, r=100, t=30, b=30),
-            showlegend=False
+            # title="Holding Time Distribution",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+
+            font=dict(
+                color="white",
+                family="Inter"
+            ),
+
+            margin=dict(
+                l=20,
+                r=20,
+                t=50,
+                b=20
+            ),
+
+            showlegend=True,
+
+            legend=dict(
+                orientation="v",
+                y=1.05
+            )
         )
 
-        return fig.to_html(
-            full_html=False,
-            # include_plotlyjs="cdn",
-            config={"responsive": True}
-        )
+        return {
+            "plot": fig.to_html(
+                full_html=False,
+                config={"responsive": True}
+            ),
+
+            "summary": {
+                "mean": str(pd.to_timedelta(desc["mean"], unit="m")),
+                "std": str(pd.to_timedelta(desc["std"], unit="m")),
+                "min": str(pd.to_timedelta(desc["min"], unit="m")),
+                "q25": str(pd.to_timedelta(desc["25%"], unit="m")),
+                "median": str(pd.to_timedelta(desc["50%"], unit="m")),
+                "q75": str(pd.to_timedelta(desc["75%"], unit="m")),
+                "max": str(pd.to_timedelta(desc["max"], unit="m"))
+            }
+        }
