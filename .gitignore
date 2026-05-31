@@ -20,8 +20,6 @@ ICMarketsSC-Demo
 Logs/
 TradingHistory/
 
-*.html
-
 site/
 .cache/
 t.txt
