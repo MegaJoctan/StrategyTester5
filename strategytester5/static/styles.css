@@ -125,7 +125,7 @@ canvas {
 
 /* ---------------- TABLE ---------------- */
 
-.table-container {
+.live-trades-section {
 
     background: rgba(15, 25, 45, 0.75);
     border-radius: 25px;
@@ -250,6 +250,7 @@ tbody tr:hover {
 }
 
 .analytics-card {
+
     background: rgba(15, 25, 45, 0.75);
     border-radius: 25px;
     padding: 20px;
@@ -269,7 +270,8 @@ tbody tr:hover {
 }
 
 .holding-chart {
-    min-width: 0;
+    min-height: 500px;
+    width: 100%;
 }
 
 .holding-stats {
