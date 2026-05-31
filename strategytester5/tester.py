@@ -1,14 +1,14 @@
 from __future__ import annotations
-from typing import Any, Literal, Optional, Tuple, Dict
+from typing import Any, Literal, Optional, Dict
 
 import pandas as pd
-import numpy as np
 import polars as pl
 
 import threading
 import time
 
-from flask import Flask, jsonify, render_template
+from flask import Flask, render_template
+from flask_socketio import SocketIO
 import webbrowser
 
 from strategytester5.MetaTrader5 import evaluate_margin_state, TradeDeal, Tick
@@ -20,51 +20,48 @@ from . import *
 from datetime import datetime
 import os
 import numpy as np
-from . import _html_templates as templates
 from . import stats
 import logging
 from tqdm import tqdm
-# import time
 
-import matplotlib as mpl
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from pathlib import Path
 
-mpl.rcParams["agg.path.chunksize"] = 10000
-mpl.rcParams["path.simplify"] = True
-mpl.rcParams["path.simplify_threshold"] = 0.9
 
-dashboard_data = {
-    "time": np.nan,
-    "balance": np.nan,
-    "equity": np.nan,
-    "free_margin": np.nan,
-    "trades": []
-}
+class DashboardState:
+
+    live_data: dict = {
+        "time": np.nan,
+        "balance": np.nan,
+        "equity": np.nan,
+        "free_margin": np.nan,
+        "trades": []
+    }
+
+    tester_stats: dict = {}
+    entries_pl_plot: str = ""
+    holding_plot: str = ""
+    holding_stats: dict = {}
+    simulation_running: bool = True
 
 app = Flask(
     __name__,
-    template_folder="../strategytester5/templates"
+    template_folder="../strategytester5/templates",
+    static_folder="../strategytester5/static"
 )
 
-TESTER_STATS = None
-SIMULATION_RUNNING = True
+socketio = SocketIO(
+    app,
+    cors_allowed_origins="*"
+)
 
 # ------------- FLASK ROUTES ---------------
 
 @app.route("/")
 def index():
-    return render_template("dashboard.html",
-                           simulation_running=SIMULATION_RUNNING,
-                           live_data=dashboard_data,
-                           tester_stats=TESTER_STATS,
-                           )
-
-@app.route("/dashboard")
-def dashboard():
-    return jsonify(dashboard_data)
+    return render_template("dashboard.html")
 
 class StrategyTester:
     """
@@ -166,10 +163,12 @@ class StrategyTester:
             server="MetaTrader5-Simulator",
         )
 
-        dashboard_data["time"] = start_dt_ts
-        dashboard_data["balance"] = deposit
-        dashboard_data["equity"] = deposit
-        dashboard_data["free_margin"] = deposit
+        self.DASHBOARD_STATE = DashboardState()
+
+        self.DASHBOARD_STATE.live_data["time"] = start_dt_ts
+        self.DASHBOARD_STATE.live_data["balance"] = deposit
+        self.DASHBOARD_STATE.live_data["equity"] = deposit
+        self.DASHBOARD_STATE.live_data["free_margin"] = deposit
 
         self.logger.debug(f"Simulated account info: {self.simulated_mt5.ACCOUNT}")
 
@@ -436,7 +435,17 @@ class StrategyTester:
             self.logger.debug(f"Pending order #{order.ticket} triggered into a position!")
             self.simulated_mt5.ORDERS.pop(i)  # safely remove a pending order that becomes a position | TRIGGERED
 
-    def _monitor_mt5(self, time: int):
+    def _monitor_mt5(self,
+                     time: int,
+                     curve_update_interval: int=OverLoadedMetaTrader5API.TIMEFRAME_D1) -> None:
+
+        """
+            Monitors the simulated MetaTrader5 instance by updating virtual position, orders, and account credentials
+
+            Args:
+                time: The current tick time.
+                curve_update_interval: The interval to update the chart on a browser alongside the trades table with other active values such as balance, equity, etc.
+        """
 
         # Monitor trading operations
 
@@ -457,14 +466,61 @@ class StrategyTester:
             tf_str = self.tester_config.get("timeframe", "M1")
             tf_int = self.simulated_mt5.STRING2TIMEFRAME_MAP[tf_str]
 
-            if time % PeriodSeconds(tf_int) == 0:
+            if time % PeriodSeconds(curve_update_interval) == 0:
+
                 self._record_curve_point()
 
-    def run_tick_simulation(
+                ac = self.simulated_mt5.ACCOUNT
+
+                self.DASHBOARD_STATE.live_data["time"] = self.simulated_mt5.current_time()
+                self.DASHBOARD_STATE.live_data["balance"] = ac.balance
+                self.DASHBOARD_STATE.live_data["equity"] = ac.equity
+                self.DASHBOARD_STATE.live_data["free_margin"] = ac.margin_free
+
+                order_type_map = {
+                    self.simulated_mt5.ORDER_TYPE_BUY: "Buy",
+                    self.simulated_mt5.ORDER_TYPE_SELL: "Sell",
+                    self.simulated_mt5.ORDER_TYPE_BUY_LIMIT: "Buy Limit",
+                    self.simulated_mt5.ORDER_TYPE_SELL_LIMIT: "Sell Limit",
+                    self.simulated_mt5.ORDER_TYPE_BUY_STOP: "Buy Stop",
+                    self.simulated_mt5.ORDER_TYPE_SELL_STOP: "Sell Stop"
+                }
+
+                positions = [
+                    {
+                        **pos._asdict(),
+                        "type": order_type_map[pos.type]
+                    }
+
+                    for pos in self.simulated_mt5.POSITIONS
+                ]
+
+                orders = [
+                    {
+                        **order._asdict(),
+                        "type": order_type_map[order.type]
+                    }
+
+                    for order in self.simulated_mt5.ORDERS
+                ]
+
+                # combine
+                trades = positions + orders
+
+                # sort so positions first, pending orders last
+                trades.sort(key=lambda x: x["type"])
+
+                self.DASHBOARD_STATE.live_data["trades"] = trades
+
+                socketio.emit("dashboard_update", self.DASHBOARD_STATE.live_data)
+
+
+    def _run_tick_simulation(
             self,
             df: pl.DataFrame,
             symbols: list[str],
             on_tick_function,
+            curve_update_interval: int = OverLoadedMetaTrader5API.TIMEFRAME_D1
     ):
         """
         This function Drives the strategy tester using grouped tick events.
@@ -473,6 +529,7 @@ class StrategyTester:
             df (pl.DataFrame): A Polars DataFrame containing tick data, with columns for time, symbol_id, bid, ask, etc.
             symbols (list[str]): A list mapping symbol_id to actual symbol names.
             on_tick_function: A callback function that executes the strategy logic on each tick. This function is called after all ticks for a given timestamp are processed and the simulated MetaTrader5 instance is updated with the latest tick information.
+            curve_update_interval: The interval to update the chart on a browser alongside the trades table with other active values such as balance, equity, etc.
         """
 
         total_rows = df.height
@@ -490,25 +547,7 @@ class StrategyTester:
                     self.simulated_mt5.tick_update(symbol, row)
 
                 t = row["time"]
-                self._monitor_mt5(time=t)
-
-                # update dashboard's data
-
-                ac = self.simulated_mt5.ACCOUNT
-
-                dashboard_data["balance"] = ac.balance
-                dashboard_data["equity"] = ac.equity
-                dashboard_data["free_margin"] = ac.margin_free
-
-                dashboard_data["positions"] = [
-                    pos._asdict()
-                    for pos in self.simulated_mt5.POSITIONS
-                ]
-
-                dashboard_data["orders"] = [
-                    order._asdict()
-                    for order in self.simulated_mt5.ORDERS
-                ]
+                self._monitor_mt5(time=t, curve_update_interval=curve_update_interval)
 
                 # update progress AFTER processing group
                 processed += n
@@ -519,11 +558,12 @@ class StrategyTester:
                 # call strategy AFTER all symbols updated
                 on_tick_function()
 
-    def run_bar_simulation(
+    def _run_bar_simulation(
             self,
             df: pl.DataFrame,
             symbols: list[str],
             on_tick_function,
+            curve_update_interval: int = OverLoadedMetaTrader5API.TIMEFRAME_D1
     ):
 
         """
@@ -533,6 +573,7 @@ class StrategyTester:
             df (pl.DataFrame): A Polars DataFrame containing bars data, with columns for time, open, high, low, close, etc.
             symbols (list[str]): A list mapping symbol_id to actual symbol names.
             on_tick_function: A callback function that executes the strategy logic on each tick. This function is called after all ticks for a given timestamp are processed and the simulated MetaTrader5 instance is updated with the latest tick information.
+            curve_update_interval: The interval to update the chart on a browser alongside the trades table with other active values such as balance, equity, etc.
         """
 
         total_rows = df.height
@@ -563,61 +604,7 @@ class StrategyTester:
 
                     self.simulated_mt5.tick_update(symbol, tick)
 
-                self._monitor_mt5(time=t)
-
-                # update dashboard's data
-
-                ac = self.simulated_mt5.ACCOUNT
-
-                dashboard_data["time"] = t
-                dashboard_data["balance"] = ac.balance
-                dashboard_data["equity"] = ac.equity
-                dashboard_data["free_margin"] = ac.margin_free
-
-                order_type_map = {
-                    self.simulated_mt5.ORDER_TYPE_BUY: "Buy",
-                    self.simulated_mt5.ORDER_TYPE_SELL: "Sell",
-                    self.simulated_mt5.ORDER_TYPE_BUY_LIMIT: "Buy Limit",
-                    self.simulated_mt5.ORDER_TYPE_SELL_LIMIT: "Sell Limit",
-                    self.simulated_mt5.ORDER_TYPE_BUY_STOP: "Buy Stop",
-                    self.simulated_mt5.ORDER_TYPE_SELL_STOP: "Sell Stop"
-                }
-
-                positions = [
-                    {
-                        **pos._asdict(),
-
-                        "time": datetime
-                        .fromtimestamp(pos.time)
-                        .strftime("%Y-%m-%d %H:%M:%S"),
-                        "type": order_type_map[pos.type]
-                    }
-
-                    for pos in self.simulated_mt5.POSITIONS
-                ]
-
-                orders = [
-                    {
-                        **order._asdict(),
-
-                        "time_setup": datetime
-                        .fromtimestamp(order.time_setup)
-                        .strftime("%Y-%m-%d %H:%M:%S"),
-                        "type": order_type_map[order.type]
-                    }
-
-                    for order in self.simulated_mt5.ORDERS
-                ]
-
-                # combine
-                trades = positions + orders
-
-                # sort so positions first, pending orders last
-                trades.sort(key=lambda x: x["type"])
-
-                dashboard_data["trades"] = trades
-
-                # print(dashboard_data)
+                self._monitor_mt5(time=t, curve_update_interval=curve_update_interval)
 
                 # update progress AFTER processing group
                 processed += n
@@ -631,7 +618,9 @@ class StrategyTester:
     def run(self,
             on_tick_function: Any,
             dashboard_host: str="localhost",
-            dashboard_port: int=5000) -> stats.TesterStats:
+            dashboard_port: int=5000,
+            curve_update_interval: int = OverLoadedMetaTrader5API.TIMEFRAME_D1
+            ) -> stats.TesterStats:
 
         """Main function to run the strategy tester simulation. It initializes the tester, processes historical data according to the specified modelling mode, and generates a report at the end.
 
@@ -639,35 +628,37 @@ class StrategyTester:
             on_tick_function: A callback function that executes the strategy logic on each tick. This function is called after all ticks for a given timestamp are processed and the simulated MetaTrader5 instance is updated with the latest tick information.
             dashboard_host : The local server host
             dashboard_port : The local server port
+            curve_update_interval: The interval to update the chart on a browser alongside the trades table with other active values such as balance, equity, etc.
+
+        Notes:
+            - The wrong value for curve_update_interval could cause delay in plotting and lead to the backtesting report not showing properly.\n
+            A, we recommend leaving the value to default = TIMEFRAME_D1 (Daily timeframe).
 
         Returns:
             TesterStats: An object containing various statistics computed from the tester results, including trade performance metrics, drawdowns, and more. This is the same stats object that is used to generate the final HTML report.
         """
 
         # ---------------- START SERVER ----------------
-
         def start_dashboard():
 
-            # open browser automatically
-            webbrowser.open(f"http://{dashboard_host}:{dashboard_port}")
+            if not webbrowser.open(f"http://{dashboard_host}:{dashboard_port}"):
+                self.logger.warning("Failed to open browser for dashboard")
 
-            # use_reloader=False avoids double execution
-            app.run(
+            socketio.run(
+                app,
                 host=dashboard_host,
                 port=dashboard_port,
                 debug=False,
-                use_reloader=False
+                use_reloader=False,
+                allow_unsafe_werkzeug=True
             )
-
-        # ---------- Run a live dashboard ---------------
 
         # run flask in background
         threading.Thread(
             target=start_dashboard,
-            daemon=True
+            daemon=True,
         ).start()
 
-        # small delay so server starts first
         time.sleep(2)
 
         start_date = self.tester_config["start_date"]
@@ -702,10 +693,11 @@ class StrategyTester:
             self._tester_init(size=df.height)  # initialize the tester
 
             # run simulation
-            self.run_tick_simulation(
+            self._run_tick_simulation(
                 df,
                 symbols,
                 on_tick_function,
+                curve_update_interval = curve_update_interval
             )
 
         elif modelling in (2, 1):
@@ -723,22 +715,44 @@ class StrategyTester:
             self._tester_init(size=df.height)  # initialize the tester
 
             # run bar simulation
-            self.run_bar_simulation(
+            self._run_bar_simulation(
                 df,
                 symbols,
                 on_tick_function,
+                curve_update_interval=curve_update_interval
             )
 
         self._tester_deinit()
 
+        tester_stats = self.generate_tester_stats()
+
         # update the dashboard
 
-        global TESTER_STATS, SIMULATION_RUNNING
+        self.DASHBOARD_STATE.simulation_running = False
+        self.DASHBOARD_STATE.tester_stats = tester_stats.to_dict()
+        self.DASHBOARD_STATE.entries_pl_plot = self.generate_entries_pl_plot_json(
+            deals_df=pd.DataFrame(self.simulated_mt5.DEALS),
+        )
 
-        SIMULATION_RUNNING = False
-        TESTER_STATS = self.generate_tester_stats()
+        holding = self.generate_holding_time_json(
+            orders_df=pd.DataFrame(self.simulated_mt5.ORDERS_HISTORY),
+        )
 
-        return TESTER_STATS
+        self.DASHBOARD_STATE.holding_plot = holding["plot"]
+        self.DASHBOARD_STATE.holding_stats = holding["summary"]
+
+        socketio.emit(
+            "simulation_finished",
+            {
+                "tester_stats": tester_stats.to_dict(),
+                "holding_stats": self.DASHBOARD_STATE.holding_stats,
+                "entries_plot": self.DASHBOARD_STATE.entries_pl_plot,
+                "holding_plot": self.DASHBOARD_STATE.holding_plot
+            }
+        )
+
+        time.sleep(1)
+        return tester_stats
 
     def generate_tester_stats(self):
 
@@ -861,7 +875,7 @@ class StrategyTester:
             self.logger.warning(f"Failed to save trading history: {e!r}")
 
     @staticmethod
-    def generate_entries_pl_html(deals_df: pd.DataFrame) -> str:
+    def generate_entries_pl_plot_json(deals_df: pd.DataFrame) -> str:
         """
          Generates plots for entries and profit & Loss by hours, weekdays, etc.
 
@@ -971,14 +985,10 @@ class StrategyTester:
             )
         )
 
-        return fig.to_html(
-            full_html=False,
-            # include_plotlyjs="cdn",
-            config={"responsive": True}
-        )
+        return fig.to_json()
 
     @staticmethod
-    def generate_holding_time_html(orders_df: pd.DataFrame) -> Dict:
+    def generate_holding_time_json(orders_df: pd.DataFrame) -> Dict:
 
         if orders_df.empty:
             return {}
@@ -1091,11 +1101,7 @@ class StrategyTester:
         )
 
         return {
-            "plot": fig.to_html(
-                full_html=False,
-                config={"responsive": True}
-            ),
-
+            "plot": fig.to_json(),
             "summary": {
                 "mean": str(pd.to_timedelta(desc["mean"], unit="m")),
                 "std": str(pd.to_timedelta(desc["std"], unit="m")),
