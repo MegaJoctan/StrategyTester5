@@ -201,16 +201,13 @@ function updateDashboard(data) {
         },
 
         [0, 1],
-
-        1000
     );
 
     // -------------------------
     // TRADES TABLE
     // -------------------------
 
-    const tbody =
-        document.getElementById("trades-body");
+    const tbody = document.getElementById("trades-body");
 
     tbody.innerHTML = "";
 
