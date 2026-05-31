@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "strategytester5"
-version = "2.1.0"
+version = "2.2.0"
 description = "A Python-based MetaTrader strategy tester for the MetaTrader5 module"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -26,7 +26,9 @@ dependencies = [
   "kaleido",
   "nbformat",
   "python-dateutil",
-  "metatrader5"
+  "metatrader5",
+  "flask",
+  "flask-socketio"
 ]
 
 keywords = [
