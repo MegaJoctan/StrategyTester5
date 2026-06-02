@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Dict
-from strategytester5.MetaTrader5.api import OverLoadedMetaTrader5API
+from strategytester5.MetaTrader5.api import VirtualMetaTrader5
 from . import config
 from datetime import datetime
 from dateutil import parser
@@ -91,9 +91,9 @@ class TesterConfigValidators:
 
         # --- TIMEFRAME ---
         timeframe = raw_config["timeframe"]
-        if timeframe not in OverLoadedMetaTrader5API.STRING2TIMEFRAME_MAP:
+        if timeframe not in VirtualMetaTrader5.STRING2TIMEFRAME_MAP:
             raise RuntimeError(
-                f"Invalid timeframe: {timeframe} supported: {OverLoadedMetaTrader5API.STRING2TIMEFRAME_MAP.keys()}")
+                f"Invalid timeframe: {timeframe} supported: {VirtualMetaTrader5.STRING2TIMEFRAME_MAP.keys()}")
         cfg["timeframe"] = timeframe
 
         # --- MODELLING ---
