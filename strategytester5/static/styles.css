@@ -41,14 +41,29 @@ body {
     margin-bottom: 30px;
 }
 
+.branding {
+    display: flex;
+    flex-direction: column;
+}
+
 .title {
 
     font-size: 38px;
     font-weight: 700;
-
     color: dodgerblue;
-
     letter-spacing: 1px;
+}
+
+.subtitle {
+    margin-top: 4px;
+
+    font-size: 14px;
+    color: #8ec8ff;
+
+    text-transform: uppercase;
+    letter-spacing: 1px;
+
+    opacity: 0.9;
 }
 
 .metrics {

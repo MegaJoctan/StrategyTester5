@@ -167,6 +167,10 @@ function formatDateTime(timestamp)
 
 function updateDashboard(data) {
 
+    document.getElementById(
+        "bot-name"
+    ).innerText =
+        data.bot_name;
     // -------------------------
     // ACCOUNT INFO
     // -------------------------
