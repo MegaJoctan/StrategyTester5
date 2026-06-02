@@ -77,11 +77,15 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
         self._initialized = False
 
+    def assign_logger(self, logger = logging.Logger):
+        """
+            Assigns a logger instance to the class
+        """
+        self.logger = logger
+
     def initialize(self,
                    parent_mt5: MetaTrader5,
-                   is_optimization_mode: bool,
                    custom_broker_data_path: str = "",
-                   logger: Optional[logging.Logger] = None
                    ) -> bool:
         """
         Initializes the virtual MetaTrader5.
@@ -90,7 +94,6 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             parent_mt5 (Any): MetaTrader5 API/client instance used for obtaining crucial information from the broker as an attempt to mimic the terminal.
             is_optimization_mode (bool): Whether to run the virtual terminal in optimization mode.
             custom_broker_data_path (bool | optional): Where custom folders for history are kept.
-            logger (Logger | optional): Logger object for logging.
 
         Returns:
             True if successful and False otherwise.
@@ -98,9 +101,9 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
         # store global variables
 
-        self.IS_OPTIMIZATION_MODE = is_optimization_mode
+        self.IS_OPTIMIZATION_MODE = False
         self.parent_mt5 = parent_mt5
-        self.logger = logger
+        self.logger = None
 
         # checking the parent MetaTrader5
 
@@ -172,7 +175,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         if self.logger is None:
             print(msg)
         else:
-            self.logger.info(msg, stacklevel=3)
+            self.logger.info(msg, stacklevel=4)
 
     def debug_log(self, msg: str):
         if self.IS_OPTIMIZATION_MODE:
@@ -181,7 +184,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         if self.logger is None:
             print(msg)
         else:
-            self.logger.debug(msg, stacklevel=3)
+            self.logger.debug(msg, stacklevel=4)
 
     def warning_log(self, msg: str):
         if self.IS_OPTIMIZATION_MODE:
@@ -190,7 +193,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         if self.logger is None:
             print(msg)
         else:
-            self.logger.warning(msg, stacklevel=3)
+            self.logger.warning(msg, stacklevel=4)
 
     def critical_log(self, msg: str):
         if self.IS_OPTIMIZATION_MODE:
@@ -199,7 +202,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         if self.logger is None:
             print(msg)
         else:
-            self.logger.critical(msg, stacklevel=3)
+            self.logger.critical(msg, stacklevel=4)
 
     def error_log(self, msg: str):
         if self.IS_OPTIMIZATION_MODE:
