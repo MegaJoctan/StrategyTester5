@@ -12,6 +12,9 @@ import fnmatch
 from datetime import datetime
 from functools import wraps
 
+from ..MQL5.functions import PeriodSeconds
+
+
 def requires_initialization(func):
     """
     A decorator for checking if virtual MT5 is initialized.
@@ -35,45 +38,17 @@ def requires_initialization(func):
 class VirtualMetaTrader5(MetaTrader5Constants):
     """The simulated MetaTrader5 Instance similar to [https://pypi.org/project/metatrader5/](https://pypi.org/project/metatrader5/)"""
 
-    def __init__(self,
-                 logger: Optional[logging.Logger]=None,
-                 polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto",
-                 direct_mt5_api_calls: bool = False
-                 ):
+    def __init__(self):
         """
         Instantiates & initializes the simulated MetaTrader5 instance
-
-        Args:
-            logger (logging.Logger): The logger to use. Defaults to None.
-            polars_collect_engine (str): Engine used by Polars when collecting historical data in functions for obtaining ticks — copy_ticks*, and bars information/rates (copy_rates*). Supported values are:
-                - ``"auto"`` (default): Use Polars’ standard in-memory engine and
-                    respect the ``POLARS_ENGINE_AFFINITY`` environment variable if set.
-                - ``"in-memory"``: Explicitly use the default in-memory engine,
-                    optimized with multi-threading and SIMD over Arrow data.
-                - ``"streaming"``: Process queries in batches, enabling
-                    larger-than-RAM datasets.
-                - ``"gpu"``: Use NVIDIA GPUs via RAPIDS cuDF for accelerated execution.
-                    Requires installing Polars with GPU support, e.g.:
-                    ``pip install polars[gpu] --extra-index-url=https://pypi.nvidia.com``.
-
-            direct_mt5_api_calls (bool): When set to True, all methods for copying data such as *copy_rates and *copy_ticks reach out to the MetaTrader5-API.
-                When set to False (default), data is collected from custom directories prepared by the virtual MetaTrader5 instance.
-
-        Notes:
-            The reason for direct_mt5_api_calls is to help users experiment what works best for them in a particular moment, direct MT5 calls are usually faster and efficient
-            compared to accessing data from custom directories which introduce "file IO" that are often computationally expensive.
         """
         
         super().__init__()
 
         self.IS_OPTIMIZATION_MODE = False
-
-        self.history_start_date = None
-        self.logger = logger
+        self.logger = None
         self.broker_data_path = ""
-        self.polars_collect_engine = polars_collect_engine
         self.history_manager = None
-        self.direct_mt5_api_calls = direct_mt5_api_calls
 
         self._last_error = None
 
@@ -104,23 +79,30 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
     def initialize(self,
                    parent_mt5: MetaTrader5,
-                   history_start_date: datetime,
-                   is_optimization_mode: bool) -> bool:
+                   is_optimization_mode: bool,
+                   custom_broker_data_path: str = "",
+                   logger: Optional[logging.Logger] = None
+                   ) -> bool:
         """
         Initializes the virtual MetaTrader5.
 
         Args:
             parent_mt5 (Any): MetaTrader5 API/client instance used for obtaining crucial information from the broker as an attempt to mimic the terminal.
-            history_start_date (datetime | optional): The first date in history
-            is_optimization_mode: Whether to run the virtual terminal in optimization mode
+            is_optimization_mode (bool): Whether to run the virtual terminal in optimization mode.
+            custom_broker_data_path (bool | optional): Where custom folders for history are kept.
+            logger (Logger | optional): Logger object for logging.
 
         Returns:
             True if successful and False otherwise.
         """
 
+        # store global variables
+
         self.IS_OPTIMIZATION_MODE = is_optimization_mode
         self.parent_mt5 = parent_mt5
-        self.history_start_date = history_start_date
+        self.logger = logger
+
+        # checking the parent MetaTrader5
 
         if parent_mt5 is None:
             self.critical_log("Invalid parent_mt5 was received")
@@ -145,7 +127,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
         # broker's data
 
-        self.broker_data_path = self.ACCOUNT.server
+        self.broker_data_path = self.ACCOUNT.server if custom_broker_data_path == "" else custom_broker_data_path
         self.history_manager = data.HistoryManager(mt5_instance=parent_mt5, broker_data_path=self.broker_data_path)
 
         terminal_info = parent_mt5.terminal_info()
@@ -364,7 +346,14 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         self.TICK_CACHE[symbol] = tick
 
     @requires_initialization
-    def copy_rates_range(self, symbol: str, timeframe: int, date_from: datetime, date_to: datetime) -> Optional[
+    def copy_rates_range(self,
+                         symbol: str,
+                         timeframe: int,
+                         date_from: datetime,
+                         date_to: datetime,
+                         parent_mt5_source: bool=False,
+                         polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto"
+                         ) -> Optional[
         RATES_DTYPE]:
         """Get bars in the specified date range from the MetaTrader 5 terminal.
 
@@ -375,21 +364,37 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             timeframe (int): Timeframe the bars are requested for. Set by a value from the TIMEFRAME enumeration. Required unnamed parameter.
             date_from (datetime): Date the bars are requested from. Set by the 'datetime' object or as a number of seconds elapsed since 1970.01.01. Bars with the open time >= date_from are returned. Required unnamed parameter.
             date_to (datetime): Date, up to which the bars are requested. Set by the 'datetime' object or as a number of seconds elapsed since 1970.01.01. Bars with the open time <= date_to are returned. Required unnamed parameter.
+            parent_mt5_source (bool): Whether to obtain rates directly from the `parent_mt5` (directly from the terminal) when set to True. Or, from custom broker's path created by the StrategyTester object.
+
+            polars_collect_engine (str): Engine used by Polars when collecting rates from custom broker's path. Supported values are:
+                - ``"auto"`` (default): Use Polars’ standard in-memory engine and
+                    respect the ``POLARS_ENGINE_AFFINITY`` environment variable if set.
+                - ``"in-memory"``: Explicitly use the default in-memory engine,
+                    optimized with multi-threading and SIMD over Arrow data.
+                - ``"streaming"``: Process queries in batches, enabling
+                    larger-than-RAM datasets.
+                - ``"gpu"``: Use NVIDIA GPUs via RAPIDS cuDF for accelerated execution.
+                    Requires installing Polars with GPU support, e.g.:
+                    ``pip install polars[gpu] --extra-index-url=https://pypi.nvidia.com``.
 
             Returns:
                 Returns bars as the numpy array with the named time, open, high, low, close, tick_volume, spread and real_volume columns. Returns None in case of an error. The info on the error can be obtained using MetaTrader5.last_error().
+
+            Notes:
+                - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5` becomes handy.
         """
 
         if not isinstance(date_from, datetime) or not isinstance(date_to, datetime):
             self.warning_log("Failed, both `date_from` and `date_to` must be datetime objects")
             return None
 
-        if self.direct_mt5_api_calls:
+        if parent_mt5_source:
             rates = self.parent_mt5.copy_rates_range(symbol, timeframe, date_from, date_to)
+            self._last_error = self.parent_mt5.last_error()
 
         else:
             rates = self.history_manager.copy_rates_range_from_parquet(symbol, timeframe, date_from, date_to,
-                                                                       polars_collect_engine=self.polars_collect_engine,
+                                                                       polars_collect_engine=polars_collect_engine,
                                                                        broker_data_dir=self.broker_data_path,
                                                                        logger=self.logger)
 
@@ -400,7 +405,14 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         return rates
 
     @requires_initialization
-    def copy_rates_from(self, symbol: str, timeframe: int, date_from: datetime, count: int) -> Optional[RATES_DTYPE]:
+    def copy_rates_from(self,
+                        symbol: str,
+                        timeframe: int,
+                        date_from: datetime,
+                        count: int,
+                        parent_mt5_source: bool = False,
+                        polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto"
+                        ) -> Optional[RATES_DTYPE]:
 
         """Get bars from the MetaTrader 5 terminal starting from the specified date.
 
@@ -411,9 +423,24 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             timeframe (int): Timeframe the bars are requested for. Set by a value from the TIMEFRAME enumeration. Required unnamed parameter.
             date_from (datetime): Date of opening of the first bar from the requested sample. Set by the 'datetime' object or as a number of seconds elapsed since 1970.01.01. Required unnamed parameter.
             count (int): Number of bars to receive. Required unnamed parameter.
+            parent_mt5_source (bool): Whether to obtain rates directly from the `parent_mt5` (directly from the terminal) when set to True. Or, from custom broker's path created by the StrategyTester object.
+
+            polars_collect_engine (str): Engine used by Polars when collecting rates from custom broker's path. Supported values are:
+                - ``"auto"`` (default): Use Polars’ standard in-memory engine and
+                    respect the ``POLARS_ENGINE_AFFINITY`` environment variable if set.
+                - ``"in-memory"``: Explicitly use the default in-memory engine,
+                    optimized with multi-threading and SIMD over Arrow data.
+                - ``"streaming"``: Process queries in batches, enabling
+                    larger-than-RAM datasets.
+                - ``"gpu"``: Use NVIDIA GPUs via RAPIDS cuDF for accelerated execution.
+                    Requires installing Polars with GPU support, e.g.:
+                    ``pip install polars[gpu] --extra-index-url=https://pypi.nvidia.com``.
 
         Returns:
             Returns bars as the numpy array with the named time, open, high, low, close, tick_volume, spread and real_volume columns. Return None in case of an error. The info on the error can be obtained using last_error().
+
+        Notes:
+            - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5` becomes handy.
         """
 
         if isinstance(date_from, (int, float)):
@@ -421,17 +448,19 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
         # instead of getting data from MetaTrader 5, get data stored in our custom directories
 
-        if self.direct_mt5_api_calls:
+        if parent_mt5_source:
             rates = self.parent_mt5.copy_rates_from(symbol, timeframe, date_from, count)
         else:
+
+            date_to = self.current_time() - PeriodSeconds(timeframe) * count
             rates = self.history_manager.copy_rates_from_parquet(symbol,
                                                                  timeframe,
                                                                  date_from=date_from,
-                                                                 history_start_date=self.history_start_date,
+                                                                 history_start_date=date_to,
                                                                  count=count,
                                                                  broker_data_dir=self.broker_data_path,
                                                                  logger=self.logger,
-                                                                 polars_collect_engine=self.polars_collect_engine)
+                                                                 polars_collect_engine=polars_collect_engine)
 
         if rates is None or len(rates) == 0:
             self.warning_log(f"no rates found for {symbol} from {date_from} bars: {count}")
@@ -440,7 +469,14 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         return rates
 
     @requires_initialization
-    def copy_rates_from_pos(self, symbol: str, timeframe: int, start_pos: int, count: int) -> Optional[TICKS_DTYPE]:
+    def copy_rates_from_pos(self,
+                            symbol: str,
+                            timeframe: int,
+                            start_pos: int,
+                            count: int,
+                            parent_mt5_source: bool=False,
+                            polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto"
+                            ) -> Optional[TICKS_DTYPE]:
         """
         Get bars from the MetaTrader 5 terminal starting from the specified index.
 
@@ -451,9 +487,24 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             timeframe (int): MT5 timeframe the bars are requested for.
             start_pos (int): Initial index of the bar the data are requested from. The numbering of bars goes from present to past. Thus, the zero bar means the current one. Required unnamed parameter.
             count (int): Number of bars to receive. Required unnamed parameter.
+            parent_mt5_source (bool): Whether to obtain rates directly from the `parent_mt5` (directly from the terminal) when set to True. Or, from custom broker's path created by the StrategyTester object.
+
+            polars_collect_engine (str): Engine used by Polars when collecting rates from custom broker's path. Supported values are:
+                - ``"auto"`` (default): Use Polars’ standard in-memory engine and
+                    respect the ``POLARS_ENGINE_AFFINITY`` environment variable if set.
+                - ``"in-memory"``: Explicitly use the default in-memory engine,
+                    optimized with multi-threading and SIMD over Arrow data.
+                - ``"streaming"``: Process queries in batches, enabling
+                    larger-than-RAM datasets.
+                - ``"gpu"``: Use NVIDIA GPUs via RAPIDS cuDF for accelerated execution.
+                    Requires installing Polars with GPU support, e.g.:
+                    ``pip install polars[gpu] --extra-index-url=https://pypi.nvidia.com``.
 
         Returns:
             Returns bars as the numpy array with the named time, open, high, low, close, tick_volume, spread and real_volume columns. Returns None in case of an error. The info on the error can be obtained using last_error().
+
+        Notes:
+            - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5` becomes handy.
         """
 
         tick = self.symbol_info_tick(symbol=symbol)
@@ -463,20 +514,23 @@ class VirtualMetaTrader5(MetaTrader5Constants):
                 f"Time information not found in the ticker for {symbol}, call the function 'tick_update' giving it the latest tick information")
             return None
 
-        now = datetime.fromtimestamp(tick.time)
-
-        if self.direct_mt5_api_calls:
+        if parent_mt5_source:
             rates = self.parent_mt5.copy_rates_from_pos(symbol, timeframe, start_pos, count)
             self._last_error = self.parent_mt5.last_error()
+
         else:
+
+            date_from = self.current_time() - PeriodSeconds(timeframe) * start_pos
+            date_to = date_from - PeriodSeconds(timeframe) * count
+
             rates = self.history_manager.copy_rates_from_parquet(symbol,
                                                                  timeframe,
-                                                                 date_from=now,
-                                                                 history_start_date=self.history_start_date,
+                                                                 date_from=date_from,
+                                                                 history_start_date=date_to,
                                                                  count=count,
                                                                  broker_data_dir=self.broker_data_path,
                                                                  logger=self.logger,
-                                                                 polars_collect_engine=self.polars_collect_engine)
+                                                                 polars_collect_engine=polars_collect_engine)
 
         if rates is None or len(rates) == 0:
             self.debug_log(f"no rates found for {symbol} from {start_pos} bars: {count}")
@@ -492,7 +546,10 @@ class VirtualMetaTrader5(MetaTrader5Constants):
                          symbol: str,
                          date_from: datetime,
                          date_to: datetime,
-                         flags: int = MetaTrader5.COPY_TICKS_ALL) -> Optional[TICKS_DTYPE]:
+                         flags: int = MetaTrader5.COPY_TICKS_ALL,
+                         parent_mt5_source: bool=False,
+                         polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto"
+                         ) -> Optional[TICKS_DTYPE]:
 
         """Get ticks for the specified date range from the MetaTrader 5 terminal.
 
@@ -501,38 +558,54 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         Args:
             symbol(str): Financial instrument name, for example, "EURUSD". Required unnamed parameter.
             date_from(datetime): Date of opening of the first bar from the requested sample. Set by the 'datetime' object or as a number of seconds elapsed since 1970.01.01. Required unnamed parameter.
-
             date_to(datetime): Date, up to which the ticks are requested. Set by the 'datetime' object or as a number of seconds elapsed since 1970.01.01. Required unnamed parameter.
             flags(int): A flag to define the type of the requested ticks. COPY_TICKS_INFO – ticks with Bid and/or Ask changes, COPY_TICKS_TRADE – ticks with changes in Last and Volume, COPY_TICKS_ALL – all ticks. Flag values are described in the COPY_TICKS enumeration. Required unnamed parameter.
+            parent_mt5_source (bool): Whether to obtain ticks directly from the `parent_mt5` (directly from the terminal) when set to True. Or, from custom broker's path created by the StrategyTester object.
 
+            polars_collect_engine (str): Engine used by Polars when collecting ticks from custom broker's path. Supported values are:
+                - ``"auto"`` (default): Use Polars’ standard in-memory engine and
+                    respect the ``POLARS_ENGINE_AFFINITY`` environment variable if set.
+                - ``"in-memory"``: Explicitly use the default in-memory engine,
+                    optimized with multi-threading and SIMD over Arrow data.
+                - ``"streaming"``: Process queries in batches, enabling
+                    larger-than-RAM datasets.
+                - ``"gpu"``: Use NVIDIA GPUs via RAPIDS cuDF for accelerated execution.
+                    Requires installing Polars with GPU support, e.g.:
+                    ``pip install polars[gpu] --extra-index-url=https://pypi.nvidia.com``.
         Returns:
             Returns ticks as the numpy array with the named time, bid, ask, last and flags columns. The 'flags' value can be a combination of flags from the TICK_FLAG enumeration. Return None in case of an error. The info on the error can be obtained using last_error().
+
+        Notes:
+            - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5` becomes handy.
         """
 
         if not isinstance(date_from, datetime) or isinstance(date_to, datetime):
             self.warning_log("Failed, both `date_from` and `date_to` must be datetime objects")
             return None
 
-        if self.direct_mt5_api_calls:
+        if parent_mt5_source:
 
             ticks = self.parent_mt5.copy_ticks_range(symbol, date_from, date_to, flags)
             self._last_error = self.parent_mt5.last_error()
             return ticks
 
-        return self.history_manager.copy_ticks_range_from_parquet(symbol=symbol,
-                                                                  date_from=date_from,
-                                                                  date_to=date_to,
-                                                                  polars_collect_engine=self.polars_collect_engine,
-                                                                  broker_data_dir=self.broker_data_path,
-                                                                  flags=flags,
-                                                                  logger=self.logger)
+        return self.history_manager.copy_ticks_range_parquet(symbol=symbol,
+                                                             date_from=date_from,
+                                                             date_to=date_to,
+                                                             polars_collect_engine=polars_collect_engine,
+                                                             broker_data_dir=self.broker_data_path,
+                                                             flags=flags,
+                                                             logger=self.logger)
 
     @requires_initialization
     def copy_ticks_from(self,
                         symbol: str,
                         date_from: datetime,
                         count: int,
-                        flags: int = MetaTrader5.COPY_TICKS_ALL) -> Optional[np.array]:
+                        flags: int = MetaTrader5.COPY_TICKS_ALL,
+                        parent_mt5_source: bool=False,
+                        polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto"
+                        ) -> Optional[np.array]:
 
         """Get ticks from the MetaTrader 5 terminal starting from the specified date.
 
@@ -541,32 +614,45 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         Args:
             symbol(str): Financial instrument name, for example, "EURUSD". Required unnamed parameter.
             date_from(datetime): Date of opening of the first bar from the requested sample. Set by the 'datetime' object or as a number of seconds elapsed since 1970.01.01. Required unnamed parameter.
-
             count(int): Number of ticks to receive. Required unnamed parameter.
             flags(int): A flag to define the type of the requested ticks. COPY_TICKS_INFO – ticks with Bid and/or Ask changes, COPY_TICKS_TRADE – ticks with changes in Last and Volume, COPY_TICKS_ALL – all ticks. Flag values are described in the COPY_TICKS enumeration. Required unnamed parameter.
+            parent_mt5_source (bool): Whether to obtain ticks directly from the `parent_mt5` (directly from the terminal) when set to True. Or, from custom broker's path created by the StrategyTester object.
+
+            polars_collect_engine (str): Engine used by Polars when collecting ticks from custom broker's path. Supported values are:
+                - ``"auto"`` (default): Use Polars’ standard in-memory engine and
+                    respect the ``POLARS_ENGINE_AFFINITY`` environment variable if set.
+                - ``"in-memory"``: Explicitly use the default in-memory engine,
+                    optimized with multi-threading and SIMD over Arrow data.
+                - ``"streaming"``: Process queries in batches, enabling
+                    larger-than-RAM datasets.
+                - ``"gpu"``: Use NVIDIA GPUs via RAPIDS cuDF for accelerated execution.
+                    Requires installing Polars with GPU support, e.g.:
+                    ``pip install polars[gpu] --extra-index-url=https://pypi.nvidia.com``.
 
         Returns:
             Returns ticks as the numpy array with the named time, bid, ask, last and flags columns. The 'flags' value can be a combination of flags from the TICK_FLAG enumeration. Return None in case of an error. The info on the error can be obtained using last_error().
+
+        Notes:
+            - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5` becomes handy.
         """
 
         if not isinstance(date_from, datetime):
             self.warning_log("Failed, `date_from` must be a datetime object")
             return None
 
-        if self.direct_mt5_api_calls:
+        if parent_mt5_source:
 
             ticks = self.parent_mt5.copy_ticks_from(symbol, date_from, count, flags)
             self._last_error = self.parent_mt5.last_error()
             return ticks
 
-        return self.history_manager.copy_ticks_range_from_parquet(symbol=symbol,
-                                                                  date_from=date_from,
-                                                                  date_to=self.history_start_date,
-                                                                  limit=count,
-                                                                  polars_collect_engine=self.polars_collect_engine,
-                                                                  broker_data_dir=self.broker_data_path,
-                                                                  flags=flags,
-                                                                  logger=self.logger)
+        return self.history_manager.copy_ticks_from_parquet(symbol=symbol,
+                                                          date_from=date_from,
+                                                          limit=count,
+                                                          polars_collect_engine=polars_collect_engine,
+                                                          broker_data_dir=self.broker_data_path,
+                                                          flags=flags,
+                                                          logger=self.logger)
 
     @requires_initialization
     def orders_total(self) -> int:
@@ -596,7 +682,6 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             ticket (int | optional): Order ticket (ORDER_TICKET).
 
         Returns:
-
             list: Returns info in the form of a tuple structure (TradeOrder). Return None in case of an error. The info on the error can be obtained using last_error().
         """
 
