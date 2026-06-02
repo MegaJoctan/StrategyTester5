@@ -317,6 +317,11 @@ class HistoryManager:
             _warning_log("date_from must be <= date_to", logger)
             return None
 
+        if isinstance(date_from, (int, float)):
+            date_from = datetime.fromtimestamp(date_from)
+        if isinstance(date_to, (int, float)):
+            date_to = datetime.fromtimestamp(date_to)
+
         timeframe_str = MetaTrader5Constants.TIMEFRAME2STRING_MAP[timeframe]
 
         files: list[str] = []
@@ -410,6 +415,11 @@ class HistoryManager:
         """
 
         timeframe_str = MetaTrader5Constants.TIMEFRAME2STRING_MAP[timeframe]
+
+        if isinstance(date_from, (int, float)):
+            date_from = datetime.fromtimestamp(date_from)
+        if isinstance(history_start_date, (int, float)):
+            history_start_date = datetime.fromtimestamp(history_start_date)
 
         # ---------------- determine months ----------------
 
@@ -549,6 +559,11 @@ class HistoryManager:
                 _warning_log("date_from must be <= date_to", logger)
                 return None
 
+        if isinstance(date_from, (int, float)):
+            date_from = datetime.fromtimestamp(date_from)
+        if isinstance(date_to, (int, float)):
+            date_to = datetime.fromtimestamp(date_to)
+
         # ---------------- determine months ----------------
         months_iter = (
             HistoryManager.iter_months_between(date_from, date_to)
@@ -671,6 +686,9 @@ class HistoryManager:
         if not files:
             _warning_log(f"No stored tick history found for {symbol}", logger)
             return None
+
+        if isinstance(date_from, (int, float)):
+            date_from = datetime.fromtimestamp(date_from)
 
         t_from = int(date_from.timestamp())
         flag_mask = HistoryManager._tick_flag_mask(flags)
