@@ -230,6 +230,7 @@ TradeDeal = namedtuple(
     ]
 )
 
+
 AccountInfo = namedtuple(
     "AccountInfo",
     [
@@ -263,6 +264,38 @@ AccountInfo = namedtuple(
         "company",
     ]
 )
+
+
+@dataclass
+class SimulatedAccountInfo:
+    login: int
+    trade_mode: int
+    leverage: int
+    limit_orders: int
+    margin_so_mode: int
+    trade_allowed: bool
+    trade_expert: bool
+    margin_mode: int
+    currency_digits: int
+    fifo_close: bool
+    balance: float
+    credit: float
+    profit: float
+    equity: float
+    margin: float
+    margin_free: float
+    margin_level: int
+    margin_so_call: int
+    margin_so_so: int
+    margin_initial: int
+    margin_maintenance: int
+    assets: int
+    liabilities: int
+    commission_blocked: int
+    name: str
+    server: str
+    currency: str
+    company: str
 
 TerminalInfo = namedtuple(
     "TerminalInfo",
