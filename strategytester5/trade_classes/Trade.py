@@ -4,7 +4,7 @@ import logging
 
 from datetime import datetime, timezone
 from typing import Union
-from strategytester5.MetaTrader5.api import OverLoadedMetaTrader5API
+from strategytester5.MetaTrader5.api import VirtualMetaTrader5
 import MetaTrader5
 
 class CTrade:
@@ -21,7 +21,7 @@ class CTrade:
             magic_number: int,
             symbol: str,
             deviation_points: int,
-            terminal: Union[OverLoadedMetaTrader5API|MetaTrader5],
+            terminal: Union[VirtualMetaTrader5|MetaTrader5],
             logger: logging.Logger | None = None
     ):
         """
