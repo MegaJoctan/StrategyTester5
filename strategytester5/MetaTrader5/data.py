@@ -3,7 +3,8 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, as_completed
 # from threading import Lock
 import time
-
+import glob
+import os
 import logging
 from typing import Iterable, Optional, Literal, Any
 from pathlib import Path
@@ -512,7 +513,7 @@ class HistoryManager:
         return mask
 
     @staticmethod
-    def copy_ticks_range_from_parquet(
+    def copy_ticks_range_parquet(
             symbol: str,
             date_from: datetime,
             date_to: Optional[datetime] = None,
@@ -583,6 +584,107 @@ class HistoryManager:
             lf = lf.filter((pl.col("flags") & flag_mask) != 0)
 
             # ---------------- sorting ----------------
+            lf = lf.sort(["time", "time_msc"])
+
+            # ---------------- limit mode ----------------
+            if limit is not None:
+                lf = lf.limit(limit)
+
+            df = (
+                lf.select([
+                    "time",
+                    "bid",
+                    "ask",
+                    "last",
+                    "volume",
+                    "time_msc",
+                    "flags",
+                    "volume_real",
+                ])
+                .collect(engine=polars_collect_engine)
+            )
+
+            if df.is_empty():
+                return np.empty(0, dtype=TICKS_DTYPE)
+
+            return np.array(
+                list(zip(
+                    df["time"],
+                    df["bid"],
+                    df["ask"],
+                    df["last"],
+                    df["volume"],
+                    df["time_msc"],
+                    df["flags"],
+                    df["volume_real"],
+                )),
+                dtype=TICKS_DTYPE
+            )
+
+        except Exception as e:
+            _warning_log(
+                f"Failed to copy ticks for {symbol} from {date_from}: {e}",
+                logger
+            )
+            return None
+
+    @staticmethod
+    def copy_ticks_from_parquet(
+            symbol: str,
+            date_from: datetime,
+            flags: int = MetaTrader5Constants.COPY_TICKS_ALL,
+            limit: Optional[int] = None,
+            polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto",
+            broker_data_dir: Optional[str] = config.DEFAULT_BROKER_DATA_PATH,
+            logger: Optional[logging.Logger] = None,
+    ):
+
+        """Copies ticks for a specified symbol, timeframe and date range from locally stored parquet files. This method is used by the simulator to load ticks without accessing the MetaTrader5 terminal.
+
+        Args:
+            symbol (str): An instrument in the terminal
+            date_from (datetime): start date of the ticks to copy
+            flags (int): A flag to define the type of the requested ticks. COPY_TICKS_INFO – ticks with Bid and/or Ask changes, COPY_TICKS_TRADE – ticks with changes in Last and Volume, COPY_TICKS_ALL – all ticks. For any type of request, the values of the previous tick are added to the remaining fields of the MqlTick structure.
+            limit (int | optional): The maximum number of ticks to collect
+            polars_collect_engine (Literal["auto", "in-memory", "streaming", "gpu"], optional): Polars collection engine to use. Defaults to "auto".
+            broker_data_dir (Optional[str], optional): The directory where broker data is stored. Defaults to config.DEFAULT_BROKER_DATA_PATH.
+            logger (Optional[logging.Logger], optional): The logger to use. Defaults to None.
+
+        Returns:
+            Copied ticks as a NumPy array or None in case of a failure
+        """
+
+        # ---------------- locate parquet files ----------------
+
+        files = sorted(
+            glob.glob(
+                os.path.join(
+                    broker_data_dir,
+                    symbol,
+                    "Ticks",
+                    "*.parquet"
+                ),
+                recursive=True
+            )
+        )
+
+        if not files:
+            _warning_log(f"No stored tick history found for {symbol}", logger)
+            return None
+
+        t_from = int(date_from.timestamp())
+        flag_mask = HistoryManager._tick_flag_mask(flags)
+
+        try:
+            lf = pl.scan_parquet(files)
+
+            # ---------------- filtering ----------------
+
+            lf = lf.filter(pl.col("time") >= t_from)
+            lf = lf.filter((pl.col("flags") & flag_mask) != 0)
+
+            # ---------------- sorting ----------------
+
             lf = lf.sort(["time", "time_msc"])
 
             # ---------------- limit mode ----------------
@@ -812,7 +914,7 @@ class HistoryManager:
 
         if not lazy_frames:
             err = "No tick data found"
-            self.logger.critical(err)
+            self._critical_log(err)
             raise RuntimeError(err)
 
         return pl.concat(lazy_frames)
@@ -897,7 +999,7 @@ class HistoryManager:
 
         if not lazy_frames:
             err = f"No bars data found on: {tf_str} timeframe"
-            self.logger.critical(err)
+            self._critical_log(err)
             raise RuntimeError(err)
 
         return pl.concat(lazy_frames)
