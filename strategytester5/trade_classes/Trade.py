@@ -1,7 +1,5 @@
 
 from __future__ import annotations
-import logging
-
 from datetime import datetime, timezone
 from typing import Union
 from strategytester5.MetaTrader5.api import VirtualMetaTrader5
@@ -21,8 +19,7 @@ class CTrade:
             magic_number: int,
             symbol: str,
             deviation_points: int,
-            terminal: Union[VirtualMetaTrader5|MetaTrader5],
-            logger: logging.Logger | None = None
+            terminal: Union[VirtualMetaTrader5|MetaTrader5]
     ):
         """
         Initializes a CTrade wrapper for MetaTrader 5 trade operations.
@@ -34,7 +31,6 @@ class CTrade:
             magic_number : Expert Advisor identifier used to tag and track orders and positions created by this trade object.
             symbol : Trading symbol e.g., EURUSD, USDJPY.
             deviation_points : Maximum allowed price deviation, in points, when executing market orders.
-            logger : Logger instance used for diagnostic and error messages. If None, logging output is handled only by the class' internal logic.
 
         Notes:
             - The constructor resolves and stores the filling type for the provided
@@ -47,8 +43,7 @@ class CTrade:
               once and reused across requests.
         """
         
-        self.logger = logger
-
+        # self.logger = logger
         self.terminal = terminal
 
         self.magic_number = magic_number
@@ -57,38 +52,14 @@ class CTrade:
         self.filling_type = self._get_type_filling(self.symbol)
         
         if self.filling_type == -1:
-            self._critical_log("Failed to initialize the class, Invalid filling type. Check your symbol")
-            return
-    
-    def _critical_log(self, message: str):
-        if self.logger:
-            self.logger.critical(message, stacklevel=3)
-        else:
-            print(f"CRITICAL: {message}")
-            
-    def _info_log(self, message: str):
-        if self.logger:
-            self.logger.info(message, stacklevel=3)
-        else:
-            print(f"INFO: {message}")
-    
-    def _error_log(self, message: str):
-        if self.logger:
-            self.logger.error(message, stacklevel=3)
-        else:
-            print(f"ERROR: {message}")
-    
-    def _warning_log(self, message: str):
-        if self.logger:
-            self.logger.warning(message, stacklevel=3)
-        else:
-            print(f"WARNING: {message}")
+            raise RuntimeError("Failed to initialize the class, Invalid filling type. Check your symbol")
     
     def _get_type_filling(self, symbol):
         
         symbol_info = self.terminal.symbol_info(symbol)
         if symbol_info is None:
-            self._warning_log(f"Failed to get symbol info for {symbol}")
+            msg = f"Failed to get symbol info for {symbol}"
+            raise RuntimeError(msg)
         
         filling_map = {
             1: self.terminal.ORDER_FILLING_FOK,
@@ -144,10 +115,8 @@ class CTrade:
         result = self.terminal.order_send(request)
         if result.retcode != self.terminal.TRADE_RETCODE_DONE:
             return False
-        
-        self._info_log(f"Position #{result.deal} Opened successfully!")
+
         return True
-    
     
     def order_open(self, volume: float, order_type: int, price: float, sl: float = 0.0, tp: float = 0.0, type_time: int = 0, expiration: datetime = None, comment: str = "") -> bool:
         
@@ -176,7 +145,7 @@ class CTrade:
         
         # Validate expiration for time-specific orders
         if type_time in (self.terminal.ORDER_TIME_SPECIFIED, self.terminal.ORDER_TIME_SPECIFIED_DAY) and expiration is None:
-            self._error_log(f"Expiration required for order type {type_time}")
+            # self._error_log(f"Expiration required for order type {type_time}")
             return False
         
         request = {
@@ -376,7 +345,7 @@ class CTrade:
             
         # Select position by ticket
         if not self.terminal.positions_get(ticket=ticket):
-            self._warning_log(f"Position with ticket {ticket} not found.")
+            # self._warning_log(f"Position with ticket {ticket} not found.")
             return False
 
         position = self.terminal.positions_get(ticket=ticket)[0]
@@ -410,7 +379,7 @@ class CTrade:
         if self.terminal.order_send(request) is None:
             return False
 
-        self._info_log(f"Position {ticket} closed successfully!")
+        # self._info_log(f"Position {ticket} closed successfully!")
         return True
     
     def order_delete(self, ticket: int) -> bool:
@@ -432,7 +401,8 @@ class CTrade:
     
         order = self.terminal.orders_get(ticket=ticket)[0]
         if order is None:
-            self._info_log(f"Order {order} not found!")
+            return False
+            # self._info_log(f"Order {order} not found!")
         
         request = {
             "action": self.terminal.TRADE_ACTION_REMOVE,
@@ -446,7 +416,7 @@ class CTrade:
         if self.terminal.order_send(request) is None:
             return False
 
-        self._info_log(f"Order {ticket} deleted successfully!")
+        # self._info_log(f"Order {ticket} deleted successfully!")
         return True
             
 
@@ -471,7 +441,7 @@ class CTrade:
         
         # Select position by ticket
         if not self.terminal.positions_get(ticket=ticket):
-            self._warning_log(f"Position with ticket {ticket} not found.")
+            # self._warning_log(f"Position with ticket {ticket} not found.")
             return False
 
         position = self.terminal.positions_get(ticket=ticket)[0]
@@ -491,7 +461,7 @@ class CTrade:
         if self.terminal.order_send(request) is None:
             return False
         
-        self._info_log(f"Position {ticket} modified successfully!")
+        # self._info_log(f"Position {ticket} modified successfully!")
         return True
     
     def order_modify(self, ticket: int, price: float, sl: float, tp: float, type_time: int = 0, expiration: datetime = None, stoplimit: float = 0.0) -> bool:
@@ -520,7 +490,7 @@ class CTrade:
         # Get the order by ticket
         order = self.terminal.orders_get(ticket=ticket)
         if not order:
-            self._warning_log(f"Order with ticket {ticket} not found")
+            # self._warning_log(f"Order with ticket {ticket} not found")
             return False
         
         order = order[0]  # Get the first (and only) order
@@ -541,7 +511,7 @@ class CTrade:
         # Add expiration if specified (for ORDER_TIME_SPECIFIED)
         if type_time == self.terminal.ORDER_TIME_SPECIFIED:
             if expiration is None:
-                self._warning_log("Error: expiration must be specified for ORDER_TIME_SPECIFIED")
+                # self._warning_log("Error: expiration must be specified for ORDER_TIME_SPECIFIED")
                 return False
             
             request["expiration"] = expiration
