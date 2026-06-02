@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from . import *
-from typing import Optional, Literal, Union, Any
+from typing import Optional, Literal, Union
 from strategytester5.MetaTrader5.constants import MetaTrader5Constants
 import MetaTrader5
 import logging
@@ -10,57 +10,70 @@ from .trade_validators import TradeValidators
 from . import data
 import fnmatch
 from datetime import datetime
-from functools import wraps
 
 from ..MQL5.functions import PeriodSeconds
-
-
-def requires_initialization(func):
-    """
-    A decorator for checking if virtual MT5 is initialized.
-
-    Raises:
-        A runtime error if a method is called before initialize().
-    """
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-
-        if not self._initialized:
-            raise RuntimeError(
-                "VirtualMetaTrader5 is not initialized. "
-                "Call initialize() first."
-            )
-
-        return func(self, *args, **kwargs)
-
-    return wrapper
 
 class VirtualMetaTrader5(MetaTrader5Constants):
     """The simulated MetaTrader5 Instance similar to [https://pypi.org/project/metatrader5/](https://pypi.org/project/metatrader5/)"""
 
-    def __init__(self):
+    def __init__(self,
+                 parent_mt5: MetaTrader5,
+                 custom_broker_data_path: str = "",
+                ):
         """
-        Instantiates & initializes the simulated MetaTrader5 instance
+        Instantiates the simulated MetaTrader5 instance.
+
+        Args:
+            parent_mt5 (Any): MetaTrader5 API/client instance used for obtaining crucial information from the broker as an attempt to mimic the terminal.
+            custom_broker_data_path (bool | optional): Where custom folders for history are kept.
+
         """
         
         super().__init__()
 
-        self.IS_OPTIMIZATION_MODE = False
-        self.logger = None
-        self.broker_data_path = ""
-        self.history_manager = None
+        # store global variables
 
+        self.IS_OPTIMIZATION_MODE = False
+        self.parent_mt5 = parent_mt5
+        self.logger = None
+
+        # checking the parent MetaTrader5
+
+        if self.parent_mt5 is None:
+            raise RuntimeError("Invalid parent_mt5 was received")
+
+        # Get necessary information from the parent API
+
+        all_s_info = parent_mt5.symbols_get()
+
+        if all_s_info is None:
+            raise RuntimeError(f"Failed to obtain symbol info from the live MetaTrader5 instance, error = {parent_mt5.last_error()}")
+
+        self.SYMBOL_INFO_CACHE = {s.name: s for s in all_s_info}
+
+        ac_info = parent_mt5.account_info()
+
+        if ac_info is None:
+            raise RuntimeError(f"Failed to obtain account info from the live MetaTrader5 instance, error = {parent_mt5.last_error()}")
+
+        self.ACCOUNT = AccountInfo(*ac_info)
+
+        # broker's data
+
+        self.broker_data_path = self.ACCOUNT.server if custom_broker_data_path == "" else custom_broker_data_path
+        self.history_manager = data.HistoryManager(mt5_instance=parent_mt5, broker_data_path=self.broker_data_path)
+
+        terminal_info = parent_mt5.terminal_info()
+        if terminal_info is None:
+            raise RuntimeError(f"Failed to obtain terminal information from a live MetaTrader5 instance, error = {parent_mt5.last_error()}")
+
+        self.TERMINAL_INFO = terminal_info
         self._last_error = None
 
         self._current_time: int = 0
         self._current_time_msc: int = -1
 
         # ----------------- MetaTrader5-Like Containers-----------------
-
-        self.parent_mt5: MetaTrader5 = Any
-        self.ACCOUNT: AccountInfo = Any
-        self.TERMINAL_INFO: TerminalInfo = Any
-        self.SYMBOL_INFO_CACHE = {}
 
         self.TICK_CACHE: dict[str, Tick] = {}
 
@@ -75,75 +88,12 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         self._positions_counter = 0
         self._orders_counter = 0
 
-        self._initialized = False
-
     def assign_logger(self, logger = logging.Logger):
         """
             Assigns a logger instance to the class
         """
         self.logger = logger
 
-    def initialize(self,
-                   parent_mt5: MetaTrader5,
-                   custom_broker_data_path: str = "",
-                   ) -> bool:
-        """
-        Initializes the virtual MetaTrader5.
-
-        Args:
-            parent_mt5 (Any): MetaTrader5 API/client instance used for obtaining crucial information from the broker as an attempt to mimic the terminal.
-            is_optimization_mode (bool): Whether to run the virtual terminal in optimization mode.
-            custom_broker_data_path (bool | optional): Where custom folders for history are kept.
-
-        Returns:
-            True if successful and False otherwise.
-        """
-
-        # store global variables
-
-        self.IS_OPTIMIZATION_MODE = False
-        self.parent_mt5 = parent_mt5
-        self.logger = None
-
-        # checking the parent MetaTrader5
-
-        if parent_mt5 is None:
-            self.critical_log("Invalid parent_mt5 was received")
-            return False
-
-        # we export account information and all instrument info
-        all_s_info = parent_mt5.symbols_get()
-
-        if all_s_info is None:
-            self.critical_log(f"Failed to obtain symbol info from the live MetaTrader5 instance, error = {parent_mt5.last_error()}")
-            return False
-
-        self.SYMBOL_INFO_CACHE = {s.name: s for s in all_s_info}
-
-        ac_info = parent_mt5.account_info()
-
-        if ac_info is None:
-            self.critical_log(f"Failed to obtain account info from the live MetaTrader5 instance, error = {parent_mt5.last_error()}")
-            return False
-
-        self.ACCOUNT = AccountInfo(*ac_info)
-
-        # broker's data
-
-        self.broker_data_path = self.ACCOUNT.server if custom_broker_data_path == "" else custom_broker_data_path
-        self.history_manager = data.HistoryManager(mt5_instance=parent_mt5, broker_data_path=self.broker_data_path)
-
-        terminal_info = parent_mt5.terminal_info()
-        if terminal_info is None:
-            self.critical_log(f"Failed to obtain terminal information from a live MetaTrader5 instance, error = {parent_mt5.last_error()}")
-            return False
-
-        self.TERMINAL_INFO = terminal_info
-
-        self._initialized = True
-        return True
-
-    @requires_initialization
     def reset_state(self):
         """
         Resets the internal state of the virtual MetaTrader5 object.
@@ -175,7 +125,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         if self.logger is None:
             print(msg)
         else:
-            self.logger.info(msg, stacklevel=4)
+            self.logger.info(msg, stacklevel=3)
 
     def debug_log(self, msg: str):
         if self.IS_OPTIMIZATION_MODE:
@@ -184,7 +134,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         if self.logger is None:
             print(msg)
         else:
-            self.logger.debug(msg, stacklevel=4)
+            self.logger.debug(msg, stacklevel=3)
 
     def warning_log(self, msg: str):
         if self.IS_OPTIMIZATION_MODE:
@@ -193,7 +143,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         if self.logger is None:
             print(msg)
         else:
-            self.logger.warning(msg, stacklevel=4)
+            self.logger.warning(msg, stacklevel=3)
 
     def critical_log(self, msg: str):
         if self.IS_OPTIMIZATION_MODE:
@@ -202,7 +152,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         if self.logger is None:
             print(msg)
         else:
-            self.logger.critical(msg, stacklevel=4)
+            self.logger.critical(msg, stacklevel=3)
 
     def error_log(self, msg: str):
         if self.IS_OPTIMIZATION_MODE:
@@ -213,40 +163,40 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         else:
             self.logger.error(msg, stacklevel=3)
 
-    @requires_initialization
+    
     def current_time(self) -> int:
         """Returns the current time in seconds since 1970.01.01 00:00:00, as obtained from the latest tick update."""
         return self._current_time
 
-    @requires_initialization
+    
     def current_time_msc(self) -> int:
         """Returns the current time in milliseconds since 1970.01.01 00:00:00, as obtained from the latest tick update."""
         return self._current_time_msc
 
-    @requires_initialization
+    
     def _generate_order_history_ticket(self) -> int:
         return len(self.ORDERS_HISTORY) + 1
 
-    @requires_initialization
+    
     def _generate_deal_ticket(self) -> int:
         return len(self.DEALS) + 1
 
-    @requires_initialization
+    
     def _generate_order_ticket(self) -> int:
         self._orders_counter += 1
         return self._orders_counter
 
-    @requires_initialization
+    
     def _generate_position_ticket(self) -> int:
         self._positions_counter += 1
         return self._positions_counter
 
-    @requires_initialization
+    
     def last_error(self):
         """returns the last error from the terminal or the strategy tester"""
         return self._last_error
 
-    @requires_initialization
+    
     def account_info(self) -> Optional[AccountInfo]:
         """Gets info on the current trading account.
 
@@ -258,7 +208,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
         return self.ACCOUNT
 
-    @requires_initialization
+    
     def symbol_info(self, symbol: str) -> Optional[SymbolInfo]:
         """Gets data on the specified financial instrument.
 
@@ -274,7 +224,6 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
         return self.SYMBOL_INFO_CACHE[symbol]
 
-    @requires_initialization
     def symbol_info_tick(self, symbol: str) -> Tick:
         """Gets the last tick for the specified financial instrument.
 
@@ -292,7 +241,6 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
         return tick
 
-    @requires_initialization
     def tick_update(self, symbol: str, tick: Union[Tick, dict, TICKS_DTYPE]):
         """
         Assigns the tick object to a virtual MetaTrader5 instance.
@@ -348,7 +296,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         self._current_time_msc = tick.time_msc
         self.TICK_CACHE[symbol] = tick
 
-    @requires_initialization
+    
     def copy_rates_range(self,
                          symbol: str,
                          timeframe: int,
@@ -407,7 +355,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
         return rates
 
-    @requires_initialization
+    
     def copy_rates_from(self,
                         symbol: str,
                         timeframe: int,
@@ -459,7 +407,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             rates = self.history_manager.copy_rates_from_parquet(symbol,
                                                                  timeframe,
                                                                  date_from=date_from,
-                                                                 history_start_date=date_to,
+                                                                 history_start_date=datetime.fromtimestamp(date_to),
                                                                  count=count,
                                                                  broker_data_dir=self.broker_data_path,
                                                                  logger=self.logger,
@@ -471,7 +419,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
         return rates
 
-    @requires_initialization
+    
     def copy_rates_from_pos(self,
                             symbol: str,
                             timeframe: int,
@@ -528,8 +476,8 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
             rates = self.history_manager.copy_rates_from_parquet(symbol,
                                                                  timeframe,
-                                                                 date_from=date_from,
-                                                                 history_start_date=date_to,
+                                                                 date_from=datetime.fromtimestamp(date_from),
+                                                                 history_start_date=datetime.fromtimestamp(date_to),
                                                                  count=count,
                                                                  broker_data_dir=self.broker_data_path,
                                                                  logger=self.logger,
@@ -544,7 +492,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
     def symbol_select(self, symbol: str, select: bool=False) -> bool:
         return True
 
-    @requires_initialization
+    
     def copy_ticks_range(self,
                          symbol: str,
                          date_from: datetime,
@@ -600,7 +548,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
                                                              flags=flags,
                                                              logger=self.logger)
 
-    @requires_initialization
+    
     def copy_ticks_from(self,
                         symbol: str,
                         date_from: datetime,
@@ -657,7 +605,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
                                                           flags=flags,
                                                           logger=self.logger)
 
-    @requires_initialization
+    
     def orders_total(self) -> int:
 
         """Get the number of active orders.
@@ -668,7 +616,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
         return len(self.ORDERS)
 
-    @requires_initialization
+    
     def orders_get(self,
                    symbol: Optional[str] = None,
                    group: Optional[str] = None,
@@ -708,7 +656,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
         return tuple()
 
-    @requires_initialization
+    
     def positions_total(self) -> int:
         """Get the number of open positions in MetaTrader 5 client.
 
@@ -718,7 +666,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         """
         return len(self.POSITIONS)
 
-    @requires_initialization
+    
     def positions_get(self,
                       symbol: Optional[str] = None,
                       group: Optional[str] = None,
@@ -759,7 +707,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
         return tuple()
 
-    @requires_initialization
+    
     def history_orders_total(self, date_from: datetime, date_to: datetime) -> int:
         """
         Get the number of orders in trading history within the specified interval.
@@ -789,7 +737,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             if date_from_ts <= o.time_setup <= date_to_ts
         )
 
-    @requires_initialization
+    
     def history_orders_get(self,
                            date_from: Optional[datetime] = None,
                            date_to: Optional[datetime] = None,
@@ -868,7 +816,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
         return tuple(filtered)
 
-    @requires_initialization
+    
     def history_deals_total(self, date_from: datetime, date_to: datetime) -> int:
         """
         Get the number of deals in history within the specified date range.
@@ -900,7 +848,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             if date_from_ts <= d.time <= date_to_ts
         )
 
-    @requires_initialization
+    
     def history_deals_get(self,
                           date_from: datetime,
                           date_to: datetime,
@@ -1032,7 +980,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             position_by=int(request.get("position_by", 0)),
         )
 
-    @requires_initialization
+    
     def _make_result(
             self,
             request: TradeRequest,
@@ -1058,7 +1006,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             request=request,
         )
 
-    @requires_initialization
+    
     def _get_trade_validators(self, symbol: str):
         """Returns TradeValidators instance for the given symbol."""
 
@@ -1070,7 +1018,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
         return self.TRADE_VALIDATORS_CACHE[symbol]
 
-    @requires_initialization
+    
     def _create_position_from_request(self, time: int, time_msc: float, request: TradeRequest,
                                       margin: Optional[float] = 0.0) -> TradePosition:
 
@@ -1102,7 +1050,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             margin=margin,
         )
 
-    @requires_initialization
+    
     def _create_order_from_request(self, time: int, time_msc: int, request: TradeRequest,
                                    state: int = MetaTrader5Constants.ORDER_STATE_PLACED) -> TradeOrder:
 
@@ -1135,7 +1083,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             external_id=0,
         )
 
-    @requires_initialization
+    
     def _create_deal_from_request(self, time: int, time_msc: float, entry: int, request: TradeRequest,
                                   position: TradePosition, commission: float = 0.0, swap: float = 0.0,
                                   fee: float = 0.0) -> TradeDeal:
@@ -1179,7 +1127,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             balance=self.ACCOUNT.balance
         )
 
-    @requires_initialization
+    
     def _open_position(self, request: dict):
 
         trade_request = self._build_trade_request(request=request)
@@ -1306,7 +1254,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         return self._make_result(trade_request, retcode=self.TRADE_RETCODE_DONE, deal=deal.ticket, order=deal.order,
                                  volume=position.volume)
 
-    @requires_initialization
+    
     def _close_position(self, request: dict):
 
         trade_request = self._build_trade_request(request=request)
@@ -1440,7 +1388,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             volume=volume,
         )
 
-    @requires_initialization
+    
     def _modify_position(self, request: dict):
 
         trade_request = self._build_trade_request(request=request)
@@ -1515,7 +1463,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             order=position.ticket,
         )
 
-    @requires_initialization
+    
     def _open_pending_order(self, request: dict):
 
         trade_request = self._build_trade_request(request=request)
@@ -1606,7 +1554,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             volume=volume,
         )
 
-    @requires_initialization
+    
     def _modify_order(self, request: dict):
 
         trade_request = self._build_trade_request(request=request)
@@ -1703,7 +1651,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             order=order.ticket,
         )
 
-    @requires_initialization
+    
     def _delete_order(self, request: dict):
 
         trade_request = self._build_trade_request(request=request)
@@ -1760,7 +1708,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             order=order.ticket,
         )
 
-    @requires_initialization
+    
     def order_send(self, request: dict) -> Optional[OrderSendResult]:
         action = request.get("action")
 
@@ -1785,7 +1733,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         self.critical_log("Unknown trade action")
         return None
 
-    @requires_initialization
+    
     def _terminate_all_positions(self, comment: str) -> bool:
 
         for pos in self.positions_get():
@@ -1820,7 +1768,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
         return True
 
-    @requires_initialization
+    
     def order_calc_profit(self,
                           order_type: int,
                           symbol: str,
@@ -1930,7 +1878,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             self.critical_log(f"Failed: {e}")
             return 0.0
 
-    @requires_initialization
+    
     def order_calc_margin(self, order_type: int, symbol: str, volume: float, price: float) -> float:
         """
         Return margin in the account currency to perform a specified trading operation.
