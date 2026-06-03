@@ -20,7 +20,6 @@ from datetime import datetime, timedelta
 import json
 from strategytester5 import config
 
-
 def _warning_log(msg: str, logger: Optional[logging.Logger] = None):
     if logger is None:
         print(msg)
@@ -32,7 +31,8 @@ def _warning_log(msg: str, logger: Optional[logging.Logger] = None):
 class HistoryManager:
     def __init__(self, mt5_instance: Optional[Any] = None,
                  broker_data_path: Optional[str] = config.DEFAULT_BROKER_DATA_PATH,
-                 logger: Optional[logging.Logger] = None):
+                 logger: Optional[logging.Logger] = None,
+                 ):
 
         """
         A class for managing historical market data for the simulation. It provides methods for synchronizing bars and ticks from the MetaTrader5 terminal, as well as loading them from locally stored parquet files.
@@ -95,28 +95,28 @@ class HistoryManager:
             print(msg)
             return
 
-        self.logger.info(msg)
+        self.logger.info(msg, stacklevel=3)
 
     def _error_log(self, msg: str):
         if self.logger is None:
             print(msg)
             return
 
-        self.logger.error(msg)
+        self.logger.error(msg, stacklevel=3)
 
     def _warning_log(self, msg: str):
         if self.logger is None:
             print(msg)
             return
 
-        self.logger.warning(msg)
+        self.logger.warning(msg, stacklevel=3)
 
     def _critical_log(self, msg: str):
         if self.logger is None:
             print(msg)
             return
 
-        self.logger.critical(msg)
+        self.logger.critical(msg, stacklevel=3)
 
     def synchronize_bars(self,
                          symbol: str,
@@ -296,7 +296,8 @@ class HistoryManager:
             date_to: datetime,
             polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto",
             broker_data_dir: Optional[str] = config.DEFAULT_BROKER_DATA_PATH,
-            logger: Optional[logging.Logger] = None
+            logger: Optional[logging.Logger] = None,
+            verbosity: bool = True
     ):
         """Copies bars (rates) for a specified symbol, timeframe and date range from locally stored parquet files. This method is used by the simulator to load bars without accessing the MetaTrader5 terminal.
 
@@ -308,13 +309,15 @@ class HistoryManager:
             polars_collect_engine (Literal["auto", "in-memory", "streaming", "gpu"], optional): Polars collection engine to use. Defaults to "auto".
             broker_data_dir (Optional[str], optional): The directory where broker data is stored. Defaults to config.DEFAULT_BROKER_DATA_PATH.
             logger (Optional[logging.Logger], optional): The logger to use. Defaults to None.
+            verbosity (bool): Whether to log information or remain silent (False). This is crucial during optimization situations where you want minimal to, no logs.
 
         Returns:
             Copied bars as a NumPy array or None in case of a failure
         """
 
         if date_from > date_to:
-            _warning_log("date_from must be <= date_to", logger)
+            if verbosity:
+                _warning_log("date_from must be <= date_to", logger)
             return None
 
         if isinstance(date_from, (int, float)):
@@ -332,10 +335,8 @@ class HistoryManager:
                 files.append(str(file))
 
         if not files:
-            _warning_log(
-                f"No stored bar history found for {symbol} {timeframe_str} "
-                f"between {date_from} and {date_to}", logger
-            )
+            if verbosity:
+                _warning_log(f"No stored bar history found for {symbol} {timeframe_str} between {date_from} and {date_to}", logger)
             return None
 
         t_from = int(date_from.timestamp())
@@ -381,10 +382,8 @@ class HistoryManager:
             return np.array(rows, dtype=RATES_DTYPE)
 
         except Exception as e:
-            _warning_log(
-                f"Failed to copy stored rates for {symbol} {timeframe_str} "
-                f"from {date_from} to {date_to}: {e}", logger
-            )
+            if verbosity:
+                _warning_log(f"Failed to copy stored rates for {symbol} {timeframe_str} from {date_from} to {date_to}: {e}", logger)
             return None
 
     @staticmethod
@@ -396,7 +395,8 @@ class HistoryManager:
             count: int,
             polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto",
             broker_data_dir: Optional[str] = config.DEFAULT_BROKER_DATA_PATH,
-            logger: Optional[logging.Logger] = None
+            logger: Optional[logging.Logger] = None,
+            verbosity: bool = True
     ):
         """Copies bars (rates) for a specified symbol, timeframe and date range from locally stored parquet files. This method is used by the simulator to load bars without accessing the MetaTrader5 terminal.
 
@@ -409,6 +409,7 @@ class HistoryManager:
             polars_collect_engine (Literal["auto", "in-memory", "streaming", "gpu"], optional): Polars collection engine to use. Defaults to "auto".
             broker_data_dir (Optional[str], optional): The directory where broker data is stored. Defaults to config.DEFAULT_BROKER_DATA_PATH.
             logger (Optional[logging.Logger], optional): The logger to use. Defaults to None.
+            verbosity (bool): Whether to log information or remain silent (False). This is crucial during optimization situations where you want minimal to, no logs.
 
         Returns:
             Copied bars as a NumPy array or None in case of a failure
@@ -441,13 +442,12 @@ class HistoryManager:
             if file.exists():
                 files.append(str(file))
             else:
-                _warning_log(f"{file} not found, skipping", logger)
+                if verbosity:
+                    _warning_log(f"{file} not found, skipping", logger)
 
         if not files:
-            _warning_log(
-                f"No stored bar history found for {symbol} {timeframe_str} searched paths: {files}",
-                logger
-            )
+            if verbosity:
+                _warning_log(f"No stored bar history found for {symbol} {timeframe_str} searched paths: {files}", logger)
             return None
 
         t_from = int(date_from.timestamp())
@@ -495,11 +495,8 @@ class HistoryManager:
             return arr[::-1]
 
         except Exception as e:
-            _warning_log(
-                f"Failed to copy stored rates for {symbol} {timeframe_str} "
-                f"from {date_from}: {e}",
-                logger
-            )
+            if verbosity:
+                _warning_log(f"Failed to copy stored rates for {symbol} {timeframe_str} from {date_from}: {e}", logger)
             return None
 
     @staticmethod
@@ -532,6 +529,7 @@ class HistoryManager:
             polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto",
             broker_data_dir: Optional[str] = config.DEFAULT_BROKER_DATA_PATH,
             logger: Optional[logging.Logger] = None,
+            verbosity: bool = True,
     ):
 
         """Copies ticks for a specified symbol, timeframe and date range from locally stored parquet files. This method is used by the simulator to load ticks without accessing the MetaTrader5 terminal.
@@ -545,6 +543,7 @@ class HistoryManager:
             polars_collect_engine (Literal["auto", "in-memory", "streaming", "gpu"], optional): Polars collection engine to use. Defaults to "auto".
             broker_data_dir (Optional[str], optional): The directory where broker data is stored. Defaults to config.DEFAULT_BROKER_DATA_PATH.
             logger (Optional[logging.Logger], optional): The logger to use. Defaults to None.
+            verbosity (bool): Whether to log information or remain silent (False). This is crucial during optimization situations where you want minimal to, no logs.
 
         Returns:
             Copied ticks as a NumPy array or None in case of a failure
@@ -552,11 +551,13 @@ class HistoryManager:
 
         if limit is None:
             if date_to is None:
-                _warning_log("Either date_to or limit must be provided", logger)
+                if verbosity:
+                    _warning_log("Either date_to or limit must be provided", logger)
                 return None
 
             if date_from > date_to:
-                _warning_log("date_from must be <= date_to", logger)
+                if verbosity:
+                    _warning_log("date_from must be <= date_to", logger)
                 return None
 
         if isinstance(date_from, (int, float)):
@@ -579,7 +580,8 @@ class HistoryManager:
                 files.append(str(file))
 
         if not files:
-            _warning_log(f"No stored tick history found for {symbol}", logger)
+            if verbosity:
+                _warning_log(f"No stored tick history found for {symbol}", logger)
             return None
 
         t_from = int(date_from.timestamp())
@@ -637,10 +639,8 @@ class HistoryManager:
             )
 
         except Exception as e:
-            _warning_log(
-                f"Failed to copy ticks for {symbol} from {date_from}: {e}",
-                logger
-            )
+            if verbosity:
+                _warning_log(f"Failed to copy ticks for {symbol} from {date_from}: {e}",logger)
             return None
 
     @staticmethod
@@ -652,6 +652,7 @@ class HistoryManager:
             polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto",
             broker_data_dir: Optional[str] = config.DEFAULT_BROKER_DATA_PATH,
             logger: Optional[logging.Logger] = None,
+            verbosity: bool = True,
     ):
 
         """Copies ticks for a specified symbol, timeframe and date range from locally stored parquet files. This method is used by the simulator to load ticks without accessing the MetaTrader5 terminal.
@@ -664,6 +665,7 @@ class HistoryManager:
             polars_collect_engine (Literal["auto", "in-memory", "streaming", "gpu"], optional): Polars collection engine to use. Defaults to "auto".
             broker_data_dir (Optional[str], optional): The directory where broker data is stored. Defaults to config.DEFAULT_BROKER_DATA_PATH.
             logger (Optional[logging.Logger], optional): The logger to use. Defaults to None.
+            verbosity (bool): Whether to log information or remain silent (False). This is crucial during optimization situations where you want minimal to, no logs.
 
         Returns:
             Copied ticks as a NumPy array or None in case of a failure
@@ -684,7 +686,8 @@ class HistoryManager:
         )
 
         if not files:
-            _warning_log(f"No stored tick history found for {symbol}", logger)
+            if verbosity:
+                _warning_log(f"No stored tick history found for {symbol}", logger)
             return None
 
         if isinstance(date_from, (int, float)):
@@ -741,10 +744,8 @@ class HistoryManager:
             )
 
         except Exception as e:
-            _warning_log(
-                f"Failed to copy ticks for {symbol} from {date_from}: {e}",
-                logger
-            )
+            if verbosity:
+                _warning_log(f"Failed to copy ticks for {symbol} from {date_from}: {e}",logger)
             return None
 
     def _ensure_ticks_month(self, symbol, year, month, sync: bool):

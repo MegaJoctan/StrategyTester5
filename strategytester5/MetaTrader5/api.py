@@ -61,7 +61,8 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         # broker's data
 
         self.broker_data_path = self.ACCOUNT.server if custom_broker_data_path == "" else custom_broker_data_path
-        self.history_manager = data.HistoryManager(mt5_instance=parent_mt5, broker_data_path=self.broker_data_path)
+        self.history_manager = data.HistoryManager(mt5_instance=parent_mt5,
+                                                   broker_data_path=self.broker_data_path)
 
         terminal_info = parent_mt5.terminal_info()
         if terminal_info is None:
@@ -347,7 +348,9 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             rates = self.history_manager.copy_rates_range_from_parquet(symbol, timeframe, date_from, date_to,
                                                                        polars_collect_engine=polars_collect_engine,
                                                                        broker_data_dir=self.broker_data_path,
-                                                                       logger=self.logger)
+                                                                       logger=self.logger,
+                                                                       verbosity=not self.IS_OPTIMIZATION_MODE
+                                                                       )
 
         if rates is None or len(rates) == 0:
             self.warning_log(f"no rates found on {symbol} from {date_from} bars: {date_to}")
@@ -411,7 +414,8 @@ class VirtualMetaTrader5(MetaTrader5Constants):
                                                                  count=count,
                                                                  broker_data_dir=self.broker_data_path,
                                                                  logger=self.logger,
-                                                                 polars_collect_engine=polars_collect_engine)
+                                                                 polars_collect_engine=polars_collect_engine,
+                                                                 verbosity=not self.IS_OPTIMIZATION_MODE)
 
         if rates is None or len(rates) == 0:
             self.warning_log(f"no rates found for {symbol} from {date_from} bars: {count}")
@@ -481,7 +485,8 @@ class VirtualMetaTrader5(MetaTrader5Constants):
                                                                  count=count,
                                                                  broker_data_dir=self.broker_data_path,
                                                                  logger=self.logger,
-                                                                 polars_collect_engine=polars_collect_engine)
+                                                                 polars_collect_engine=polars_collect_engine,
+                                                                 verbosity=not self.IS_OPTIMIZATION_MODE)
 
         if rates is None or len(rates) == 0:
             self.debug_log(f"no rates found for {symbol} from {start_pos} bars: {count}")
@@ -546,7 +551,8 @@ class VirtualMetaTrader5(MetaTrader5Constants):
                                                              polars_collect_engine=polars_collect_engine,
                                                              broker_data_dir=self.broker_data_path,
                                                              flags=flags,
-                                                             logger=self.logger)
+                                                             logger=self.logger,
+                                                             verbosity=not self.IS_OPTIMIZATION_MODE)
 
     
     def copy_ticks_from(self,
@@ -597,13 +603,15 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             self._last_error = self.parent_mt5.last_error()
             return ticks
 
-        return self.history_manager.copy_ticks_from_parquet(symbol=symbol,
-                                                          date_from=date_from,
-                                                          limit=count,
-                                                          polars_collect_engine=polars_collect_engine,
-                                                          broker_data_dir=self.broker_data_path,
-                                                          flags=flags,
-                                                          logger=self.logger)
+        return self.history_manager.copy_ticks_from_parquet(
+            symbol=symbol,
+            date_from=date_from,
+            limit=count,
+            polars_collect_engine=polars_collect_engine,
+            broker_data_dir=self.broker_data_path,
+            flags=flags,
+            logger=self.logger,
+            verbosity=not self.IS_OPTIMIZATION_MODE)
 
     
     def orders_total(self) -> int:
@@ -1387,7 +1395,6 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             order=deal.order,
             volume=volume,
         )
-
     
     def _modify_position(self, request: dict):
 
