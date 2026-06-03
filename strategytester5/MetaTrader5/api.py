@@ -107,17 +107,12 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         self._positions_counter = 0
         self._orders_counter = 0
 
-        self.SYMBOL_INFO_CACHE = {}
-
-        self.TICK_CACHE: dict[str, Tick] = {}
-
         # clear history
 
         self.ORDERS = []
         self.ORDERS_HISTORY = []
         self.POSITIONS = []
         self.DEALS = []
-        self.TRADE_VALIDATORS_CACHE = {}
 
     def info_log(self, msg: str):
         if self.IS_OPTIMIZATION_MODE:
@@ -194,9 +189,12 @@ class VirtualMetaTrader5(MetaTrader5Constants):
 
     
     def last_error(self):
-        """returns the last error from the terminal or the strategy tester"""
+        """Returns the last error from the terminal or the strategy tester"""
         return self._last_error
 
+    def reset_last_error(self):
+        """Resets last_error object"""
+        self._last_error = None
     
     def account_info(self) -> Optional[AccountInfo]:
         """Gets info on the current trading account.
