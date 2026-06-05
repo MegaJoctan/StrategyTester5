@@ -14,7 +14,7 @@ import webbrowser
 
 from strategytester5.MetaTrader5 import evaluate_margin_state, TradeDeal, Tick
 from strategytester5.MetaTrader5.api import VirtualMetaTrader5
-from strategytester5.config_validators import TesterConfigValidators
+from strategytester5.utils import TesterConfigValidators
 from strategytester5.MQL5.functions import PeriodSeconds
 from . import *
 from datetime import datetime
@@ -28,6 +28,8 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import MetaTrader5
 from pathlib import Path
+from .stats import TesterStats
+
 
 class DashboardState:
 
@@ -163,6 +165,9 @@ class StrategyTester:
         Initializes the StrategyTester class and the simulated MetaTrader5 instance.
 
         """
+
+        self.virtual_mt5.IS_OPTIMIZATION_MODE = is_optimization_mode
+        self.virtual_mt5.assign_logger(self.logger)  # use the same logger for virtual MetaTrader5 as the tester object
 
         # reset values
 
@@ -657,19 +662,27 @@ class StrategyTester:
         grouped = df.group_by("time", maintain_order=True)
         with tqdm(total=total_rows, desc="StrategyTester Progress", unit="bar") as pbar:
 
+            current_time = self.tester_config["start_date"]
+
             for _, rows in grouped:
                 n = rows.height
 
                 # process all ticks at this timestamp
                 for row in rows.iter_rows(named=True):
                     symbol = symbols[row["symbol_id"]]
-                    point = self.simulated_mt5.symbol_info(symbol).point
-                    t = row["time"]
+
+                    s_info = self.simulated_mt5.symbol_info(symbol)
+
+                    if s_info is None:
+                        self.critical_log("No symbol info found in the simulated (virtual) MetaTrader5 instance")
+                        continue
+
+                    current_time = row["time"]
 
                     tick = Tick(
-                        time=t,
+                        time=current_time,
                         bid=row["close"],
-                        ask=row["close"] + row["spread"] * point,
+                        ask=row["close"] + row["spread"] * s_info.point,
                         last=0,
                         volume=row["tick_volume"],
                         time_msc=row["time"] * 1000,
@@ -682,7 +695,7 @@ class StrategyTester:
                 if self.IS_MARGIN_STOPOUT:
                     break
 
-                self._monitor_mt5(current_time=t, dashboard_fps=dashboard_fps)
+                self._monitor_mt5(current_time=current_time, dashboard_fps=dashboard_fps)
 
 
                 # update progress AFTER processing group
@@ -696,7 +709,7 @@ class StrategyTester:
 
     def run(self,
             on_tick_function: Any,
-            optimization_mode: bool=False,
+            is_optimization_mode: bool=False,
             dashboard_host: str="localhost",
             dashboard_port: int=5000,
             dashboard_fps: int = 60
@@ -706,20 +719,16 @@ class StrategyTester:
 
         Args:
             on_tick_function: A callback function that executes the strategy logic on each tick. This function is called after all ticks for a given timestamp are processed and the simulated MetaTrader5 instance is updated with the latest tick information.
-            optimization_mode: When set to true, it runs the simulator and everything in "light-mode". It prevents logging, real-time dashboard, avoids unnecessary calculations. Just to end up with a smooth backtest.
+            is_optimization_mode: When set to true, it runs the simulator and everything in "light-mode". It prevents logging, real-time dashboard, avoids unnecessary calculations. Just to end up with a smooth backtest.
             dashboard_host : The local server host
             dashboard_port : The local server port
             dashboard_fps: The interval to update the chart on a browser alongside the trades table with other active values such as balance, equity, etc.
-
-        Notes:
-            - The wrong value for curve_update_interval could cause delay in plotting and lead to the backtesting report not showing properly.\n
-            A, we recommend leaving the value to default = TIMEFRAME_D1 (Daily timeframe).
 
         Returns:
             TesterStats (optional): An object containing various statistics computed from the tester results, including trade performance metrics, drawdowns, and more. This is the same stats object that is used to generate the final HTML report.
         """
 
-        self.IS_OPTIMIZATION_MODE = optimization_mode
+        self.IS_OPTIMIZATION_MODE = is_optimization_mode
 
         # ---------------- START SERVER ----------------
         def start_dashboard():
@@ -736,13 +745,15 @@ class StrategyTester:
                 allow_unsafe_werkzeug=True
             )
 
-        # run flask in background
-        threading.Thread(
-            target=start_dashboard,
-            daemon=True,
-        ).start()
+        if not is_optimization_mode:
 
-        time.sleep(1)
+            # run flask in background
+            threading.Thread(
+                target=start_dashboard,
+                daemon=True,
+            ).start()
+
+            time.sleep(1)
 
         start_date = self.tester_config["start_date"]
         end_date = self.tester_config["end_date"]
@@ -786,7 +797,6 @@ class StrategyTester:
         elif modelling in (2, 1):
 
             if not self._tester_init(is_optimization_mode=self.IS_OPTIMIZATION_MODE):  # initialize the tester
-
                 self.error_log("Failed to initialize StrategyTester")
                 return
 
@@ -1209,3 +1219,83 @@ class StrategyTester:
                 "max": str(pd.to_timedelta(desc["max"], unit="m"))
             }
         }
+
+
+_optimization_cache: dict[int, StrategyTester] = {}
+
+
+def run_backtesting(main_function: Any,
+                    tester_config: dict,
+                    virtual_mt5: VirtualMetaTrader5,
+                    is_optimization_mode: bool = False,
+                    dashboard_host: str = "localhost",
+                    dashboard_port: int = 5000,
+                    dashboard_fps: int = 60,
+                    logging_level: int = logging.WARNING,
+                    logs_dir: Optional[str] = "Logs",
+                    trading_history_dir: Optional[str] = "TradesHistory",
+                    polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto"
+                    ) -> TesterStats:
+    """
+        Runs the main_function (OnTick) through multiple ticks or bars in history, depending on the type of modelling specified in the tester_config dictionary.
+
+        Args:
+            tester_config (dict): Dictionary of tester configuration values.
+            virtual_mt5 (MetaTrader5): Virtual (simulated) MetaTrader5 instance.
+            logging_level: Minimum severity of messages to record. Uses standard `logging` levels (e.g., logging.DEBUG, INFO, WARNING, ERROR, CRITICAL). Messages below this level are ignored.
+            logs_dir (str): Directory for log files.
+            trading_history_dir (str | optional) A directory to keep trading history.
+            main_function: A callback function that executes the strategy logic on each tick. This function is called after all ticks for a given timestamp are processed and the simulated MetaTrader5 instance is updated with the latest tick information.
+            is_optimization_mode: When set to true, it runs the simulator and everything in "light-mode". It prevents logging, real-time dashboard, avoids unnecessary calculations. Just to end up with a quick and smooth backtest which suits multiple backtesting iterations (optimization).
+            dashboard_host : The local server host
+            dashboard_port : The local server port
+            dashboard_fps: The interval to update the chart on a browser alongside the trades table with other active values such as balance, equity, etc.
+
+            polars_collect_engine (str): Engine used by Polars when collecting historical data in functions for obtaining ticks — copy_ticks*, and bars information/rates (copy_rates*). Supported values are:
+                - ``"auto"`` (default): Use Polars’ standard in-memory engine and
+                    respect the ``POLARS_ENGINE_AFFINITY`` environment variable if set.
+                - ``"in-memory"``: Explicitly use the default in-memory engine,
+                    optimized with multi-threading and SIMD over Arrow data.
+                - ``"streaming"``: Process queries in batches, enabling
+                    larger-than-RAM datasets.
+                - ``"gpu"``: Use NVIDIA GPUs via RAPIDS cuDF for accelerated execution.
+                    Requires installing Polars with GPU support, e.g.:
+                    ``pip install polars[gpu] --extra-index-url=https://pypi.nvidia.com``.
+        Raises:
+            RuntimeError: If required MT5 account info cannot be obtained.
+
+        Returns:
+            TesterStats (optional): An object containing various statistics computed from the tester results, including trade performance metrics, drawdowns, and more. This is the same stats object that is used to generate the final HTML report.
+    """
+    cache_key = id(virtual_mt5)  # one tester per VirtualMT5 instance
+
+    if is_optimization_mode and cache_key in _optimization_cache:
+        tester = _optimization_cache[cache_key]
+    else:
+
+        tester = StrategyTester(
+            tester_config=tester_config,
+            virtual_mt5=virtual_mt5,
+            logging_level=logging_level,
+            logs_dir=logs_dir,
+            trading_history_dir=trading_history_dir,
+            polars_collect_engine=polars_collect_engine
+        )
+        
+        if is_optimization_mode:
+            _optimization_cache[cache_key] = tester
+
+    return tester.run(
+            on_tick_function=main_function,
+            is_optimization_mode=is_optimization_mode,
+            dashboard_host=dashboard_host,
+            dashboard_port=dashboard_port,
+            dashboard_fps=dashboard_fps,
+        )
+
+def clear_optimization_cache(virtual_mt5: Optional[VirtualMetaTrader5] = None):
+    """Call this when the optimization loop is done to free memory."""
+    if virtual_mt5 is not None:
+        _optimization_cache.pop(id(virtual_mt5), None)
+    else:
+        _optimization_cache.clear()
