@@ -82,13 +82,10 @@ tester_config = {
 }
 
 
-total = 10
-for i in range(1, total):
-    stats = run_backtesting(
-        main_function=on_tick,
-        tester_config=tester_config,
-        virtual_mt5=virtual_mt5,
-        logging_level=logging.DEBUG,
-        # is_optimization_mode=True
-    )
+stats = run_backtesting(
+    main_function=on_tick,
+    tester_config=tester_config,
+    virtual_mt5=virtual_mt5,
+    logging_level=logging.DEBUG
+)
 
