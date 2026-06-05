@@ -61,8 +61,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
         # broker's data
 
         self.broker_data_path = self.ACCOUNT.server if custom_broker_data_path == "" else custom_broker_data_path
-        self.history_manager = data.HistoryManager(mt5_instance=parent_mt5,
-                                                   broker_data_path=self.broker_data_path)
+        self.history_manager = data.HistoryManager(mt5_instance=parent_mt5, broker_data_path=self.broker_data_path)
 
         terminal_info = parent_mt5.terminal_info()
         if terminal_info is None:
@@ -186,7 +185,6 @@ class VirtualMetaTrader5(MetaTrader5Constants):
     def _generate_position_ticket(self) -> int:
         self._positions_counter += 1
         return self._positions_counter
-
     
     def last_error(self):
         """Returns the last error from the terminal or the strategy tester"""
