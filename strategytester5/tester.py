@@ -1267,6 +1267,10 @@ def run_backtesting(main_function: Any,
         Returns:
             TesterStats (optional): An object containing various statistics computed from the tester results, including trade performance metrics, drawdowns, and more. This is the same stats object that is used to generate the final HTML report.
     """
+
+    if not isinstance(virtual_mt5, VirtualMetaTrader5):
+        raise RuntimeError("virtual_mt5 argument should be of the virtualMetaTrader5 instance object.")
+
     cache_key = id(virtual_mt5)  # one tester per VirtualMT5 instance
 
     if is_optimization_mode and cache_key in _optimization_cache:
