@@ -258,18 +258,18 @@ function updateDashboard(data) {
 
                 <td>
                     ${
-                        trade.price_open ??
+                        trade.price_open.toFixed(5) ??
                         "-"
                     }
                 </td>
 
-                <td>${trade.sl ?? "-"}</td>
+                <td>${trade.sl.toFixed(5) ?? "-"}</td>
 
-                <td>${trade.tp ?? "-"}</td>
+                <td>${trade.tp.toFixed(5) ?? "-"}</td>
 
                 <td>
                     ${
-                        trade.price_current ??
+                        trade.price_current.toFixed(5) ??
                         "-"
                     }
                 </td>
