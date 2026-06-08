@@ -29,6 +29,7 @@ from plotly.subplots import make_subplots
 import MetaTrader5
 from pathlib import Path
 from .stats import TesterStats
+import json
 
 
 class DashboardState:
@@ -56,6 +57,7 @@ app = Flask(
 
 socketio = SocketIO(
     app,
+    # ping_timeout=300,
     cors_allowed_origins="*"
 )
 
@@ -580,20 +582,20 @@ class StrategyTester:
                     # if not self.IS_MARGIN_STOPOUT: # if margin stopout is reached, prevent updating the trades dashboard just for reference
                     self.DASHBOARD_STATE.live_data["trades"] = trades
 
-            if not self.IS_OPTIMIZATION_MODE:  # no dashboard update during optimization mode
+                    # live dashboard update
 
-                # live dashboard update
+                    dashboard_interval = 1.0 / dashboard_fps
+                    now = time.perf_counter()
 
-                dashboard_interval = 1.0 / dashboard_fps
-                now = time.perf_counter()
+                    if now - self._last_dashboard_update >= dashboard_interval:
+                        self._last_dashboard_update = now
 
-                if now - self._last_dashboard_update >= dashboard_interval:
-                    self._last_dashboard_update = now
+                        socketio.emit(
+                            "dashboard_update",
+                            self.DASHBOARD_STATE.live_data
+                        )
 
-                    socketio.emit(
-                        "dashboard_update",
-                        self.DASHBOARD_STATE.live_data
-                    )
+                        socketio.sleep(0)
 
     def _run_tick_simulation(
             self,
@@ -754,7 +756,7 @@ class StrategyTester:
                 daemon=True,
             ).start()
 
-            time.sleep(1)
+            # time.sleep(1)
 
         start_date = self.tester_config["start_date"]
         end_date = self.tester_config["end_date"]
@@ -853,17 +855,20 @@ class StrategyTester:
             self.DASHBOARD_STATE.holding_plot = holding.get("plot", {})
             self.DASHBOARD_STATE.holding_stats = holding.get("summary", {})
 
+            payload = {
+                "tester_stats": tester_stats_dict,
+                "holding_stats": self.DASHBOARD_STATE.holding_stats,
+                "entries_plot": self.DASHBOARD_STATE.entries_pl_plot,
+                "holding_plot": self.DASHBOARD_STATE.holding_plot
+            }
+
             socketio.emit(
                 "simulation_finished",
-                {
-                    "tester_stats": tester_stats_dict,
-                    "holding_stats": self.DASHBOARD_STATE.holding_stats,
-                    "entries_plot": self.DASHBOARD_STATE.entries_pl_plot,
-                    "holding_plot": self.DASHBOARD_STATE.holding_plot
-                }
+                payload
             )
 
-            time.sleep(2)
+            time.sleep(1)
+
         else:
             self.IS_OPTIMIZATION_FIRST_RUN = False
             self.simulated_mt5.reset_state()  # reset data in the simulated MetaTrader5 instance
