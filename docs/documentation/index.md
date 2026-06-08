@@ -4,17 +4,7 @@ description: Learn how to use StrategyTester5 with MetaTrader5 in Python. Covers
 keywords: StrategyTester5 guide, MetaTrader5 Python backtesting, MT5 strategy tester rules, trading bot configuration python, algorithmic trading MT5 setup
 ---
 
-The StrategyTester5 framework has the same syntax as the MetaTrader5 API, thanks to the [Simulated MetaTrader5 API](../api/metatrader5/api.md) with a few tweaks you can get your Python code for the MetaTrader5 up and running through a specified time in the past just like testing a Native trading robot made in the MetaTrader5 terminal.
-
 Below are a few things to consider:
-
-## Rules of Thumb
-
-### Firstly, Initialize the MetaTrader5 terminal 
-
-After importing the right modules you must initialize the terminal using the [MetaTrader5 Native API](https://www.mql5.com/en/docs/python_metatrader5) before everything else.
-
-The initialized MetaTrader5 instance helps the simulated MetaTrader5 within a StrategyTester instance mimick the platform by extracting crucial platform and broker-specific details such as account information, instruments (symbols) and their configurations, charts settings, etc.
 
 ### MetaTrader5-Like StrategyTester Configurations
 
@@ -50,39 +40,20 @@ Example **config.json**
 
 ![testerjson](../images/testerjson.png)
 
-### Always, use the simulated MetaTrader5 extracted from the StrategyTester
+### All YOur Trading Logic Should be Organized or Traced from a Single Function
 
-After instantiating the strategytester class, you should extract the simulated MetaTrader5 from it.
+Similarly to the OnTick function in MQL5 programming language, which calls all functions and lines of code that makes up a trading strategy.
 
-```py
-tester = StrategyTester(tester_config=tester_config, mt5_instance=mt5, logging_level=logging.DEBUG)
-sim_mt5 = tester.simulated_mt5 # extract the simulated metatrader5 from the StrategyTester object and assign it to a simple variable
+We recommend doing the same in your Python script. This final "strategy" function should be passed to the method `run_backtest` which runs the it repetetively depending on [modelling type](https://www.google.com/search?q=mql5+modelling+types+strategy+testing) selected in tester configs.
+
+```python
+
+stats = run_backtesting(
+    main_function=main,
+    tester_config=tester_config,
+    virtual_mt5=mt5,
+    logging_level=logging.DEBUG
+)
 ```
 
-You should replace all methods accessing the [native MetaTrader5 API](https://www.mql5.com/en/docs/python_metatrader5) attribute with this simulated instance, in your existing logic relying on the native API.
-
-!!! Note "Additionally"
-
-    Instead of logging using the builtin print function, we recommend you use the logger extracted from the strategy tester.
-    ```py
-    logger = tester.logger # extract a logger
-    ```
-    This provides detailed logs aware of the simulated time. For more information see: [Logging and debugging](../documentation/logging_debugging.md)
-
-### All Trading Logic Should be Organized in a Single Function
-
-The StrategyTester main function for backtesting is called `run`, it expects a single (standalone) function with all the trading logic and everything traced to it. 
-
-This function is the one repeatedly called throughout history.
-
-We recommend this function to be called on_tick but the naming isn't important as what it holds
-
-### The run Method
-
-This is the final function that runs backtesting and handles everything including exporting trading history, reports, etc.
-
-It expects the main strategy function, and returns the TesterStats object with all the statistics used in the final report.
-
-```py
-def run(self, on_tick_function: Any) -> stats.TesterStats:
-```
+Working examples are found here: [https://github.com/MegaJoctan/StrategyTester5/tree/omega-dev/examples](https://github.com/MegaJoctan/StrategyTester5/tree/omega-dev/examples)
