@@ -127,8 +127,8 @@
 </style>
 
 <div>
-  🚀 Get StrategyTester5 Premium (Lifetime Access) —
-  <a href="https://omegajoctan.gumroad.com/l/strategytester5-pro" target="_blank" rel="noopener">Buy Now</a>
+  Backtest your Python bots in MetaTrader5 👉
+  <a href="https://omegajoctan.gumroad.com/l/strategytester5-professional" target="_blank" rel="noopener">Learn How</a>
 </div>
 
           </div>
@@ -561,7 +561,7 @@
   <span class="md-ellipsis">
     
   
-    Quick Start | Make your first Bot
+    Quick Start | backtest your trading bots
   
 
     
@@ -706,35 +706,7 @@
   <span class="md-ellipsis">
     
   
-    RSI Strategy Example
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../documentation/logging_debugging/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Logging and Debugging
+    RSI Trading Bot Example
   
 
     
@@ -1892,7 +1864,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../strategytester5/config_validators/" class="md-nav__link">
+      <a href="../../strategytester5/utilsutils.md" class="md-nav__link">
         
   
   
@@ -2528,7 +2500,8 @@ of the MetaTrader 5 terminal environment.</p>
 <p>This class caches the result of <code>mt5.terminal_info()</code> at construction time.
 The returned values reflect the terminal state at the moment of initialization.
 If you need up-to-date values, create a new instance or add a refresh method.</p>
-<p><a href="https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cterminalinfo">Reference (MQL5)</a></p>
+<p><a href="https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cterminalinfo">Reference (MQL5.com)</a></p>
+<p>See full documentation: https://strategytester5.com/api/trade_classes/terminalinfo/</p>
 
 
 
@@ -2808,7 +2781,9 @@ If you need up-to-date values, create a new instance or add a refresh method.</p
 <span class="normal">271</span>
 <span class="normal">272</span>
 <span class="normal">273</span>
-<span class="normal">274</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CTerminalInfo</span><span class="p">:</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CTerminalInfo</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        A lightweight Python wrapper that resembles the MQL5 Standard Library class</span>
 <span class="sd">        `CTerminalInfo` and provides convenient, read-only access to the properties</span>
@@ -2818,7 +2793,9 @@ If you need up-to-date values, create a new instance or add a refresh method.</p
 <span class="sd">        The returned values reflect the terminal state at the moment of initialization.</span>
 <span class="sd">        If you need up-to-date values, create a new instance or add a refresh method.</span>
 
-<span class="sd">        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cterminalinfo)</span>
+<span class="sd">        [Reference (MQL5.com)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/cterminalinfo)</span>
+
+<span class="sd">        See full documentation: https://strategytester5.com/api/trade_classes/terminalinfo/</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">terminal</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
@@ -3851,9 +3828,7 @@ If you need up-to-date values, create a new instance or add a refresh method.</p
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\TerminalInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">20</span>
 <span class="normal">21</span>
 <span class="normal">22</span>
 <span class="normal">23</span>
@@ -3874,7 +3849,9 @@ If you need up-to-date values, create a new instance or add a refresh method.</p
 <span class="normal">38</span>
 <span class="normal">39</span>
 <span class="normal">40</span>
-<span class="normal">41</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">terminal</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">terminal</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Instantiates the TerminalInfo object.</span>
@@ -3973,9 +3950,7 @@ If you need up-to-date values, create a new instance or add a refresh method.</p
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\TerminalInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">214</span>
-<span class="normal">215</span>
-<span class="normal">216</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">216</span>
 <span class="normal">217</span>
 <span class="normal">218</span>
 <span class="normal">219</span>
@@ -3987,7 +3962,9 @@ If you need up-to-date values, create a new instance or add a refresh method.</p
 <span class="normal">225</span>
 <span class="normal">226</span>
 <span class="normal">227</span>
-<span class="normal">228</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">info_integer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">info_integer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Gets the value of a property of integer type.</span>
 
@@ -4077,9 +4054,7 @@ If you need up-to-date values, create a new instance or add a refresh method.</p
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\TerminalInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">230</span>
-<span class="normal">231</span>
-<span class="normal">232</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">232</span>
 <span class="normal">233</span>
 <span class="normal">234</span>
 <span class="normal">235</span>
@@ -4091,7 +4066,9 @@ If you need up-to-date values, create a new instance or add a refresh method.</p
 <span class="normal">241</span>
 <span class="normal">242</span>
 <span class="normal">243</span>
-<span class="normal">244</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">info_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">info_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Gets the value of a property of string type.</span>
 
@@ -4128,10 +4105,10 @@ If you need up-to-date values, create a new instance or add a refresh method.</p
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\TerminalInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">266</span>
-<span class="normal">267</span>
-<span class="normal">268</span>
-<span class="normal">269</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">print_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">print_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Print all @property values of the class.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">24</span><span class="si">}</span><span class="s2"> : </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -4157,9 +4134,7 @@ If you need up-to-date values, create a new instance or add a refresh method.</p
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\TerminalInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">248</span>
-<span class="normal">249</span>
-<span class="normal">250</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">250</span>
 <span class="normal">251</span>
 <span class="normal">252</span>
 <span class="normal">253</span>
@@ -4173,7 +4148,9 @@ If you need up-to-date values, create a new instance or add a refresh method.</p
 <span class="normal">261</span>
 <span class="normal">262</span>
 <span class="normal">263</span>
-<span class="normal">264</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return all @property values as a dictionary.&quot;&quot;&quot;</span>
     <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>

@@ -46,7 +46,7 @@
         
         
         
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback">
+        <link rel="stylesheet" href="../../../assets/external/fonts.googleapis.com/css.49ea35f2.css">
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
@@ -127,8 +127,8 @@
 </style>
 
 <div>
-  🚀 Get StrategyTester5 Premium (Lifetime Access) —
-  <a href="https://omegajoctan.gumroad.com/l/strategytester5-pro" target="_blank" rel="noopener">Buy Now</a>
+  Backtest your Python bots in MetaTrader5 👉
+  <a href="https://omegajoctan.gumroad.com/l/strategytester5-professional" target="_blank" rel="noopener">Learn How</a>
 </div>
 
           </div>
@@ -561,7 +561,7 @@
   <span class="md-ellipsis">
     
   
-    Quick Start | Make your first Bot
+    Quick Start | backtest your trading bots
   
 
     
@@ -706,35 +706,7 @@
   <span class="md-ellipsis">
     
   
-    RSI Strategy Example
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../documentation/logging_debugging/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Logging and Debugging
+    RSI Trading Bot Example
   
 
     
@@ -1826,7 +1798,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../strategytester5/config_validators/" class="md-nav__link">
+      <a href="../../strategytester5/utilsutils.md" class="md-nav__link">
         
   
   
@@ -2397,7 +2369,8 @@ the currently connected MetaTrader 5 trading account.</p>
 The returned values reflect the account state at the time of initialization
 (balance, equity, margin, etc.). If you need up-to-date values after trading
 activity or price changes, re-instantiate the class or implement a refresh.</p>
-<p><a href="https://www.mql5.com/en/docs/standardlibrary/tradeclasses/caccountinfo">Reference (MQL5)</a></p>
+<p><a href="https://www.mql5.com/en/docs/standardlibrary/tradeclasses/caccountinfo">Reference (mql5.com)</a></p>
+<p>Full documentation: https://strategytester5.com/api/trade_classes/accountinfo/</p>
 
 
 
@@ -2646,7 +2619,9 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
 <span class="normal">240</span>
 <span class="normal">241</span>
 <span class="normal">242</span>
-<span class="normal">243</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CAccountInfo</span><span class="p">:</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CAccountInfo</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        A lightweight Python wrapper that resembles the MQL5 Standard Library class</span>
 <span class="sd">        `CAccountInfo` and provides convenient, read-only access to the properties of</span>
@@ -2657,7 +2632,9 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
 <span class="sd">        (balance, equity, margin, etc.). If you need up-to-date values after trading</span>
 <span class="sd">        activity or price changes, re-instantiate the class or implement a refresh.</span>
 
-<span class="sd">        [Reference (MQL5)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/caccountinfo)</span>
+<span class="sd">        [Reference (mql5.com)](https://www.mql5.com/en/docs/standardlibrary/tradeclasses/caccountinfo)</span>
+
+<span class="sd">        Full documentation: https://strategytester5.com/api/trade_classes/accountinfo/</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ac_info</span><span class="p">:</span> <span class="n">namedtuple</span><span class="p">):</span>
@@ -3507,9 +3484,7 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\AccountInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">21</span>
 <span class="normal">22</span>
 <span class="normal">23</span>
 <span class="normal">24</span>
@@ -3529,7 +3504,9 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
 <span class="normal">38</span>
 <span class="normal">39</span>
 <span class="normal">40</span>
-<span class="normal">41</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ac_info</span><span class="p">:</span> <span class="n">namedtuple</span><span class="p">):</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ac_info</span><span class="p">:</span> <span class="n">namedtuple</span><span class="p">):</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Instatiates the CAccountInfo object</span>
@@ -3574,12 +3551,12 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\AccountInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">202</span>
-<span class="normal">203</span>
-<span class="normal">204</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">204</span>
 <span class="normal">205</span>
 <span class="normal">206</span>
-<span class="normal">207</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">free_margin_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">free_margin_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns free margin left after opening the position, or None if margin check fails.&quot;&quot;&quot;</span>
 
@@ -3607,12 +3584,12 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\AccountInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">209</span>
-<span class="normal">210</span>
-<span class="normal">211</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">211</span>
 <span class="normal">212</span>
 <span class="normal">213</span>
-<span class="normal">214</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">margin_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">margin_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Gets the amount of margin required to execute trade operation&quot;&quot;&quot;</span>
 
@@ -3693,9 +3670,7 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\AccountInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">216</span>
-<span class="normal">217</span>
-<span class="normal">218</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">218</span>
 <span class="normal">219</span>
 <span class="normal">220</span>
 <span class="normal">221</span>
@@ -3707,7 +3682,9 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
 <span class="normal">227</span>
 <span class="normal">228</span>
 <span class="normal">229</span>
-<span class="normal">230</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">max_lot_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">percent</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span> 
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">max_lot_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">percent</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span> 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Estimates the maximum tradable volume based on available margin. </span>
 
 <span class="sd">    Args:</span>
@@ -3744,12 +3721,12 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\AccountInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">195</span>
-<span class="normal">196</span>
-<span class="normal">197</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">197</span>
 <span class="normal">198</span>
 <span class="normal">199</span>
-<span class="normal">200</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">order_profit_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price_open</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price_close</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">order_profit_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">volume</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price_open</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">price_close</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluates profit for the given open/close prices (approximate, ignores commissions/swaps).&quot;&quot;&quot;</span>
 
@@ -3777,9 +3754,7 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>strategytester5\trade_classes\AccountInfo.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">233</span>
-<span class="normal">234</span>
-<span class="normal">235</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">235</span>
 <span class="normal">236</span>
 <span class="normal">237</span>
 <span class="normal">238</span>
@@ -3787,7 +3762,9 @@ activity or price changes, re-instantiate the class or implement a refresh.</p>
 <span class="normal">240</span>
 <span class="normal">241</span>
 <span class="normal">242</span>
-<span class="normal">243</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">print_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">print_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Print all @property values of the class.&quot;&quot;&quot;</span>
 
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>

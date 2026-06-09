@@ -16,7 +16,7 @@
         <link rel="prev" href="../working_with_indicators/">
       
       
-        <link rel="next" href="../logging_debugging/">
+        <link rel="next" href="../../tutorials/">
       
       
         
@@ -129,8 +129,8 @@
 </style>
 
 <div>
-  🚀 Get StrategyTester5 Premium (Lifetime Access) —
-  <a href="https://omegajoctan.gumroad.com/l/strategytester5-pro" target="_blank" rel="noopener">Buy Now</a>
+  Backtest your Python bots in MetaTrader5 👉
+  <a href="https://omegajoctan.gumroad.com/l/strategytester5-professional" target="_blank" rel="noopener">Learn How</a>
 </div>
 
           </div>
@@ -563,7 +563,7 @@
   <span class="md-ellipsis">
     
   
-    Quick Start | Make your first Bot
+    Quick Start | backtest your trading bots
   
 
     
@@ -718,7 +718,7 @@
   <span class="md-ellipsis">
     
   
-    RSI Strategy Example
+    RSI Trading Bot Example
   
 
     
@@ -736,7 +736,7 @@
   <span class="md-ellipsis">
     
   
-    RSI Strategy Example
+    RSI Trading Bot Example
   
 
     
@@ -782,21 +782,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#strategytester-configurations" class="md-nav__link">
+  <a href="#virtualmetatrader5" class="md-nav__link">
     <span class="md-ellipsis">
       
-        StrategyTester Configurations
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#strategytester-initialization" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        StrategyTester Initialization
+        VirtualMetaTrader5
       
     </span>
   </a>
@@ -840,34 +829,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../logging_debugging/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Logging and Debugging
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -1538,7 +1499,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/strategytester5/config_validators/" class="md-nav__link">
+      <a href="../../api/strategytester5/utilsutils.md" class="md-nav__link">
         
   
   
@@ -1704,21 +1665,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#strategytester-configurations" class="md-nav__link">
+  <a href="#virtualmetatrader5" class="md-nav__link">
     <span class="md-ellipsis">
       
-        StrategyTester Configurations
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#strategytester-initialization" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        StrategyTester Initialization
+        VirtualMetaTrader5
       
     </span>
   </a>
@@ -1778,16 +1728,18 @@
   
 
 
-  <h1>RSI Strategy Example</h1>
+  <h1>RSI Trading Bot Example</h1>
 
 <h2 id="imports">Imports</h2>
 <p>The first thing we do is, import all the necessary modules
 <div class="highlight"><span class="filename">bot.py</span><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">strategytester5.tester</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrategyTester</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">strategytester5.MetaTrader5.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">VirtualMetaTrader5</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">strategytester5.tester</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_backtesting</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">strategytester5.trade_classes.Trade</span><span class="w"> </span><span class="kn">import</span> <span class="n">CTrade</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">MetaTrader5</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mt5</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">MetaTrader5</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">parent_mt5</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ta.momentum</span><span class="w"> </span><span class="kn">import</span> <span class="n">rsi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 </code></pre></div></p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -1798,38 +1750,28 @@
 <h2 id="metatrader5-initialization">MetaTrader5 Initialization</h2>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Despite the strategy tester simulating the MetaTrader5 terminal, it still relies of the platform for crucial information from instruments (symbols) and a broker's account.</p>
+<p>Despite the strategytester5 framework simulating the MetaTrader5 terminal, it still relies of the platform for crucial information from instruments (symbols) and a broker's account.</p>
 <p><strong>This is a crucial step that shouldn't be missed.</strong></p>
 </div>
-<div class="highlight"><pre><span></span><code><span class="k">if</span> <span class="ow">not</span> <span class="n">mt5</span><span class="o">.</span><span class="n">initialize</span><span class="p">():</span>
-    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Failed to initialize mt5.&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="k">if</span> <span class="ow">not</span> <span class="n">parent_mt5</span><span class="o">.</span><span class="n">initialize</span><span class="p">():</span>
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to initialize mt5. Error = </span><span class="si">{</span><span class="n">parent_mt5</span><span class="o">.</span><span class="n">last_error</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
-<h2 id="strategytester-configurations">StrategyTester Configurations</h2>
-<p>This time we use a dictionary within a script rather than a JSON file:</p>
-<div class="highlight"><pre><span></span><code><span class="n">tester_config</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;bot_name&quot;</span><span class="p">:</span> <span class="s2">&quot;RSI Strategy Bot&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;symbols&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;EURUSD&quot;</span><span class="p">],</span>
-        <span class="s2">&quot;timeframe&quot;</span><span class="p">:</span> <span class="s2">&quot;H1&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;start_date&quot;</span><span class="p">:</span> <span class="s2">&quot;01.01.2026 00:00&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;end_date&quot;</span><span class="p">:</span> <span class="s2">&quot;27.03.2026 00:00&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;modelling&quot;</span> <span class="p">:</span> <span class="s2">&quot;Open price only&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;deposit&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
-        <span class="s2">&quot;leverage&quot;</span><span class="p">:</span> <span class="s2">&quot;1:100&quot;</span>
-<span class="p">}</span>
-</code></pre></div>
-<h2 id="strategytester-initialization">StrategyTester Initialization</h2>
-<div class="highlight"><pre><span></span><code><span class="n">tester</span> <span class="o">=</span> <span class="n">StrategyTester</span><span class="p">(</span><span class="n">tester_config</span><span class="o">=</span><span class="n">tester_config</span><span class="p">,</span> <span class="n">mt5_instance</span><span class="o">=</span><span class="n">mt5</span><span class="p">,</span> <span class="n">logging_level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
-<span class="n">sim_mt5</span> <span class="o">=</span> <span class="n">tester</span><span class="o">.</span><span class="n">simulated_mt5</span> <span class="c1"># extract the simulated metatrader5 from the StrategyTester object and assign it to a simple variable</span>
-<span class="n">logger</span> <span class="o">=</span> <span class="n">tester</span><span class="o">.</span><span class="n">logger</span> <span class="c1"># extract a logger</span>
-</code></pre></div>
+<h2 id="virtualmetatrader5">VirtualMetaTrader5</h2>
+<p>To be able to backtest and live trade on a single file you have to choose the appropriate MetaTrader5 to use.
+<div class="highlight"><pre><span></span><code><span class="n">script_argument</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+<span class="k">if</span> <span class="s2">&quot;--backtesting&quot;</span> <span class="ow">in</span> <span class="n">script_argument</span><span class="p">:</span>
+    <span class="n">mt5</span> <span class="o">=</span> <span class="n">VirtualMetaTrader5</span><span class="p">(</span><span class="n">parent_mt5</span><span class="o">=</span><span class="n">parent_mt5</span><span class="p">)</span> <span class="c1"># Assign parent MetaTrader5 to the virtual MetaTrader5 class object</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">mt5</span> <span class="o">=</span> <span class="n">parent_mt5</span>
+</code></pre></div></p>
 <h2 id="optional-global-variables-and-the-ctrade-helper">Optional | Global variables and the CTrade helper</h2>
-<div class="highlight"><pre><span></span><code><span class="n">symbol</span>  <span class="o">=</span> <span class="n">tester_config</span><span class="p">[</span><span class="s2">&quot;symbols&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># should be one among the symbols in symbols list from tester.json (config file/dictionary)</span>
-<span class="n">timeframe</span> <span class="o">=</span> <span class="n">sim_mt5</span><span class="o">.</span><span class="n">TIMEFRAME_H1</span> <span class="c1"># This should be an integer so you should convert timeframe in string into integer</span>
+<div class="highlight"><pre><span></span><code><span class="n">symbol</span> <span class="o">=</span> <span class="s2">&quot;EURUSD&quot;</span>
+<span class="n">timeframe</span> <span class="o">=</span> <span class="n">mt5</span><span class="o">.</span><span class="n">TIMEFRAME_H1</span> <span class="c1"># This should be an integer so you should convert timeframe in string into integer</span>
 
 <span class="c1"># ---------------------------------------------------------</span>
 
 <span class="n">MAGIC_NUMBER</span> <span class="o">=</span> <span class="mi">1001</span>
-<span class="n">m_trade</span> <span class="o">=</span> <span class="n">CTrade</span><span class="p">(</span><span class="n">terminal</span><span class="o">=</span><span class="n">sim_mt5</span><span class="p">,</span> <span class="n">magic_number</span><span class="o">=</span><span class="n">MAGIC_NUMBER</span><span class="p">,</span> <span class="n">filling_type_symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">deviation_points</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">tester</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
+<span class="n">m_trade</span> <span class="o">=</span> <span class="n">CTrade</span><span class="p">(</span><span class="n">terminal</span><span class="o">=</span><span class="n">mt5</span><span class="p">,</span> <span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">magic_number</span><span class="o">=</span><span class="n">MAGIC_NUMBER</span><span class="p">,</span> <span class="n">deviation_points</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="rsi-reversal-strategy">RSI Reversal Strategy</h2>
 <p>The strategy is simple; We open a long trade when the price reaches the oversold threshold and do the opposite when the price reaches an overbought threshold, we open a short trade.</p>
@@ -1838,7 +1780,7 @@
 <p>Not to mention, we open a single trade (position) in one direction at a time.</p>
 <div class="highlight"><span class="filename">bot.py</span><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">pos_exists</span><span class="p">(</span><span class="n">magic</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pos_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if position exists&quot;&quot;&quot;</span>
-    <span class="n">positions_found</span> <span class="o">=</span> <span class="n">sim_mt5</span><span class="o">.</span><span class="n">positions_get</span><span class="p">()</span>
+    <span class="n">positions_found</span> <span class="o">=</span> <span class="n">mt5</span><span class="o">.</span><span class="n">positions_get</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="n">positions_found</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">position</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">pos_type</span> <span class="ow">and</span> <span class="n">position</span><span class="o">.</span><span class="n">magic</span> <span class="o">==</span> <span class="n">magic</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>
@@ -1847,15 +1789,16 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">close_pos_by_type</span><span class="p">(</span><span class="n">magic</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pos_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Close positions by type&quot;&quot;&quot;</span>
-    <span class="n">positions_found</span> <span class="o">=</span> <span class="n">sim_mt5</span><span class="o">.</span><span class="n">positions_get</span><span class="p">()</span>
+    <span class="n">positions_found</span> <span class="o">=</span> <span class="n">mt5</span><span class="o">.</span><span class="n">positions_get</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="n">positions_found</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">position</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">pos_type</span> <span class="ow">and</span> <span class="n">position</span><span class="o">.</span><span class="n">magic</span> <span class="o">==</span> <span class="n">magic</span><span class="p">:</span>
             <span class="n">m_trade</span><span class="o">.</span><span class="n">position_close</span><span class="p">(</span><span class="n">position</span><span class="o">.</span><span class="n">ticket</span><span class="p">)</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">on_tick</span><span class="p">():</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
 
     <span class="n">indicator_window</span> <span class="o">=</span> <span class="mi">14</span>
-    <span class="n">rates</span> <span class="o">=</span> <span class="n">sim_mt5</span><span class="o">.</span><span class="n">copy_rates_from_pos</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">timeframe</span><span class="o">=</span><span class="n">timeframe</span><span class="p">,</span> <span class="n">start_pos</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="n">indicator_window</span><span class="p">)</span>
+    <span class="n">rates</span> <span class="o">=</span> <span class="n">mt5</span><span class="o">.</span><span class="n">copy_rates_from_pos</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">timeframe</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">indicator_window</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">rates</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">rates</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">indicator_window</span><span class="p">:</span> <span class="c1"># if no information was found, or less than expected rates were returned</span>
         <span class="k">return</span> <span class="c1"># prevent further calculations</span>
@@ -1868,28 +1811,47 @@
     <span class="n">rsi_oversold</span> <span class="o">=</span> <span class="mf">30.0</span>
     <span class="n">rsi_overbought</span> <span class="o">=</span> <span class="mf">70.0</span>
 
-    <span class="n">symbol_info</span> <span class="o">=</span> <span class="n">sim_mt5</span><span class="o">.</span><span class="n">symbol_info</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">)</span>
+    <span class="n">symbol_info</span> <span class="o">=</span> <span class="n">mt5</span><span class="o">.</span><span class="n">symbol_info</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span>
     <span class="n">lot_size</span> <span class="o">=</span> <span class="n">symbol_info</span><span class="o">.</span><span class="n">volume_min</span>
 
 
     <span class="k">if</span> <span class="n">rsi_value</span> <span class="o">&lt;</span> <span class="n">rsi_oversold</span><span class="p">:</span> <span class="c1"># long signal</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">pos_exists</span><span class="p">(</span><span class="n">magic</span><span class="o">=</span><span class="n">MAGIC_NUMBER</span><span class="p">,</span> <span class="n">pos_type</span><span class="o">=</span><span class="n">sim_mt5</span><span class="o">.</span><span class="n">POSITION_TYPE_BUY</span><span class="p">):</span>
-            <span class="n">m_trade</span><span class="o">.</span><span class="n">buy</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">lot_size</span><span class="p">,</span> <span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">symbol_info</span><span class="o">.</span><span class="n">ask</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">pos_exists</span><span class="p">(</span><span class="n">magic</span><span class="o">=</span><span class="n">MAGIC_NUMBER</span><span class="p">,</span> <span class="n">pos_type</span><span class="o">=</span><span class="n">mt5</span><span class="o">.</span><span class="n">POSITION_TYPE_BUY</span><span class="p">):</span>
+            <span class="n">m_trade</span><span class="o">.</span><span class="n">buy</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">lot_size</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">symbol_info</span><span class="o">.</span><span class="n">ask</span><span class="p">)</span>
 
-        <span class="n">close_pos_by_type</span><span class="p">(</span><span class="n">magic</span><span class="o">=</span><span class="n">MAGIC_NUMBER</span><span class="p">,</span> <span class="n">pos_type</span><span class="o">=</span><span class="n">sim_mt5</span><span class="o">.</span><span class="n">POSITION_TYPE_SELL</span><span class="p">)</span>
+        <span class="n">close_pos_by_type</span><span class="p">(</span><span class="n">magic</span><span class="o">=</span><span class="n">MAGIC_NUMBER</span><span class="p">,</span> <span class="n">pos_type</span><span class="o">=</span><span class="n">mt5</span><span class="o">.</span><span class="n">POSITION_TYPE_SELL</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">rsi_value</span> <span class="o">&gt;</span> <span class="n">rsi_overbought</span><span class="p">:</span> <span class="c1"># short signal</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">pos_exists</span><span class="p">(</span><span class="n">magic</span><span class="o">=</span><span class="n">MAGIC_NUMBER</span><span class="p">,</span> <span class="n">pos_type</span><span class="o">=</span><span class="n">sim_mt5</span><span class="o">.</span><span class="n">POSITION_TYPE_SELL</span><span class="p">):</span>
-            <span class="n">m_trade</span><span class="o">.</span><span class="n">sell</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">lot_size</span><span class="p">,</span> <span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">symbol_info</span><span class="o">.</span><span class="n">bid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">pos_exists</span><span class="p">(</span><span class="n">magic</span><span class="o">=</span><span class="n">MAGIC_NUMBER</span><span class="p">,</span> <span class="n">pos_type</span><span class="o">=</span><span class="n">mt5</span><span class="o">.</span><span class="n">POSITION_TYPE_SELL</span><span class="p">):</span>
+            <span class="n">m_trade</span><span class="o">.</span><span class="n">sell</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">lot_size</span><span class="p">,</span> <span class="n">price</span><span class="o">=</span><span class="n">symbol_info</span><span class="o">.</span><span class="n">bid</span><span class="p">)</span>
 
-        <span class="n">close_pos_by_type</span><span class="p">(</span><span class="n">magic</span><span class="o">=</span><span class="n">MAGIC_NUMBER</span><span class="p">,</span> <span class="n">pos_type</span><span class="o">=</span><span class="n">sim_mt5</span><span class="o">.</span><span class="n">POSITION_TYPE_BUY</span><span class="p">)</span>
+        <span class="n">close_pos_by_type</span><span class="p">(</span><span class="n">magic</span><span class="o">=</span><span class="n">MAGIC_NUMBER</span><span class="p">,</span> <span class="n">pos_type</span><span class="o">=</span><span class="n">mt5</span><span class="o">.</span><span class="n">POSITION_TYPE_BUY</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="backtesting">Backtesting</h2>
-<div class="highlight"><pre><span></span><code><span class="n">tester</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">on_tick_function</span><span class="o">=</span><span class="n">on_tick</span><span class="p">)</span> 
+<p><a href="https://strategytester5.com/documentation/#metatrader5-like-strategytester-configurations">Learn about tester configurations</a>.</p>
+<div class="highlight"><pre><span></span><code><span class="n">tester_config</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;bot_name&quot;</span><span class="p">:</span> <span class="s2">&quot;RSI Strategy Bot&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;symbols&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;EURUSD&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;timeframe&quot;</span><span class="p">:</span> <span class="s2">&quot;H1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;start_date&quot;</span><span class="p">:</span> <span class="s2">&quot;01.01.2026&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;end_date&quot;</span><span class="p">:</span> <span class="s2">&quot;01.06.2026&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;modelling&quot;</span> <span class="p">:</span> <span class="s2">&quot;open price only&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;deposit&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="s2">&quot;leverage&quot;</span><span class="p">:</span> <span class="s2">&quot;1:100&quot;</span>
+<span class="p">}</span>
+
+<span class="k">if</span> <span class="s2">&quot;--backtesting&quot;</span> <span class="ow">in</span> <span class="n">script_argument</span><span class="p">:</span>
+
+    <span class="n">stats</span> <span class="o">=</span> <span class="n">run_backtesting</span><span class="p">(</span>
+        <span class="n">main_function</span><span class="o">=</span><span class="n">main</span><span class="p">,</span>
+        <span class="n">tester_config</span><span class="o">=</span><span class="n">tester_config</span><span class="p">,</span>
+        <span class="n">virtual_mt5</span><span class="o">=</span><span class="n">mt5</span><span class="p">,</span>
+        <span class="n">logging_level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
+    <span class="p">)</span>
 </code></pre></div>
-<p>At the end of the backtest you should see a strategy tester report. </p>
-<p>Under Reports subfolder:</p>
+<p>Running the script in the command prompt with parameter(s) <code>--backtesting</code>, will open a browser tab on localhost, from there your trading operations will be visualized.</p>
 <p><img alt="report" src="../../images/tester_report.png" /></p>
+<p>Other Working examples and trading robots can be found <a href="https://github.com/MegaJoctan/StrategyTester5/tree/main/examples">here</a>.</p>
 
 
 

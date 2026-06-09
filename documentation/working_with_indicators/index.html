@@ -129,8 +129,8 @@
 </style>
 
 <div>
-  🚀 Get StrategyTester5 Premium (Lifetime Access) —
-  <a href="https://omegajoctan.gumroad.com/l/strategytester5-pro" target="_blank" rel="noopener">Buy Now</a>
+  Backtest your Python bots in MetaTrader5 👉
+  <a href="https://omegajoctan.gumroad.com/l/strategytester5-professional" target="_blank" rel="noopener">Learn How</a>
 </div>
 
           </div>
@@ -563,7 +563,7 @@
   <span class="md-ellipsis">
     
   
-    Quick Start | Make your first Bot
+    Quick Start | backtest your trading bots
   
 
     
@@ -753,17 +753,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#tldr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TL;DR
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -787,35 +776,7 @@
   <span class="md-ellipsis">
     
   
-    RSI Strategy Example
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../logging_debugging/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Logging and Debugging
+    RSI Trading Bot Example
   
 
     
@@ -1494,7 +1455,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/strategytester5/config_validators/" class="md-nav__link">
+      <a href="../../api/strategytester5/utilsutils.md" class="md-nav__link">
         
   
   
@@ -1659,17 +1620,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#tldr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TL;DR
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1759,56 +1709,6 @@ In this example we will deploy a simple moving average indicator, so rather than
 <span class="m">2026</span>-01-05<span class="w"> </span><span class="m">04</span>:00:00<span class="w"> </span><span class="p">|</span><span class="w"> </span>INFO<span class="w">     </span><span class="p">|</span><span class="w"> </span>Simple<span class="w"> </span>Trading<span class="w"> </span>Robot<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="o">[</span>bot.py:45<span class="w"> </span>-<span class="w">    </span>on_tick<span class="o">()</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">=</span>&gt;<span class="w"> </span>Current<span class="w"> </span>sma<span class="o">(</span><span class="m">20</span><span class="o">)</span><span class="w"> </span>:<span class="w"> </span><span class="m">156</span>.69075
 StrategyTester<span class="w"> </span>Progress:<span class="w">   </span><span class="m">2</span>%<span class="p">|</span>▏<span class="w">         </span><span class="p">|</span><span class="w"> </span><span class="m">33</span>/1441<span class="w"> </span><span class="o">[</span><span class="m">00</span>:00&lt;<span class="m">00</span>:04,<span class="w"> </span><span class="m">326</span>.34bar/s<span class="o">]</span><span class="m">2026</span>-01-05<span class="w"> </span><span class="m">05</span>:00:00<span class="w"> </span><span class="p">|</span><span class="w"> </span>INFO<span class="w">     </span><span class="p">|</span><span class="w"> </span>Simple<span class="w"> </span>Trading<span class="w"> </span>Robot<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="o">[</span>bot.py:45<span class="w"> </span>-<span class="w">    </span>on_tick<span class="o">()</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">=</span>&gt;<span class="w"> </span>Current<span class="w"> </span>sma<span class="o">(</span><span class="m">20</span><span class="o">)</span><span class="w"> </span>:<span class="w"> </span><span class="m">156</span>.6599
 </code></pre></div>
-<h2 id="tldr">TL;DR</h2>
-<p>Below is the full script:
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">strategytester5.tester</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrategyTester</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">MetaTrader5</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mt5</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">ta.trend</span><span class="w"> </span><span class="kn">import</span> <span class="n">sma_indicator</span>
-
-<span class="k">if</span> <span class="ow">not</span> <span class="n">mt5</span><span class="o">.</span><span class="n">initialize</span><span class="p">():</span>
-    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Failed to initialize mt5.&quot;</span><span class="p">)</span>
-
-<span class="n">tester_config</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;bot_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Working With Indicators&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;symbols&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;USDJPY&quot;</span><span class="p">],</span>
-        <span class="s2">&quot;timeframe&quot;</span><span class="p">:</span> <span class="s2">&quot;H1&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;start_date&quot;</span><span class="p">:</span> <span class="s2">&quot;01.01.2026 00:00&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;end_date&quot;</span><span class="p">:</span> <span class="s2">&quot;27.03.2026 00:00&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;modelling&quot;</span> <span class="p">:</span> <span class="s2">&quot;Open price only&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;deposit&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
-        <span class="s2">&quot;leverage&quot;</span><span class="p">:</span> <span class="s2">&quot;1:100&quot;</span>
-<span class="p">}</span>
-
-<span class="n">tester</span> <span class="o">=</span> <span class="n">StrategyTester</span><span class="p">(</span><span class="n">tester_config</span><span class="o">=</span><span class="n">tester_config</span><span class="p">,</span> <span class="n">mt5_instance</span><span class="o">=</span><span class="n">mt5</span><span class="p">,</span> <span class="n">logging_level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
-<span class="n">sim_mt5</span> <span class="o">=</span> <span class="n">tester</span><span class="o">.</span><span class="n">simulated_mt5</span> <span class="c1"># extract the simulated metatrader5 from the StrategyTester object and assign it to a simple variable</span>
-<span class="n">logger</span> <span class="o">=</span> <span class="n">tester</span><span class="o">.</span><span class="n">logger</span>
-
-<span class="c1"># ---------------------- inputs ----------------------------</span>
-
-<span class="n">symbol</span>  <span class="o">=</span> <span class="n">tester_config</span><span class="p">[</span><span class="s2">&quot;symbols&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># it should be one among the symbols in symbols list from tester.json (config file/dictionary)</span>
-<span class="n">timeframe</span> <span class="o">=</span> <span class="n">sim_mt5</span><span class="o">.</span><span class="n">TIMEFRAME_H1</span> <span class="c1"># This should be an integer so you should convert timeframe in string into integer</span>
-
-<span class="c1"># ---------------------------------------------------------</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">on_tick</span><span class="p">():</span>
-
-    <span class="n">indicator_window</span> <span class="o">=</span> <span class="mi">20</span>
-    <span class="n">rates</span> <span class="o">=</span> <span class="n">sim_mt5</span><span class="o">.</span><span class="n">copy_rates_from_pos</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">timeframe</span><span class="o">=</span><span class="n">timeframe</span><span class="p">,</span> <span class="n">start_pos</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="n">indicator_window</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">rates</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">rates</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">indicator_window</span><span class="p">:</span> <span class="c1"># if no information was found, or less than expected rates were returned</span>
-        <span class="k">return</span> <span class="c1"># prevent further calculations</span>
-
-    <span class="n">rates_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">rates</span><span class="p">)</span>
-
-    <span class="c1"># print(rates_df.head(-10))</span>
-    <span class="n">sma_indicator_values</span> <span class="o">=</span> <span class="n">sma_indicator</span><span class="p">(</span><span class="n">rates_df</span><span class="p">[</span><span class="s2">&quot;close&quot;</span><span class="p">],</span> <span class="n">window</span><span class="o">=</span><span class="n">indicator_window</span><span class="p">)</span>
-
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current sma(</span><span class="si">{</span><span class="n">indicator_window</span><span class="si">}</span><span class="s2">) : </span><span class="si">{</span><span class="n">sma_indicator_values</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="c1"># print the last calculated value in the array</span>
-
-<span class="n">tester</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">on_tick_function</span><span class="o">=</span><span class="n">on_tick</span><span class="p">)</span> <span class="c1"># very important!</span>
-</code></pre></div></p>
 
 
 
