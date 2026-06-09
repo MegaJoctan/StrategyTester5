@@ -23,3 +23,6 @@ TradingHistory/
 site/
 .cache/
 t.txt
+
+deals.csv
+orders.csv
