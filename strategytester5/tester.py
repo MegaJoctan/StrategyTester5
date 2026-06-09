@@ -868,6 +868,12 @@ class StrategyTester:
             )
 
             time.sleep(1)
+            print(
+                "\n📈 Visualize your backtesting progress on MetaTrader 5 charts.\n"
+                "See entries, exits, SL/TP levels and trade history directly in MT5.\n"
+                "Professional Edition:\n"
+                "https://omegajoctan.gumroad.com/l/strategytester5-professional"
+            )
 
         else:
             self.IS_OPTIMIZATION_FIRST_RUN = False

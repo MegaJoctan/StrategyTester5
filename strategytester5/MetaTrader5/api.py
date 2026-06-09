@@ -325,7 +325,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
                 Returns bars as the numpy array with the named time, open, high, low, close, tick_volume, spread and real_volume columns. Returns None in case of an error. The info on the error can be obtained using MetaTrader5.last_error().
 
             Notes:
-                - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5` becomes handy.
+                - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5_source` becomes handy.
         """
 
         if not isinstance(date_from, datetime) or not isinstance(date_to, datetime):
@@ -385,7 +385,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             Returns bars as the numpy array with the named time, open, high, low, close, tick_volume, spread and real_volume columns. Return None in case of an error. The info on the error can be obtained using last_error().
 
         Notes:
-            - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5` becomes handy.
+            - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5_source` becomes handy.
         """
 
         if isinstance(date_from, (int, float)):
@@ -449,7 +449,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             Returns bars as the numpy array with the named time, open, high, low, close, tick_volume, spread and real_volume columns. Returns None in case of an error. The info on the error can be obtained using last_error().
 
         Notes:
-            - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5` becomes handy.
+            - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5_source` becomes handy.
         """
 
         tick = self.symbol_info_tick(symbol=symbol)
@@ -521,7 +521,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             Returns ticks as the numpy array with the named time, bid, ask, last and flags columns. The 'flags' value can be a combination of flags from the TICK_FLAG enumeration. Return None in case of an error. The info on the error can be obtained using last_error().
 
         Notes:
-            - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5` becomes handy.
+            - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5_source` becomes handy.
         """
 
         if not isinstance(date_from, datetime) or isinstance(date_to, datetime):
@@ -577,7 +577,7 @@ class VirtualMetaTrader5(MetaTrader5Constants):
             Returns ticks as the numpy array with the named time, bid, ask, last and flags columns. The 'flags' value can be a combination of flags from the TICK_FLAG enumeration. Return None in case of an error. The info on the error can be obtained using last_error().
 
         Notes:
-            - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5` becomes handy.
+            - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5_source` becomes handy.
         """
 
         if not isinstance(date_from, datetime):
