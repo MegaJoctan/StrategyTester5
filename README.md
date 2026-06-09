@@ -6,7 +6,7 @@ StrategyTester5 (ST5) is a Python framework for building, testing, and optimizin
 
 It extends the native [MetaTrader 5 Python API](https://pypi.org/project/metatrader5/) by adding high-performance backtesting, simulation, and data handling capabilities that are not available out of the box.
 
-!["banner"](docs/images/banner.png)
+!["banner"](https://raw.githubusercontent.com/MegaJoctan/StrategyTester5/main/docs/images/banner.png)
 <!-- !["mt5"](images/terminal.png "mt5-terminal") -->
 
 ## Why StrategyTester5?
@@ -114,7 +114,7 @@ else:
 
 The so-called `tester_config` is supposed to be a dictionary with a set of key, and value pairs that resemble MetaTrader5's strategy tester section.
 
-![mt5config](docs/images/mt5tester%20config.png)
+![mt5config](https://raw.githubusercontent.com/MegaJoctan/StrategyTester5/main/docs/images/mt5tester%20config.png)
 
 ```python title="example tester config(s)"
 tester_config = {
