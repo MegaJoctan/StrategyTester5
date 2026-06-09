@@ -4,7 +4,7 @@ from .MetaTrader5.api import MetaTrader5Constants
 from scipy.stats import linregress
 import pandas as pd
 import warnings
-
+import inspect
 
 # np.seterr(all="raise")  # turn numpy warnings into exceptions
 # warnings.filterwarnings("error")
@@ -98,12 +98,12 @@ class TesterStats:
         """
 
         self.deals = deals
-        self.initial_deposit = float(initial_deposit)
+        self.initial_deposit_ = float(initial_deposit)
         self.balance_curve = np.ascontiguousarray(np.asarray(balance_curve, dtype=np.float64)).reshape(-1)
         self.equity_curve = np.ascontiguousarray(np.asarray(equity_curve, dtype=np.float64)).reshape(-1)
         self.margin_level_curve = np.ascontiguousarray(np.asarray(margin_level_curve, dtype=np.float64)).reshape(-1)
-        self.ticks = ticks
-        self.symbols = symbols
+        self.ticks_ = ticks
+        self.symbols_ = symbols
 
         self._profits: list[float] = []
         self._losses: list[float] = []  # negative profits (losses)
@@ -218,6 +218,21 @@ class TesterStats:
             self._win_streaks.append(cur_win_count)
         if cur_loss_count > 0:
             self._loss_streaks.append(cur_loss_count)
+
+    @property
+    def initial_deposit(self):
+        """The initial trading capital for the backtest"""
+        return self.initial_deposit_
+
+    @property
+    def ticks(self):
+        """The number of ticks seen during the backtest"""
+        return self.ticks_
+
+    @property
+    def symbols(self):
+        """The number of symbols seen during the backtest"""
+        return self.symbols_
 
     @property
     def total_trades(self) -> int:
@@ -375,12 +390,12 @@ class TesterStats:
     def balance_drawdown_absolute(self) -> float:
         """ Absolute drawdown for balance curve. """
         # AbsoluteDrawDown = InitialDeposit - MinimalBalance (below initial) :contentReference[oaicite:12]{index=12}
-        return self._abs_drawdown(self.initial_deposit, self.balance_curve)
+        return self._abs_drawdown(self.initial_deposit_, self.balance_curve)
 
     @property
     def equity_drawdown_absolute(self) -> float:
         """ Absolute drawdown for equity curve. """
-        return self._abs_drawdown(self.initial_deposit, self.equity_curve)
+        return self._abs_drawdown(self.initial_deposit_, self.equity_curve)
 
     @property
     def balance_drawdown_maximal(self) -> float:
@@ -388,7 +403,7 @@ class TesterStats:
         return float(_max_dd_money_and_pct_nb(self.balance_curve)[0])
 
     def _validate_baleq_values(self, value: float) -> float:
-        if abs(value) > self.initial_deposit:
+        if abs(value) > self.initial_deposit_:
             return np.nan
 
         return value
@@ -517,6 +532,29 @@ class TesterStats:
             "avg": durations.mean(),
         }
 
+    def to_dict(self) -> dict:
+        """
+            Converts all non-protected methods in this class to a dictionary.
+
+            Returns:
+                   A dictionary object (dict).
+        """
+        result = {}
+
+        for name, obj in inspect.getmembers(type(self)):
+
+            # skip private/protected
+            if name.startswith("_"):
+                continue
+
+            # collect @property values
+            if isinstance(obj, property):
+                try:
+                    result[name] = getattr(self, name)
+                except Exception:
+                    result[name] = None
+
+        return result
 
 class EntriesCalculator:
     """ Calculates entry counts by hour, weekday, and month based on the deals data. """
@@ -524,6 +562,25 @@ class EntriesCalculator:
     def __init__(self, deals_df: pd.DataFrame):
         self.deals_df = deals_df.query(
             f"entry=={MetaTrader5Constants.DEAL_ENTRY_IN} and (type=={MetaTrader5Constants.DEAL_TYPE_SELL} or type=={MetaTrader5Constants.DEAL_TYPE_BUY})").copy()
+
+        time_col = self.deals_df["time"]
+
+        # Convert only if not already datetime
+        if not pd.api.types.is_datetime64_any_dtype(time_col):
+
+            # If timestamps are seconds since epoch
+            if pd.api.types.is_integer_dtype(time_col):
+                self.deals_df["time"] = pd.to_datetime(
+                    time_col,
+                    unit="s",
+                    errors="coerce"
+                )
+
+            else:
+                self.deals_df["time"] = pd.to_datetime(
+                    time_col,
+                    errors="coerce"
+                )
 
         self.deals_df["hour"] = self.deals_df["time"].dt.hour
         self.deals_df["weekday"] = self.deals_df["time"].dt.weekday
@@ -553,6 +610,25 @@ class PLCalculator:
 
         self.deals_df = deals_df.query(
             f"entry == {MetaTrader5Constants.DEAL_ENTRY_OUT} and (type=={MetaTrader5Constants.DEAL_TYPE_BUY} | type=={MetaTrader5Constants.DEAL_TYPE_SELL})").copy()
+
+        time_col = self.deals_df["time"]
+
+        # Convert only if not already datetime
+        if not pd.api.types.is_datetime64_any_dtype(time_col):
+
+            # If timestamps are seconds since epoch
+            if pd.api.types.is_integer_dtype(time_col):
+                self.deals_df["time"] = pd.to_datetime(
+                    time_col,
+                    unit="s",
+                    errors="coerce"
+                )
+
+            else:
+                self.deals_df["time"] = pd.to_datetime(
+                    time_col,
+                    errors="coerce"
+                )
 
         self.deals_df["hour"] = self.deals_df["time"].dt.hour
         self.deals_df["weekday"] = self.deals_df["time"].dt.weekday

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from typing import Dict
-from strategytester5.MetaTrader5.api import OverLoadedMetaTrader5API
+from strategytester5.MetaTrader5.api import VirtualMetaTrader5
 from . import config
 from datetime import datetime
 from dateutil import parser
-
+from difflib import get_close_matches
 
 class TesterConfigValidators:
     """
@@ -47,22 +47,29 @@ class TesterConfigValidators:
 
     @staticmethod
     def _parse_modelling(value):
-        # already integer
-        if isinstance(value, int):
-            if value not in config.SUPPORTED_TESTER_MODELLING:
-                raise RuntimeError(f"Invalid modelling integer: {value}")
-            return value
 
-        # string input
         if isinstance(value, str):
-            key = value.lower()
-            if key not in config.SUPPORTED_TESTER_MODELLING_REVERSE:
-                raise RuntimeError(
-                    f"Invalid modelling: {value}, supported: {list(config.SUPPORTED_TESTER_MODELLING.values())}"
-                )
-            return config.SUPPORTED_TESTER_MODELLING_REVERSE[key]
 
-        raise RuntimeError(f"Invalid modelling type: {type(value)}")
+            key = value.lower()
+
+            if key not in config.SUPPORTED_TESTER_MODELLING_REVERSE:
+                matches = get_close_matches(
+                    key,
+                    config.SUPPORTED_TESTER_MODELLING_REVERSE.keys(),
+                    n=1,
+                    cutoff=0.5
+                )
+
+                suggestion = (
+                    f" Did you mean '{matches[0]}'?"
+                    if matches else ""
+                )
+
+                raise RuntimeError(
+                    f"Invalid modelling: '{value}'.{suggestion}"
+                )
+
+            return config.SUPPORTED_TESTER_MODELLING_REVERSE[key]
 
     @staticmethod
     def parse_date(date_str: str) -> datetime:
@@ -91,9 +98,9 @@ class TesterConfigValidators:
 
         # --- TIMEFRAME ---
         timeframe = raw_config["timeframe"]
-        if timeframe not in OverLoadedMetaTrader5API.STRING2TIMEFRAME_MAP:
+        if timeframe not in VirtualMetaTrader5.STRING2TIMEFRAME_MAP:
             raise RuntimeError(
-                f"Invalid timeframe: {timeframe} supported: {OverLoadedMetaTrader5API.STRING2TIMEFRAME_MAP.keys()}")
+                f"Invalid timeframe: {timeframe} supported: {VirtualMetaTrader5.STRING2TIMEFRAME_MAP.keys()}")
         cfg["timeframe"] = timeframe
 
         # --- MODELLING ---

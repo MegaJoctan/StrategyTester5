@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+    <title>StrategyTester5 Dashboard</title>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../static/styles.css">
+
+</head>
+
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <div class="branding">
+                <div class="title">
+                    STRATEGYTESTER5
+                </div>
+
+                <div class="subtitle" id="bot-name">
+                </div>
+            </div>
+
+            <div class="metrics">
+
+                <div class="metric-card">
+                    <div class="metric-label">BALANCE</div>
+                    <div class="metric-value" id="balance">$0</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-label">EQUITY</div>
+                    <div class="metric-value" id="equity">$0</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-label">FREE MARGIN</div>
+                    <div class="metric-value" id="free_margin">$0</div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- CHART -->
+        <div class="chart-container">
+            <div id="equityChart"></div>
+        </div>
+
+        <!-- Live trades table -->
+        <div class="live-trades-section" id="live-trades-section">
+            <h2 style="margin-bottom:20px;">Trades</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Ticket</th>
+                        <th>Time</th>
+                        <th>Type</th>
+                        <th>Volume</th>
+                        <th>Price</th>
+                        <th>SL</th>
+                        <th>TP</th>
+                        <th>Current</th>
+                        <th>Profit</th>
+                    </tr>
+                </thead>
+
+                <tbody id="trades-body">
+                </tbody>
+            </table>
+        </div>
+
+        <!--        backtest report -->
+        <div class="stats-card" id="backtest-report-section" style="display: none;">
+        </div>
+
+        <!--        Entries plot -->
+
+        <div class="analytics-card" id="entries-pl-section" style="display: none;">
+        </div>
+
+        <!--        Holding trades section -->
+        <div id="holding-section" class="analytics-card" style="display:none;">
+        </div>
+    </div>
+
+    <script src="../static/socket.io.min.js"></script>
+    <script src="../static/plotly-2.35.2.min.js"></script>
+    <script src="../static/script.js"></script>
+</body>
+</html>

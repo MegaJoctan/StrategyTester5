@@ -1,105 +1,85 @@
 from __future__ import annotations
 
 from . import *
-from typing import Optional, Literal, Union, Any
+from typing import Optional, Literal, Union
 from strategytester5.MetaTrader5.constants import MetaTrader5Constants
-from strategytester5.MetaTrader5.constants import MetaTrader5Constants as MetaTrader5
+import MetaTrader5
 import logging
-from datetime import datetime
 from .error_description import return_code_description
 from .trade_validators import TradeValidators
-from strategytester5 import config
 from . import data
 import fnmatch
-from pathlib import Path
-from strategytester5.MQL5.functions import PeriodSeconds
-from datetime import datetime, timedelta
+from datetime import datetime
 
-class OverLoadedMetaTrader5API(MetaTrader5Constants):
+from ..MQL5.functions import PeriodSeconds
+
+
+class VirtualMetaTrader5(MetaTrader5Constants):
     """The simulated MetaTrader5 Instance similar to [https://pypi.org/project/metatrader5/](https://pypi.org/project/metatrader5/)"""
 
     def __init__(self,
-                 logger: logging.Logger,
-                 live_mt5: Any,
-                 history_start_date: datetime,
-                 broker_data_path: Optional[str] = config.DEFAULT_BROKER_DATA_PATH,
-                 polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto"
+                 parent_mt5: MetaTrader5,
+                 custom_broker_data_path: str = "",
                  ):
         """
-        Instantiates & initializes the simulated MetaTrader5 instance
+        Instantiates the simulated MetaTrader5 instance.
 
         Args:
-            logger (logging.Logger): The logger to use. Defaults to None.
-            live_mt5 (Any): MetaTrader5 API/client instance used for obtaining crucial information from the broker as an attempt to mimic the terminal.
-            history_start_date (datetime | optional): The first date in history
-            broker_data_path (str | optional): A folder to store broker's credentials after extracting from MetaTrader5
+            parent_mt5 (Any): MetaTrader5 API/client instance used for obtaining crucial information from the broker as an attempt to mimic the terminal.
+            custom_broker_data_path (bool | optional): Where custom folders for history are kept.
 
-            polars_collect_engine (str): Engine used by Polars when collecting historical data in functions for obtaining ticks — copy_ticks*, and bars information/rates (copy_rates*). Supported values are:
-                - ``"auto"`` (default): Use Polars’ standard in-memory engine and
-                    respect the ``POLARS_ENGINE_AFFINITY`` environment variable if set.
-                - ``"in-memory"``: Explicitly use the default in-memory engine,
-                    optimized with multi-threading and SIMD over Arrow data.
-                - ``"streaming"``: Process queries in batches, enabling
-                    larger-than-RAM datasets.
-                - ``"gpu"``: Use NVIDIA GPUs via RAPIDS cuDF for accelerated execution.
-                    Requires installing Polars with GPU support, e.g.:
-                    ``pip install polars[gpu] --extra-index-url=https://pypi.nvidia.com``.
         """
+
         super().__init__()
 
-        self.ac_info_json = Path(broker_data_path) / config.DEFAULT_ACCOUNT_INFO_JSON
-        self.symbol_info_json = Path(broker_data_path) / config.DEFAULT_SYMBOL_INFO_JSON
-        self.terminal_info_json = Path(broker_data_path) / config.DEFAULT_TERMINAL_INFO_JSON
+        # store global variables
 
-        if live_mt5 is not None:
-            # we export account information and all instrument info
-            all_s_info = live_mt5.symbols_get()
+        self.IS_OPTIMIZATION_MODE = False
+        self.parent_mt5 = parent_mt5
+        self.logger = None
 
-            if all_s_info is None:
-                log = f"Failed to obtain symbol info from the live MetaTrader5 instance, error = {live_mt5.last_error()}"
-                logger.critical(log)
-                raise RuntimeError(log)
+        # checking the parent MetaTrader5
 
-            data.export_all_symbol_info(all_s_info, self.symbol_info_json)
+        if self.parent_mt5 is None:
+            raise RuntimeError("Invalid parent_mt5 was received")
 
-            ac_info = live_mt5.account_info()
+        # Get necessary information from the parent API
 
-            if ac_info is None:
-                log = f"Failed to obtain account info from the live MetaTrader5 instance, error = {live_mt5.last_error()}"
-                logger.critical(log)
-                raise RuntimeError(log)
+        all_s_info = parent_mt5.symbols_get()
 
-            data.export_account_info(ac_info, self.ac_info_json)
+        if all_s_info is None:
+            raise RuntimeError(
+                f"Failed to obtain symbol info from the live MetaTrader5 instance, error = {parent_mt5.last_error()}")
 
-            terminal_info = live_mt5.terminal_info()
+        self.SYMBOL_INFO_CACHE = {s.name: s for s in all_s_info}
 
-            if terminal_info is None:
-                log = f"Failed to obtain terminal information from a live MetaTrader5 instance, error = {live_mt5.last_error()}"
-                logger.critical(log)
-                raise RuntimeError(log)
+        ac_info = parent_mt5.account_info()
 
-            data.export_terminal_info(terminal_info, self.terminal_info_json)
+        if ac_info is None:
+            raise RuntimeError(
+                f"Failed to obtain account info from the live MetaTrader5 instance, error = {parent_mt5.last_error()}")
 
-        self.history_start_date = history_start_date
-        self.logger = logger
-        self.broker_data_path = broker_data_path
-        self.polars_collect_engine = polars_collect_engine
-        self.history_manager = data.HistoryManager(mt5_instance=live_mt5, broker_data_path=self.broker_data_path)
+        self.ACCOUNT = AccountInfo(*ac_info)
 
+        # broker's data
+
+        self.broker_data_path = self.ACCOUNT.server if custom_broker_data_path == "" else custom_broker_data_path
+        self.history_manager = data.HistoryManager(mt5_instance=parent_mt5, broker_data_path=self.broker_data_path)
+
+        terminal_info = parent_mt5.terminal_info()
+        if terminal_info is None:
+            raise RuntimeError(
+                f"Failed to obtain terminal information from a live MetaTrader5 instance, error = {parent_mt5.last_error()}")
+
+        self.TERMINAL_INFO = terminal_info
         self._last_error = None
 
-        self.SYMBOL_INFO_CACHE = {
-            s.name: s for s in data.import_all_symbol_info(self.symbol_info_json)
-        }
-
-        self.TICK_CACHE: dict[str, Tick] = {}
         self._current_time: int = 0
         self._current_time_msc: int = -1
 
         # ----------------- MetaTrader5-Like Containers-----------------
 
-        self.ACCOUNT = data.import_account_info(self.ac_info_json)
-        self.TERMINAL_INFO = data.import_terminal_info(self.terminal_info_json)
+        self.TICK_CACHE: dict[str, Tick] = {}
 
         self.ORDERS = []
         self.ORDERS_HISTORY = []
@@ -111,6 +91,76 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
 
         self._positions_counter = 0
         self._orders_counter = 0
+
+    def assign_logger(self, logger=logging.Logger):
+        """
+            Assigns a logger instance to the class
+        """
+        self.logger = logger
+
+    def reset_state(self):
+        """
+        Resets the internal state of the virtual MetaTrader5 object.
+        """
+        self._last_error = None
+
+        self._current_time: int = 0
+        self._current_time_msc: int = -1
+
+        self._positions_counter = 0
+        self._orders_counter = 0
+
+        # clear history
+
+        self.ORDERS = []
+        self.ORDERS_HISTORY = []
+        self.POSITIONS = []
+        self.DEALS = []
+
+    def info_log(self, msg: str):
+        if self.IS_OPTIMIZATION_MODE:
+            return
+
+        if self.logger is None:
+            print(msg)
+        else:
+            self.logger.info(msg, stacklevel=3)
+
+    def debug_log(self, msg: str):
+        if self.IS_OPTIMIZATION_MODE:
+            return
+
+        if self.logger is None:
+            print(msg)
+        else:
+            self.logger.debug(msg, stacklevel=3)
+
+    def warning_log(self, msg: str):
+        if self.IS_OPTIMIZATION_MODE:
+            return
+
+        if self.logger is None:
+            print(msg)
+        else:
+            self.logger.warning(msg, stacklevel=3)
+
+    def critical_log(self, msg: str):
+        if self.IS_OPTIMIZATION_MODE:
+            return
+
+        if self.logger is None:
+            print(msg)
+        else:
+            self.logger.critical(msg, stacklevel=3)
+
+    def error_log(self, msg: str):
+        if self.IS_OPTIMIZATION_MODE:
+            return
+
+        if self.logger is None:
+            print(msg)
+        else:
+            self.logger.error(msg, stacklevel=3)
 
     def current_time(self) -> int:
         """Returns the current time in seconds since 1970.01.01 00:00:00, as obtained from the latest tick update."""
@@ -135,8 +185,12 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
         return self._positions_counter
 
     def last_error(self):
-        """returns the last error from the terminal or the strategy tester"""
+        """Returns the last error from the terminal or the strategy tester"""
         return self._last_error
+
+    def reset_last_error(self):
+        """Resets last_error object"""
+        self._last_error = None
 
     def account_info(self) -> Optional[AccountInfo]:
         """Gets info on the current trading account.
@@ -159,7 +213,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
         """
 
         if symbol not in self.SYMBOL_INFO_CACHE:
-            self.logger.warning(f"Failed to obtain symbol info for {symbol}")
+            self.warning_log(f"Failed to obtain symbol info for {symbol}")
             return None
 
         return self.SYMBOL_INFO_CACHE[symbol]
@@ -177,11 +231,18 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
         try:
             tick = self.TICK_CACHE[symbol]
         except KeyError:
-            self.logger.warning(f"{symbol} not found in the tick cache")
+            self.warning_log(f"{symbol} not found in the tick cache")
 
         return tick
 
     def tick_update(self, symbol: str, tick: Union[Tick, dict, TICKS_DTYPE]):
+        """
+        Assigns the tick object to a virtual MetaTrader5 instance.
+
+        Args:
+            symbol: An instrument a given tick belongs to.
+            tick: The tick object to be assigned.
+        """
 
         if isinstance(tick, dict):
             tick = Tick(
@@ -222,14 +283,21 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
 
         else:
             log = f"Unknown tick type {type(tick)}"
-            self.logger.critical(log)
+            self.critical_log(log)
             raise RuntimeError(log)
 
         self._current_time = tick.time
         self._current_time_msc = tick.time_msc
         self.TICK_CACHE[symbol] = tick
 
-    def copy_rates_range(self, symbol: str, timeframe: int, date_from: datetime, date_to: datetime) -> Optional[
+    def copy_rates_range(self,
+                         symbol: str,
+                         timeframe: int,
+                         date_from: datetime,
+                         date_to: datetime,
+                         parent_mt5_source: bool = False,
+                         polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto"
+                         ) -> Optional[
         RATES_DTYPE]:
         """Get bars in the specified date range from the MetaTrader 5 terminal.
 
@@ -240,27 +308,56 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
             timeframe (int): Timeframe the bars are requested for. Set by a value from the TIMEFRAME enumeration. Required unnamed parameter.
             date_from (datetime): Date the bars are requested from. Set by the 'datetime' object or as a number of seconds elapsed since 1970.01.01. Bars with the open time >= date_from are returned. Required unnamed parameter.
             date_to (datetime): Date, up to which the bars are requested. Set by the 'datetime' object or as a number of seconds elapsed since 1970.01.01. Bars with the open time <= date_to are returned. Required unnamed parameter.
+            parent_mt5_source (bool): Whether to obtain rates directly from the `parent_mt5` (directly from the terminal) when set to True. Or, from custom broker's path created by the StrategyTester object.
+
+            polars_collect_engine (str): Engine used by Polars when collecting rates from custom broker's path. Supported values are:
+                - ``"auto"`` (default): Use Polars’ standard in-memory engine and
+                    respect the ``POLARS_ENGINE_AFFINITY`` environment variable if set.
+                - ``"in-memory"``: Explicitly use the default in-memory engine,
+                    optimized with multi-threading and SIMD over Arrow data.
+                - ``"streaming"``: Process queries in batches, enabling
+                    larger-than-RAM datasets.
+                - ``"gpu"``: Use NVIDIA GPUs via RAPIDS cuDF for accelerated execution.
+                    Requires installing Polars with GPU support, e.g.:
+                    ``pip install polars[gpu] --extra-index-url=https://pypi.nvidia.com``.
 
             Returns:
                 Returns bars as the numpy array with the named time, open, high, low, close, tick_volume, spread and real_volume columns. Returns None in case of an error. The info on the error can be obtained using MetaTrader5.last_error().
+
+            Notes:
+                - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5` becomes handy.
         """
 
         if not isinstance(date_from, datetime) or not isinstance(date_to, datetime):
-            self.logger.warning("Failed, both `date_from` and `date_to` must be datetime objects")
+            self.warning_log("Failed, both `date_from` and `date_to` must be datetime objects")
             return None
 
-        rates = self.history_manager.copy_rates_range_from_parquet(symbol, timeframe, date_from, date_to,
-                                                                   polars_collect_engine=self.polars_collect_engine,
-                                                                   broker_data_dir=self.broker_data_path,
-                                                                   logger=self.logger)
+        if parent_mt5_source:
+            rates = self.parent_mt5.copy_rates_range(symbol, timeframe, date_from, date_to)
+            self._last_error = self.parent_mt5.last_error()
+
+        else:
+            rates = self.history_manager.copy_rates_range_from_parquet(symbol, timeframe, date_from, date_to,
+                                                                       polars_collect_engine=polars_collect_engine,
+                                                                       broker_data_dir=self.broker_data_path,
+                                                                       logger=self.logger,
+                                                                       verbosity=not self.IS_OPTIMIZATION_MODE
+                                                                       )
 
         if rates is None or len(rates) == 0:
-            self.logger.warning(f"no rates found on {symbol} from {date_from} bars: {date_to}")
+            self.warning_log(f"no rates found on {symbol} from {date_from} bars: {date_to}")
             return None
 
         return rates
 
-    def copy_rates_from(self, symbol: str, timeframe: int, date_from: datetime, count: int) -> Optional[RATES_DTYPE]:
+    def copy_rates_from(self,
+                        symbol: str,
+                        timeframe: int,
+                        date_from: datetime,
+                        count: int,
+                        parent_mt5_source: bool = False,
+                        polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto"
+                        ) -> Optional[RATES_DTYPE]:
 
         """Get bars from the MetaTrader 5 terminal starting from the specified date.
 
@@ -271,9 +368,24 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
             timeframe (int): Timeframe the bars are requested for. Set by a value from the TIMEFRAME enumeration. Required unnamed parameter.
             date_from (datetime): Date of opening of the first bar from the requested sample. Set by the 'datetime' object or as a number of seconds elapsed since 1970.01.01. Required unnamed parameter.
             count (int): Number of bars to receive. Required unnamed parameter.
+            parent_mt5_source (bool): Whether to obtain rates directly from the `parent_mt5` (directly from the terminal) when set to True. Or, from custom broker's path created by the StrategyTester object.
+
+            polars_collect_engine (str): Engine used by Polars when collecting rates from custom broker's path. Supported values are:
+                - ``"auto"`` (default): Use Polars’ standard in-memory engine and
+                    respect the ``POLARS_ENGINE_AFFINITY`` environment variable if set.
+                - ``"in-memory"``: Explicitly use the default in-memory engine,
+                    optimized with multi-threading and SIMD over Arrow data.
+                - ``"streaming"``: Process queries in batches, enabling
+                    larger-than-RAM datasets.
+                - ``"gpu"``: Use NVIDIA GPUs via RAPIDS cuDF for accelerated execution.
+                    Requires installing Polars with GPU support, e.g.:
+                    ``pip install polars[gpu] --extra-index-url=https://pypi.nvidia.com``.
 
         Returns:
             Returns bars as the numpy array with the named time, open, high, low, close, tick_volume, spread and real_volume columns. Return None in case of an error. The info on the error can be obtained using last_error().
+
+        Notes:
+            - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5` becomes handy.
         """
 
         if isinstance(date_from, (int, float)):
@@ -281,16 +393,35 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
 
         # instead of getting data from MetaTrader 5, get data stored in our custom directories
 
-        rates = self.history_manager.copy_rates_from_parquet(symbol, timeframe, date_from=date_from, history_start_date=self.history_start_date, count=count,
-                                                             broker_data_dir=self.broker_data_path, logger=self.logger, polars_collect_engine=self.polars_collect_engine)
+        if parent_mt5_source:
+            rates = self.parent_mt5.copy_rates_from(symbol, timeframe, date_from, count)
+        else:
+
+            date_to = self.current_time() - PeriodSeconds(timeframe) * count
+            rates = self.history_manager.copy_rates_from_parquet(symbol,
+                                                                 timeframe,
+                                                                 date_from=date_from,
+                                                                 history_start_date=datetime.fromtimestamp(date_to),
+                                                                 count=count,
+                                                                 broker_data_dir=self.broker_data_path,
+                                                                 logger=self.logger,
+                                                                 polars_collect_engine=polars_collect_engine,
+                                                                 verbosity=not self.IS_OPTIMIZATION_MODE)
 
         if rates is None or len(rates) == 0:
-            self.logger.warning(f"no rates found for {symbol} from {date_from} bars: {count}")
+            self.warning_log(f"no rates found for {symbol} from {date_from} bars: {count}")
             return None
 
         return rates
 
-    def copy_rates_from_pos(self, symbol: str, timeframe: int, start_pos: int, count: int) -> Optional[TICKS_DTYPE]:
+    def copy_rates_from_pos(self,
+                            symbol: str,
+                            timeframe: int,
+                            start_pos: int,
+                            count: int,
+                            parent_mt5_source: bool = False,
+                            polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto"
+                            ) -> Optional[TICKS_DTYPE]:
         """
         Get bars from the MetaTrader 5 terminal starting from the specified index.
 
@@ -301,42 +432,69 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
             timeframe (int): MT5 timeframe the bars are requested for.
             start_pos (int): Initial index of the bar the data are requested from. The numbering of bars goes from present to past. Thus, the zero bar means the current one. Required unnamed parameter.
             count (int): Number of bars to receive. Required unnamed parameter.
+            parent_mt5_source (bool): Whether to obtain rates directly from the `parent_mt5` (directly from the terminal) when set to True. Or, from custom broker's path created by the StrategyTester object.
+
+            polars_collect_engine (str): Engine used by Polars when collecting rates from custom broker's path. Supported values are:
+                - ``"auto"`` (default): Use Polars’ standard in-memory engine and
+                    respect the ``POLARS_ENGINE_AFFINITY`` environment variable if set.
+                - ``"in-memory"``: Explicitly use the default in-memory engine,
+                    optimized with multi-threading and SIMD over Arrow data.
+                - ``"streaming"``: Process queries in batches, enabling
+                    larger-than-RAM datasets.
+                - ``"gpu"``: Use NVIDIA GPUs via RAPIDS cuDF for accelerated execution.
+                    Requires installing Polars with GPU support, e.g.:
+                    ``pip install polars[gpu] --extra-index-url=https://pypi.nvidia.com``.
 
         Returns:
             Returns bars as the numpy array with the named time, open, high, low, close, tick_volume, spread and real_volume columns. Returns None in case of an error. The info on the error can be obtained using last_error().
+
+        Notes:
+            - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5` becomes handy.
         """
 
         tick = self.symbol_info_tick(symbol=symbol)
 
         if not tick:
-            self.logger.critical(
+            self.critical_log(
                 f"Time information not found in the ticker for {symbol}, call the function 'tick_update' giving it the latest tick information")
             return None
 
-        now = datetime.fromtimestamp(tick.time)
-        rates = self.history_manager.copy_rates_from_parquet(symbol,
-                                                             timeframe,
-                                                             date_from=now,
-                                                             history_start_date=self.history_start_date,
-                                                             count=count,
-                                                             broker_data_dir=self.broker_data_path,
-                                                             logger=self.logger,
-                                                             polars_collect_engine=self.polars_collect_engine)
+        if parent_mt5_source:
+            rates = self.parent_mt5.copy_rates_from_pos(symbol, timeframe, start_pos, count)
+            self._last_error = self.parent_mt5.last_error()
+
+        else:
+
+            date_from = self.current_time() - PeriodSeconds(timeframe) * start_pos
+            date_to = date_from - PeriodSeconds(timeframe) * count
+
+            rates = self.history_manager.copy_rates_from_parquet(symbol,
+                                                                 timeframe,
+                                                                 date_from=datetime.fromtimestamp(date_from),
+                                                                 history_start_date=datetime.fromtimestamp(date_to),
+                                                                 count=count,
+                                                                 broker_data_dir=self.broker_data_path,
+                                                                 logger=self.logger,
+                                                                 polars_collect_engine=polars_collect_engine,
+                                                                 verbosity=not self.IS_OPTIMIZATION_MODE)
 
         if rates is None or len(rates) == 0:
-            self.logger.warning(f"no rates found for {symbol} from {start_pos} bars: {count}")
+            self.debug_log(f"no rates found for {symbol} from {start_pos} bars: {count}")
             return None
 
         return rates
 
-    def symbol_select(self, symbol: str, select: bool=False) -> bool:
+    def symbol_select(self, symbol: str, select: bool = False) -> bool:
         return True
 
     def copy_ticks_range(self,
                          symbol: str,
                          date_from: datetime,
                          date_to: datetime,
-                         flags: int = MetaTrader5.COPY_TICKS_ALL) -> Optional[TICKS_DTYPE]:
+                         flags: int = MetaTrader5.COPY_TICKS_ALL,
+                         parent_mt5_source: bool = False,
+                         polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto"
+                         ) -> Optional[TICKS_DTYPE]:
 
         """Get ticks for the specified date range from the MetaTrader 5 terminal.
 
@@ -345,28 +503,53 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
         Args:
             symbol(str): Financial instrument name, for example, "EURUSD". Required unnamed parameter.
             date_from(datetime): Date of opening of the first bar from the requested sample. Set by the 'datetime' object or as a number of seconds elapsed since 1970.01.01. Required unnamed parameter.
-
             date_to(datetime): Date, up to which the ticks are requested. Set by the 'datetime' object or as a number of seconds elapsed since 1970.01.01. Required unnamed parameter.
             flags(int): A flag to define the type of the requested ticks. COPY_TICKS_INFO – ticks with Bid and/or Ask changes, COPY_TICKS_TRADE – ticks with changes in Last and Volume, COPY_TICKS_ALL – all ticks. Flag values are described in the COPY_TICKS enumeration. Required unnamed parameter.
+            parent_mt5_source (bool): Whether to obtain ticks directly from the `parent_mt5` (directly from the terminal) when set to True. Or, from custom broker's path created by the StrategyTester object.
 
+            polars_collect_engine (str): Engine used by Polars when collecting ticks from custom broker's path. Supported values are:
+                - ``"auto"`` (default): Use Polars’ standard in-memory engine and
+                    respect the ``POLARS_ENGINE_AFFINITY`` environment variable if set.
+                - ``"in-memory"``: Explicitly use the default in-memory engine,
+                    optimized with multi-threading and SIMD over Arrow data.
+                - ``"streaming"``: Process queries in batches, enabling
+                    larger-than-RAM datasets.
+                - ``"gpu"``: Use NVIDIA GPUs via RAPIDS cuDF for accelerated execution.
+                    Requires installing Polars with GPU support, e.g.:
+                    ``pip install polars[gpu] --extra-index-url=https://pypi.nvidia.com``.
         Returns:
             Returns ticks as the numpy array with the named time, bid, ask, last and flags columns. The 'flags' value can be a combination of flags from the TICK_FLAG enumeration. Return None in case of an error. The info on the error can be obtained using last_error().
+
+        Notes:
+            - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5` becomes handy.
         """
 
         if not isinstance(date_from, datetime) or isinstance(date_to, datetime):
-            self.logger.warning("Failed, both `date_from` and `date_to` must be datetime objects")
+            self.warning_log("Failed, both `date_from` and `date_to` must be datetime objects")
             return None
 
-        return self.history_manager.copy_ticks_range_from_parquet(symbol=symbol,
-                                                                  date_from=date_from,
-                                                                  date_to=date_to,
-                                                                  polars_collect_engine=self.polars_collect_engine,
-                                                                  broker_data_dir=self.broker_data_path,
-                                                                  flags=flags,
-                                                                  logger=self.logger)
+        if parent_mt5_source:
+            ticks = self.parent_mt5.copy_ticks_range(symbol, date_from, date_to, flags)
+            self._last_error = self.parent_mt5.last_error()
+            return ticks
 
-    def copy_ticks_from(self, symbol: str, date_from: datetime, count: int, flags: int = MetaTrader5.COPY_TICKS_ALL) -> \
-    Optional[np.array]:
+        return self.history_manager.copy_ticks_range_parquet(symbol=symbol,
+                                                             date_from=date_from,
+                                                             date_to=date_to,
+                                                             polars_collect_engine=polars_collect_engine,
+                                                             broker_data_dir=self.broker_data_path,
+                                                             flags=flags,
+                                                             logger=self.logger,
+                                                             verbosity=not self.IS_OPTIMIZATION_MODE)
+
+    def copy_ticks_from(self,
+                        symbol: str,
+                        date_from: datetime,
+                        count: int,
+                        flags: int = MetaTrader5.COPY_TICKS_ALL,
+                        parent_mt5_source: bool = False,
+                        polars_collect_engine: Literal["auto", "in-memory", "streaming", "gpu"] = "auto"
+                        ) -> Optional[np.array]:
 
         """Get ticks from the MetaTrader 5 terminal starting from the specified date.
 
@@ -375,26 +558,46 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
         Args:
             symbol(str): Financial instrument name, for example, "EURUSD". Required unnamed parameter.
             date_from(datetime): Date of opening of the first bar from the requested sample. Set by the 'datetime' object or as a number of seconds elapsed since 1970.01.01. Required unnamed parameter.
-
             count(int): Number of ticks to receive. Required unnamed parameter.
             flags(int): A flag to define the type of the requested ticks. COPY_TICKS_INFO – ticks with Bid and/or Ask changes, COPY_TICKS_TRADE – ticks with changes in Last and Volume, COPY_TICKS_ALL – all ticks. Flag values are described in the COPY_TICKS enumeration. Required unnamed parameter.
+            parent_mt5_source (bool): Whether to obtain ticks directly from the `parent_mt5` (directly from the terminal) when set to True. Or, from custom broker's path created by the StrategyTester object.
+
+            polars_collect_engine (str): Engine used by Polars when collecting ticks from custom broker's path. Supported values are:
+                - ``"auto"`` (default): Use Polars’ standard in-memory engine and
+                    respect the ``POLARS_ENGINE_AFFINITY`` environment variable if set.
+                - ``"in-memory"``: Explicitly use the default in-memory engine,
+                    optimized with multi-threading and SIMD over Arrow data.
+                - ``"streaming"``: Process queries in batches, enabling
+                    larger-than-RAM datasets.
+                - ``"gpu"``: Use NVIDIA GPUs via RAPIDS cuDF for accelerated execution.
+                    Requires installing Polars with GPU support, e.g.:
+                    ``pip install polars[gpu] --extra-index-url=https://pypi.nvidia.com``.
 
         Returns:
             Returns ticks as the numpy array with the named time, bid, ask, last and flags columns. The 'flags' value can be a combination of flags from the TICK_FLAG enumeration. Return None in case of an error. The info on the error can be obtained using last_error().
+
+        Notes:
+            - In some cases, copying data directly from the terminal becomes cheap compared to reading from parquet files that introduce `file IO` operations that are computationally expensive. In such cases, `parent_mt5` becomes handy.
         """
 
         if not isinstance(date_from, datetime):
-            self.logger.warning("Failed, `date_from` must be a datetime object")
+            self.warning_log("Failed, `date_from` must be a datetime object")
             return None
 
-        return self.history_manager.copy_ticks_range_from_parquet(symbol=symbol,
-                                                                  date_from=date_from,
-                                                                  date_to=self.history_start_date,
-                                                                  limit=count,
-                                                                  polars_collect_engine=self.polars_collect_engine,
-                                                                  broker_data_dir=self.broker_data_path,
-                                                                  flags=flags,
-                                                                  logger=self.logger)
+        if parent_mt5_source:
+            ticks = self.parent_mt5.copy_ticks_from(symbol, date_from, count, flags)
+            self._last_error = self.parent_mt5.last_error()
+            return ticks
+
+        return self.history_manager.copy_ticks_from_parquet(
+            symbol=symbol,
+            date_from=date_from,
+            limit=count,
+            polars_collect_engine=polars_collect_engine,
+            broker_data_dir=self.broker_data_path,
+            flags=flags,
+            logger=self.logger,
+            verbosity=not self.IS_OPTIMIZATION_MODE)
 
     def orders_total(self) -> int:
 
@@ -406,8 +609,10 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
 
         return len(self.ORDERS)
 
-    def orders_get(self, symbol: Optional[str] = None, group: Optional[str] = None, ticket: Optional[int] = None) -> \
-    Optional[tuple[TradeOrder]]:
+    def orders_get(self,
+                   symbol: Optional[str] = None,
+                   group: Optional[str] = None,
+                   ticket: Optional[int] = None) -> Optional[tuple[TradeOrder]]:
 
         """Get active orders with the ability to filter by symbol or ticket. There are three call options.
 
@@ -420,7 +625,6 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
             ticket (int | optional): Order ticket (ORDER_TICKET).
 
         Returns:
-
             list: Returns info in the form of a tuple structure (TradeOrder). Return None in case of an error. The info on the error can be obtained using last_error().
         """
 
@@ -453,8 +657,10 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
         """
         return len(self.POSITIONS)
 
-    def positions_get(self, symbol: Optional[str] = None, group: Optional[str] = None, ticket: Optional[int] = None) -> \
-            tuple[TradePosition]:
+    def positions_get(self,
+                      symbol: Optional[str] = None,
+                      group: Optional[str] = None,
+                      ticket: Optional[int] = None) -> tuple[TradePosition]:
 
         """Get open positions with the ability to filter by symbol or ticket. There are three call options.
 
@@ -578,7 +784,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
 
         # date range is a requirement
         if date_from is None or date_to is None:
-            self.logger.error("date_from and date_to must be specified")
+            self.error_log("date_from and date_to must be specified")
             return None
 
         date_from_ts = int(date_from.timestamp())
@@ -671,7 +877,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
 
         # date range is a requirement
         if date_from is None or date_to is None:
-            self.logger.error("date_from and date_to must be specified")
+            self.error_log("date_from and date_to must be specified")
             return None
 
         date_from_ts = int(date_from.timestamp())
@@ -715,9 +921,9 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
             time_expiration=0,
 
             type=position.type,
-            type_time=OverLoadedMetaTrader5API.ORDER_TIME_GTC,
-            type_filling=OverLoadedMetaTrader5API.ORDER_FILLING_FOK,
-            state=OverLoadedMetaTrader5API.ORDER_STATE_FILLED,
+            type_time=VirtualMetaTrader5.ORDER_TIME_GTC,
+            type_filling=VirtualMetaTrader5.ORDER_FILLING_FOK,
+            state=VirtualMetaTrader5.ORDER_STATE_FILLED,
 
             magic=position.magic,
             position_id=position.ticket,
@@ -917,11 +1123,11 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
             tp = float(request.get("tp", 0))
 
         except KeyError:
-            self.logger.debug(f"{return_code_description(self.TRADE_RETCODE_INVALID)}")
+            self.debug_log(f"{return_code_description(self.TRADE_RETCODE_INVALID)}")
             return self._make_result(trade_request, self.TRADE_RETCODE_INVALID)
 
         if order_type not in (self.ORDER_TYPE_BUY, self.ORDER_TYPE_SELL):
-            self.logger.debug(f"{return_code_description(self.TRADE_RETCODE_INVALID)}")
+            self.debug_log(f"{return_code_description(self.TRADE_RETCODE_INVALID)}")
             return self._make_result(trade_request, self.TRADE_RETCODE_INVALID)
 
         # ------------------------ All checks and return codes ----------------------
@@ -934,28 +1140,28 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
         ac_info = self.account_info()
 
         if tick is None:
-            self.logger.debug(f"{return_code_description(self.TRADE_RETCODE_PRICE_OFF)}")
+            self.debug_log(f"{return_code_description(self.TRADE_RETCODE_PRICE_OFF)}")
             return self._make_result(trade_request, self.TRADE_RETCODE_PRICE_OFF)  # NO_QUOTES
 
         eps = pow(10, -symbol_info.digits)
 
         if type == self.ORDER_TYPE_BUY:
             if not TradeValidators.price_equal(price, tick.ask, eps):
-                self.logger.debug(f"{return_code_description(self.TRADE_RETCODE_PRICE_CHANGED)}")
+                self.debug_log(f"{return_code_description(self.TRADE_RETCODE_PRICE_CHANGED)}")
                 return self._make_result(trade_request, self.TRADE_RETCODE_PRICE_CHANGED)  # PRICE_CHANGED
 
         elif type == self.ORDER_TYPE_SELL:
             if not TradeValidators.price_equal(price, tick.bid, eps):
-                self.logger.debug(f"{return_code_description(self.TRADE_RETCODE_PRICE_CHANGED)}")
+                self.debug_log(f"{return_code_description(self.TRADE_RETCODE_PRICE_CHANGED)}")
                 return self._make_result(trade_request, self.TRADE_RETCODE_PRICE_CHANGED)
 
         # sl and tp checks
         if not validators.is_valid_sl(price, sl, order_type):
-            self.logger.debug(f"{return_code_description(self.TRADE_RETCODE_INVALID_STOPS)}")
+            self.debug_log(f"{return_code_description(self.TRADE_RETCODE_INVALID_STOPS)}")
             return self._make_result(trade_request, self.TRADE_RETCODE_INVALID_STOPS)
 
         if not validators.is_valid_tp(price, tp, order_type):
-            self.logger.debug(f"{return_code_description(self.TRADE_RETCODE_INVALID_STOPS)}")
+            self.debug_log(f"{return_code_description(self.TRADE_RETCODE_INVALID_STOPS)}")
             return self._make_result(trade_request, self.TRADE_RETCODE_INVALID_STOPS)
 
         # check if there is enough money
@@ -978,30 +1184,30 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
             future_margin_level = float("inf")
 
         if future_margin_level <= ac_info.margin_so_call:
-            self.logger.debug(f"{return_code_description(self.TRADE_RETCODE_NO_MONEY)}")
+            self.debug_log(f"{return_code_description(self.TRADE_RETCODE_NO_MONEY)}")
             return self._make_result(trade_request, self.TRADE_RETCODE_NO_MONEY)
 
         if margin > ac_info.margin_free:
-            self.logger.debug(f"{return_code_description(self.TRADE_RETCODE_NO_MONEY)}")
+            self.debug_log(f"{return_code_description(self.TRADE_RETCODE_NO_MONEY)}")
             return self._make_result(trade_request, self.TRADE_RETCODE_NO_MONEY)  # NO_MONEY
 
         # ---------------- MAX ORDERS CHECK ---------------------
 
         if validators.is_max_orders_reached(open_orders=self.orders_total(), ac_limit_orders=self.ACCOUNT.limit_orders):
-            self.logger.debug(f"{return_code_description(self.TRADE_RETCODE_LIMIT_ORDERS)}")
+            self.debug_log(f"{return_code_description(self.TRADE_RETCODE_LIMIT_ORDERS)}")
             return self._make_result(trade_request, self.TRADE_RETCODE_LIMIT_ORDERS)
 
         # ---------------- VOLUME VALIDATION ----------------
 
         if not validators.is_valid_lotsize(volume):
-            self.logger.debug(f"{return_code_description(self.TRADE_RETCODE_INVALID_VOLUME)}")
+            self.debug_log(f"{return_code_description(self.TRADE_RETCODE_INVALID_VOLUME)}")
             return self._make_result(trade_request, self.TRADE_RETCODE_INVALID_VOLUME)
 
         total_volume = sum([pos.volume for pos in self.POSITIONS]) + sum(
             [order.volume_current for order in self.ORDERS])
 
         if validators.is_symbol_volume_reached(symbol_volume=total_volume, volume_limit=symbol_info.volume_limit):
-            self.logger.debug(f"{return_code_description(self.TRADE_RETCODE_LIMIT_VOLUME)}")
+            self.debug_log(f"{return_code_description(self.TRADE_RETCODE_LIMIT_VOLUME)}")
             return self._make_result(trade_request, self.TRADE_RETCODE_LIMIT_VOLUME)
 
         # ------------------------ FILL THE REQUEST ----------------------------------
@@ -1024,7 +1230,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
             self._position_to_order(position=position, ticket=self._generate_order_history_ticket())
         )
 
-        self.logger.info(f"Position {deal.ticket} opened successfully!")
+        self.info_log(f"Position {deal.ticket} opened successfully!")
         return self._make_result(trade_request, retcode=self.TRADE_RETCODE_DONE, deal=deal.ticket, order=deal.order,
                                  volume=position.volume)
 
@@ -1087,27 +1293,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
             close_price,
         )
 
-        # ---------------- UPDATE ACCOUNT ----------------
-
-        acct = self.ACCOUNT
-
-        new_balance = acct.balance + profit
-        new_equity = acct.equity + profit
-        released_margin = position.margin * (volume / position.volume)
-
-        new_margin = acct.margin - released_margin
-        new_margin_free = new_equity - new_margin
-
-        self.ACCOUNT = acct._replace(
-            balance=new_balance,
-            equity=new_equity,
-            profit=acct.profit + profit,
-            margin=new_margin,
-            margin_free=new_margin_free,
-            margin_level=(new_equity / new_margin * 100) if new_margin > 0 else float("inf"),
-        )
-
-        # ---------------- UPDATE POSITION ----------------
+        # ---------------- Record the order in history container ----------------
 
         idx = next(
             (i for i, o in enumerate(self.ORDERS_HISTORY)
@@ -1136,7 +1322,32 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
                     self.POSITIONS[i] = position
                     break
 
-        # ---------------- CREATE DEAL ----------------
+        # ---------------- Update the Account ----------------
+
+        acct = self.ACCOUNT
+
+        commission = self._calc_commission()
+        net_profit = profit + commission
+        new_balance = acct.balance + net_profit
+
+        floating_pl = sum([pos.profit for pos in self.POSITIONS])
+        new_equity = new_balance + floating_pl
+
+        released_margin = position.margin * (volume / position.volume)
+
+        new_margin = acct.margin - released_margin
+        new_margin_free = new_equity - new_margin
+
+        self.ACCOUNT = acct._replace(
+            balance=new_balance,
+            equity=new_equity,
+            profit=acct.profit + profit,
+            margin=new_margin,
+            margin_free=new_margin_free,
+            margin_level=(new_equity / new_margin * 100) if new_margin > 0 else float("inf"),
+        )
+
+        # ---------------- Crate the Deal ----------------
 
         time = tick.time
         time_msc = tick.time_msc
@@ -1152,7 +1363,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
 
         self.DEALS.append(deal)
 
-        self.logger.info(f"Position {deal.ticket} closed successfully!")
+        self.info_log(f"Position {deal.ticket} closed successfully!")
         return self._make_result(
             trade_request,
             retcode=self.TRADE_RETCODE_DONE,
@@ -1227,7 +1438,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
                 self.POSITIONS[i] = updated_position
                 break
 
-        self.logger.info(f"Position {position.ticket} modified successfully!")
+        self.info_log(f"Position {position.ticket} modified successfully!")
 
         return self._make_result(
             trade_request,
@@ -1271,7 +1482,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
         # ---------------- PRICE VALIDATION ----------------
 
         if not validators.is_valid_pending_price(price, tick, order_type):
-            self.logger.debug(
+            self.debug_log(
                 f"Invalid price for: {MetaTrader5Constants.ORDER_TYPE_MAP[order_type]} price: {price} ask: {tick.ask}")
             return self._make_result(trade_request, self.TRADE_RETCODE_INVALID_PRICE)
 
@@ -1316,7 +1527,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
 
         # store history of orders
         self.ORDERS_HISTORY.append(order)
-        self.logger.info(f"Pending order {order.ticket} created successfully!")
+        self.info_log(f"Pending order {order.ticket} created successfully!")
 
         return self._make_result(
             trade_request,
@@ -1357,7 +1568,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
                 break
 
         if order is None:
-            self.logger.debug(f"Invalid order ticket = {order_id}")
+            self.debug_log(f"Invalid order ticket = {order_id}")
             return self._make_result(trade_request, self.TRADE_RETCODE_INVALID_ORDER)
 
         # prevent useless modification
@@ -1413,7 +1624,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
 
         time = tick.time
 
-        self.logger.info(f"Pending order {order.ticket} modified successfully!")
+        self.info_log(f"Pending order {order.ticket} modified successfully!")
 
         return self._make_result(
             trade_request,
@@ -1469,7 +1680,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
         # ---------------- OPTIONAL: STORE HISTORY ----------------
 
         self.ORDERS_HISTORY.append(canceled_order)
-        self.logger.info(f"Pending order {order.ticket} deleted successfully!")
+        self.info_log(f"Pending order {order.ticket} deleted successfully!")
 
         return self._make_result(
             trade_request,
@@ -1498,7 +1709,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
         elif action == self.TRADE_ACTION_REMOVE:
             return self._delete_order(request)
 
-        self.logger.critical("Unknown trade action")
+        self.critical_log("Unknown trade action")
         return None
 
     def _terminate_all_positions(self, comment: str) -> bool:
@@ -1594,7 +1805,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
                 tick_size = sym.trade_tick_size
 
                 if tick_size <= 0:
-                    self.logger.critical("Invalid tick size")
+                    self.critical_log("Invalid tick size")
                     return 0.0
 
                 profit = price_delta * volume * (tick_value / tick_size)
@@ -1633,7 +1844,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
                 )
 
             else:
-                self.logger.critical(
+                self.critical_log(
                     f"Unsupported trade calc mode: {calc_mode}"
                 )
                 return 0.0
@@ -1641,7 +1852,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
             return round(profit, 2)
 
         except Exception as e:
-            self.logger.critical(f"Failed: {e}")
+            self.critical_log(f"Failed: {e}")
             return 0.0
 
     def order_calc_margin(self, order_type: int, symbol: str, volume: float, price: float) -> float:
@@ -1651,11 +1862,11 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
         """
 
         if order_type not in (self.ORDER_TYPE_BUY, self.ORDER_TYPE_SELL):
-            self.logger.critical(f"Invalid order type: {order_type}")
+            self.critical_log(f"Invalid order type: {order_type}")
             return 0.0
 
         if volume <= 0 or price <= 0:
-            self.logger.error("order_calc_margin failed: invalid volume or price")
+            self.error_log("order_calc_margin failed: invalid volume or price")
             return 0.0
 
         # IS_TESTER = True
@@ -1703,7 +1914,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
                 if conversion_tick:
                     margin *= conversion_tick.bid
                 else:
-                    self.logger.warning("Conversion symbol not found")
+                    self.warning_log("Conversion symbol not found")
                 """
 
         elif mode == self.SYMBOL_CALC_MODE_FOREX_NO_LEVERAGE:
@@ -1743,7 +1954,7 @@ class OverLoadedMetaTrader5API(MetaTrader5Constants):
             margin = 0.0
 
         else:
-            self.logger.warning(f"Unknown calc mode {mode}, fallback margin formula used")
+            self.warning_log(f"Unknown calc mode {mode}, fallback margin formula used")
             margin = (volume * contract_size * price) / leverage
 
         return round(margin, 2)

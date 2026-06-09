@@ -42,12 +42,11 @@ nav:
   - Home: index.md
   - Getting Started:
       - Installation: installation.md
-      - Quick Start | Make your first Bot: quickstart.md
+      - Quick Start | backtest your trading bots: quickstart.md
   - Documentation:
       - Overview: documentation/index.md
       - Working With Indicators: documentation/working_with_indicators.md
-      - RSI Strategy Example: documentation/rsi_strategy.md
-      - Logging and Debugging: documentation/logging_debugging.md
+      - RSI Trading Bot Example: documentation/rsi_strategy.md
   - Tutorials: tutorials.md
 
   - API Reference:
@@ -68,7 +67,7 @@ nav:
         - Trade: api/trade_classes/trade.md
       - strategytester5:
         - Configurations: api/strategytester5/config.md
-        - Tester config validators: api/strategytester5/config_validators.md
+        - Tester config validators: api/strategytester5/utilsutils.md
         - Tester Stats: api/strategytester5/stats.md
         - Tester: api/strategytester5/tester.md
 
