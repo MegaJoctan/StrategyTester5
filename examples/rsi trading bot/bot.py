@@ -2,28 +2,33 @@ import logging
 from strategytester5.MetaTrader5.api import VirtualMetaTrader5
 from strategytester5.tester import run_backtesting
 from strategytester5.trade_classes.Trade import CTrade
-import MetaTrader5 as mt5
+import MetaTrader5 as parent_mt5
 import pandas as pd
 from ta.momentum import rsi
+import sys
 
-if not mt5.initialize():
-    raise RuntimeError(f"Failed to initialize mt5. Error = {mt5.last_error()}")
+if not parent_mt5.initialize():
+    raise RuntimeError(f"Failed to initialize mt5. Error = {parent_mt5.last_error()}")
 
-virtual_mt5 = VirtualMetaTrader5(parent_mt5=mt5)
+script_argument = sys.argv[1:]
+if "--backtesting" in script_argument:
+    mt5 = VirtualMetaTrader5(parent_mt5=parent_mt5) # Assign parent MetaTrader5 to the virtual MetaTrader5 class object
+else:
+    mt5 = parent_mt5
 
-# ---------------------- inputs ----------------------------
+# ---------------------- inputs/global variables ----------------------------
 
 symbol = "EURUSD"
-timeframe = virtual_mt5.TIMEFRAME_H1 # This should be an integer so you should convert timeframe in string into integer
+timeframe = mt5.TIMEFRAME_H1 # This should be an integer so you should convert timeframe in string into integer
 
 # ---------------------------------------------------------
 
 MAGIC_NUMBER = 1001
-m_trade = CTrade(terminal=virtual_mt5, symbol=symbol, magic_number=MAGIC_NUMBER, deviation_points=100)
+m_trade = CTrade(terminal=mt5, symbol=symbol, magic_number=MAGIC_NUMBER, deviation_points=100)
 
 def pos_exists(magic: int, pos_type: int) -> bool:
     """Check if position exists"""
-    positions_found = virtual_mt5.positions_get()
+    positions_found = mt5.positions_get()
     for position in positions_found:
         if position.type == pos_type and position.magic == magic:
             return True
@@ -32,15 +37,16 @@ def pos_exists(magic: int, pos_type: int) -> bool:
 
 def close_pos_by_type(magic: int, pos_type: int):
     """Close positions by type"""
-    positions_found = virtual_mt5.positions_get()
+    positions_found = mt5.positions_get()
     for position in positions_found:
         if position.type == pos_type and position.magic == magic:
             m_trade.position_close(position.ticket)
 
-def on_tick():
+
+def main():
 
     indicator_window = 14
-    rates = virtual_mt5.copy_rates_from_pos(symbol=symbol, timeframe=timeframe, start_pos=0, count=indicator_window)
+    rates = mt5.copy_rates_from_pos(symbol, timeframe, 0, indicator_window)
 
     if rates is None or len(rates) < indicator_window: # if no information was found, or less than expected rates were returned
         return # prevent further calculations
@@ -53,21 +59,21 @@ def on_tick():
     rsi_oversold = 30.0
     rsi_overbought = 70.0
 
-    symbol_info = virtual_mt5.symbol_info(symbol=symbol)
+    symbol_info = mt5.symbol_info(symbol)
     lot_size = symbol_info.volume_min
 
 
     if rsi_value < rsi_oversold: # long signal
-        if not pos_exists(magic=MAGIC_NUMBER, pos_type=virtual_mt5.POSITION_TYPE_BUY):
+        if not pos_exists(magic=MAGIC_NUMBER, pos_type=mt5.POSITION_TYPE_BUY):
             m_trade.buy(volume=lot_size, price=symbol_info.ask)
 
-        close_pos_by_type(magic=MAGIC_NUMBER, pos_type=virtual_mt5.POSITION_TYPE_SELL)
+        close_pos_by_type(magic=MAGIC_NUMBER, pos_type=mt5.POSITION_TYPE_SELL)
 
     if rsi_value > rsi_overbought: # short signal
-        if not pos_exists(magic=MAGIC_NUMBER, pos_type=virtual_mt5.POSITION_TYPE_SELL):
+        if not pos_exists(magic=MAGIC_NUMBER, pos_type=mt5.POSITION_TYPE_SELL):
             m_trade.sell(volume=lot_size, price=symbol_info.bid)
 
-        close_pos_by_type(magic=MAGIC_NUMBER, pos_type=virtual_mt5.POSITION_TYPE_BUY)
+        close_pos_by_type(magic=MAGIC_NUMBER, pos_type=mt5.POSITION_TYPE_BUY)
 
 
 tester_config = {
@@ -81,11 +87,16 @@ tester_config = {
         "leverage": "1:100"
 }
 
+if "--backtesting" in script_argument:
 
-stats = run_backtesting(
-    main_function=on_tick,
-    tester_config=tester_config,
-    virtual_mt5=virtual_mt5,
-    logging_level=logging.DEBUG
-)
+    stats = run_backtesting(
+        main_function=main,
+        tester_config=tester_config,
+        virtual_mt5=mt5,
+        logging_level=logging.DEBUG
+    )
 
+else:
+    # run the script on the market (realtime)
+    while True:
+        main()
