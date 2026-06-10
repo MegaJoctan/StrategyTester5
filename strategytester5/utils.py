@@ -97,10 +97,15 @@ class TesterConfigValidators:
         cfg["symbols"] = symbols
 
         # --- TIMEFRAME ---
+
         timeframe = raw_config["timeframe"]
+        if isinstance(timeframe, (float, int)):
+            timeframe = VirtualMetaTrader5.TIMEFRAME2STRING_MAP[timeframe]
+
         if timeframe not in VirtualMetaTrader5.STRING2TIMEFRAME_MAP:
             raise RuntimeError(
                 f"Invalid timeframe: {timeframe} supported: {VirtualMetaTrader5.STRING2TIMEFRAME_MAP.keys()}")
+
         cfg["timeframe"] = timeframe
 
         # --- MODELLING ---
