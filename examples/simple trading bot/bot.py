@@ -75,7 +75,7 @@ def main(stop_loss: float=500,
                      ) # open a new sell position (trade)
 
 tester_config = {
-        "bot_name": "RSI Strategy Bot",
+        "bot_name": "simple trading bot",
         "symbols": ["EURUSD"],
         "timeframe": timeframe,
         "start_date": "01.01.2026",
