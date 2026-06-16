@@ -1,8 +1,8 @@
 import logging
-from strategytester5.MetaTrader5.api import VirtualMetaTrader5
+import MetaTrader5 as parent_mt5 # original MetaTrader5
+from strategytester5.MetaTrader5.api import VirtualMetaTrader5 # simulated MetaTrader5
 from strategytester5.tester import run_backtesting
 from strategytester5.trade_classes.Trade import CTrade
-import MetaTrader5 as parent_mt5
 import sys
 
 if not parent_mt5.initialize():
