@@ -1,3 +1,10 @@
+## What's New!
+<p>
+  <a href="https://youtu.be/dofuWK_25J8">
+    <img src="https://github.com/user-attachments/assets/5c4268a3-acd0-4946-8f1b-98e9c377a88e" width="1000">
+  </a>
+</p>
+
 ## What is StrategyTester5?
 
 Full documentation -> [https://strategytester5.com](https://strategytester5.com)
