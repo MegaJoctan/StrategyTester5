@@ -196,7 +196,7 @@ python bot.py --backtesting
 ```
 Results:
 
-<img width="1500" height="827" alt="simple trading bot backtesting" src="https://github.com/user-attachments/assets/f77a3717-3ed9-409e-9bfc-2f8371074027" />
+![Results](https://raw.githubusercontent.com/MegaJoctan/StrategyTester5/main/docs/images/simple%20trading%20bot%20backtesting.gif)
 
 To backtest your strategies in MetaTrader5’s StrategyTester App, add `visual_mode` to tester configurations.
 
@@ -216,7 +216,7 @@ tester_config = {
 
 This time, when you run the script using the same command, backtesting will take place inside the MetaTrader5 App (terminal)🤯
 
-<img width="1085" height="875" alt="strategytester5 MT5 visualization" src="https://github.com/user-attachments/assets/5d2be6f2-2558-4fac-8fac-8a33ff048a66" />
+![st5-visualization](https://raw.githubusercontent.com/MegaJoctan/StrategyTester5/main/docs/images/simple-strategytester5-visual.gif)
 
 More examples and Python files used in this article are found here: [GitHub repo](https://github.com/MegaJoctan/StrategyTester5).
 
