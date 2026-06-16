@@ -84,7 +84,7 @@ tester_config = {
 
     Storing tester configuration in a JSON file is the best way forward. It helps adjust the values without changing the original code :)
     
-# A complete Trading robot Example.
+## A complete Trading robot Example.
 
 ```python title="simple trading bot\bot.py"
 import logging
@@ -188,3 +188,35 @@ else:
     while True:
         main()
 ```
+
+And that’s it: Calling a script with — backtesting will start backtesting (simulation) in the web browser.
+
+```bash
+python bot.py --backtesting
+```
+Results:
+![backtesting](https://github.com/user-attachments/assets/f77a3717-3ed9-409e-9bfc-2f8371074027)
+
+To backtest your strategies in MetaTrader5’s StrategyTester App, add `visual_mode` to tester configurations.
+
+```python
+tester_config = {
+        "bot_name": "RSI Strategy Bot",
+        "symbols": ["EURUSD"],
+        "timeframe": timeframe,
+        "start_date": "01.01.2026",
+        "end_date": "01.06.2026",
+        "modelling" : "1 minute ohlc",
+        "deposit": 1000,
+        "leverage": "1:100",
+        "visual_mode": True
+}
+```
+
+This time, when you run the script using the same command, backtesting will take place inside the MetaTrader5 App (terminal)🤯
+
+![backtesting](https://github.com/user-attachments/assets/5d2be6f2-2558-4fac-8fac-8a33ff048a66)
+
+More examples and Python files used in this article are found here: [GitHub repo](https://github.com/MegaJoctan/StrategyTester5).
+
+
