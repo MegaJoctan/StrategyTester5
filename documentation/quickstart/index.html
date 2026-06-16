@@ -681,6 +681,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#a-complete-trading-robot-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A complete Trading robot Example.
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1611,6 +1622,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#a-complete-trading-robot-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A complete Trading robot Example.
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1693,7 +1715,7 @@
 <p class="admonition-title">Rule of Thumb</p>
 <p>Storing tester configuration in a JSON file is the best way forward. It helps adjust the values without changing the original code :)</p>
 </div>
-<h1 id="a-complete-trading-robot-example">A complete Trading robot Example.</h1>
+<h2 id="a-complete-trading-robot-example">A complete Trading robot Example.</h2>
 <div class="highlight"><span class="filename">simple trading bot\bot.py</span><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">strategytester5.MetaTrader5.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">VirtualMetaTrader5</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">strategytester5.tester</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_backtesting</span>
@@ -1795,6 +1817,27 @@
     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
         <span class="n">main</span><span class="p">()</span>
 </code></pre></div>
+<p>And that’s it: Calling a script with — backtesting will start backtesting (simulation) in the web browser.</p>
+<p><div class="highlight"><pre><span></span><code>python<span class="w"> </span>bot.py<span class="w"> </span>--backtesting
+</code></pre></div>
+Results:
+<img alt="backtesting" src="https://github.com/user-attachments/assets/f77a3717-3ed9-409e-9bfc-2f8371074027"></p>
+<p>To backtest your strategies in MetaTrader5’s StrategyTester App, add <code>visual_mode</code> to tester configurations.</p>
+<div class="highlight"><pre><span></span><code><span class="n">tester_config</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;bot_name&quot;</span><span class="p">:</span> <span class="s2">&quot;RSI Strategy Bot&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;symbols&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;EURUSD&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;timeframe&quot;</span><span class="p">:</span> <span class="n">timeframe</span><span class="p">,</span>
+        <span class="s2">&quot;start_date&quot;</span><span class="p">:</span> <span class="s2">&quot;01.01.2026&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;end_date&quot;</span><span class="p">:</span> <span class="s2">&quot;01.06.2026&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;modelling&quot;</span> <span class="p">:</span> <span class="s2">&quot;1 minute ohlc&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;deposit&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="s2">&quot;leverage&quot;</span><span class="p">:</span> <span class="s2">&quot;1:100&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;visual_mode&quot;</span><span class="p">:</span> <span class="kc">True</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>This time, when you run the script using the same command, backtesting will take place inside the MetaTrader5 App (terminal)🤯</p>
+<p><img alt="backtesting" src="https://github.com/user-attachments/assets/5d2be6f2-2558-4fac-8fac-8a33ff048a66"></p>
+<p>More examples and Python files used in this article are found here: <a href="https://github.com/MegaJoctan/StrategyTester5">GitHub repo</a>.</p>
 
 
 
