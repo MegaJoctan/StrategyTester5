@@ -64,7 +64,7 @@ else:
 
 The so-called `tester_config` is supposed to be a dictionary with a set of key, and value pairs that resemble MetaTrader5's strategy tester section.
 
-![mt5config](images/mt5tester%20config.png)
+![mt5config](../images/mt5tester%20config.png)
 
 ```python title="example tester config(s)"
 tester_config = {
