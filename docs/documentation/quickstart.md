@@ -195,7 +195,8 @@ And that’s it: Calling a script with — backtesting will start backtesting (s
 python bot.py --backtesting
 ```
 Results:
-![backtesting](https://github.com/user-attachments/assets/f77a3717-3ed9-409e-9bfc-2f8371074027)
+
+<img width="1500" height="827" alt="simple trading bot backtesting" src="https://github.com/user-attachments/assets/f77a3717-3ed9-409e-9bfc-2f8371074027" />
 
 To backtest your strategies in MetaTrader5’s StrategyTester App, add `visual_mode` to tester configurations.
 
@@ -215,7 +216,7 @@ tester_config = {
 
 This time, when you run the script using the same command, backtesting will take place inside the MetaTrader5 App (terminal)🤯
 
-![backtesting](https://github.com/user-attachments/assets/5d2be6f2-2558-4fac-8fac-8a33ff048a66)
+<img width="1085" height="875" alt="strategytester5 MT5 visualization" src="https://github.com/user-attachments/assets/5d2be6f2-2558-4fac-8fac-8a33ff048a66" />
 
 More examples and Python files used in this article are found here: [GitHub repo](https://github.com/MegaJoctan/StrategyTester5).
 
