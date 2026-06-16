@@ -16,7 +16,7 @@
         <link rel="prev" href="../installation/">
       
       
-        <link rel="next" href="../">
+        <link rel="next" href="../working_with_indicators/">
       
       
         
@@ -306,7 +306,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../installation/" class="md-tabs__link">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -511,6 +511,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../installation/" class="md-nav__link">
         
   
@@ -657,34 +685,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Overview
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -1693,6 +1693,108 @@
 <p class="admonition-title">Rule of Thumb</p>
 <p>Storing tester configuration in a JSON file is the best way forward. It helps adjust the values without changing the original code :)</p>
 </div>
+<h1 id="a-complete-trading-robot-example">A complete Trading robot Example.</h1>
+<div class="highlight"><span class="filename">simple trading bot\bot.py</span><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">strategytester5.MetaTrader5.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">VirtualMetaTrader5</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">strategytester5.tester</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_backtesting</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">strategytester5.trade_classes.Trade</span><span class="w"> </span><span class="kn">import</span> <span class="n">CTrade</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">MetaTrader5</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">parent_mt5</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">if</span> <span class="ow">not</span> <span class="n">parent_mt5</span><span class="o">.</span><span class="n">initialize</span><span class="p">():</span>
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to initialize mt5. Error = </span><span class="si">{</span><span class="n">parent_mt5</span><span class="o">.</span><span class="n">last_error</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">script_argument</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+<span class="k">if</span> <span class="s2">&quot;--backtesting&quot;</span> <span class="ow">in</span> <span class="n">script_argument</span><span class="p">:</span>
+    <span class="n">mt5</span> <span class="o">=</span> <span class="n">VirtualMetaTrader5</span><span class="p">(</span><span class="n">parent_mt5</span><span class="o">=</span><span class="n">parent_mt5</span><span class="p">)</span> <span class="c1"># Assign parent MetaTrader5 to the virtual MetaTrader5 class object</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">mt5</span> <span class="o">=</span> <span class="n">parent_mt5</span>
+
+<span class="c1"># ---------------------- inputs/global variables ----------------------------</span>
+
+<span class="n">symbol</span> <span class="o">=</span> <span class="s2">&quot;EURUSD&quot;</span>
+<span class="n">timeframe</span> <span class="o">=</span> <span class="n">mt5</span><span class="o">.</span><span class="n">TIMEFRAME_H1</span> <span class="c1"># This should be an integer so you should convert timeframe in string into integer</span>
+<span class="n">MAGIC_NUMBER</span> <span class="o">=</span> <span class="mi">1001</span>
+
+<span class="c1"># ---------------------------------------------------------</span>
+
+<span class="n">m_trade</span> <span class="o">=</span> <span class="n">CTrade</span><span class="p">(</span><span class="n">terminal</span><span class="o">=</span><span class="n">mt5</span><span class="p">,</span> <span class="n">symbol</span><span class="o">=</span><span class="n">symbol</span><span class="p">,</span> <span class="n">magic_number</span><span class="o">=</span><span class="n">MAGIC_NUMBER</span><span class="p">,</span> <span class="n">deviation_points</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">pos_exists</span><span class="p">(</span><span class="n">magic</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pos_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Checks if position exists&quot;&quot;&quot;</span>
+
+    <span class="n">positions_found</span> <span class="o">=</span> <span class="n">mt5</span><span class="o">.</span><span class="n">positions_get</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">positions_found</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="n">positions_found</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">position</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">pos_type</span> <span class="ow">and</span> <span class="n">position</span><span class="o">.</span><span class="n">magic</span> <span class="o">==</span> <span class="n">magic</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">stop_loss</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+         <span class="n">take_profit</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mi">700</span>
+         <span class="p">):</span>
+
+    <span class="n">symbol_info</span> <span class="o">=</span> <span class="n">mt5</span><span class="o">.</span><span class="n">symbol_info</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span> <span class="c1"># Symbols information</span>
+    <span class="k">if</span> <span class="n">symbol_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">pts</span> <span class="o">=</span> <span class="n">symbol_info</span><span class="o">.</span><span class="n">point</span>
+
+    <span class="n">lot_size</span> <span class="o">=</span> <span class="n">symbol_info</span><span class="o">.</span><span class="n">volume_min</span> <span class="c1"># use the minimum volume (lot size)</span>
+
+    <span class="n">ticks</span> <span class="o">=</span> <span class="n">mt5</span><span class="o">.</span><span class="n">symbol_info_tick</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ticks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">ask</span> <span class="o">=</span> <span class="n">ticks</span><span class="o">.</span><span class="n">ask</span>
+    <span class="n">bid</span> <span class="o">=</span> <span class="n">ticks</span><span class="o">.</span><span class="n">bid</span>
+
+    <span class="c1"># print(f&quot;ask: {ask}, bid: {bid}, pts: {pts}&quot;)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">pos_exists</span><span class="p">(</span><span class="n">magic</span><span class="o">=</span><span class="n">MAGIC_NUMBER</span><span class="p">,</span> <span class="n">pos_type</span><span class="o">=</span><span class="n">mt5</span><span class="o">.</span><span class="n">POSITION_TYPE_BUY</span><span class="p">):</span> <span class="c1"># if a buy position doesn&#39;t exist</span>
+        <span class="n">m_trade</span><span class="o">.</span><span class="n">buy</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">lot_size</span><span class="p">,</span>
+                    <span class="n">price</span><span class="o">=</span><span class="n">ask</span><span class="p">,</span>
+                    <span class="n">sl</span><span class="o">=</span><span class="n">ask</span><span class="o">-</span><span class="n">stop_loss</span> <span class="o">*</span> <span class="n">pts</span><span class="p">,</span>
+                    <span class="n">tp</span><span class="o">=</span><span class="n">ask</span><span class="o">+</span><span class="n">take_profit</span> <span class="o">*</span> <span class="n">pts</span><span class="p">,</span>
+                    <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Simple bot Buy Trade&quot;</span>
+                    <span class="p">)</span> <span class="c1"># open a new buy position (trade)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">pos_exists</span><span class="p">(</span><span class="n">magic</span><span class="o">=</span><span class="n">MAGIC_NUMBER</span><span class="p">,</span> <span class="n">pos_type</span><span class="o">=</span><span class="n">mt5</span><span class="o">.</span><span class="n">POSITION_TYPE_SELL</span><span class="p">):</span> <span class="c1"># if a sell position doesn&#39;t exist</span>
+        <span class="n">m_trade</span><span class="o">.</span><span class="n">sell</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">lot_size</span><span class="p">,</span>
+                     <span class="n">price</span><span class="o">=</span><span class="n">bid</span><span class="p">,</span>
+                     <span class="n">sl</span><span class="o">=</span><span class="n">bid</span> <span class="o">+</span> <span class="n">stop_loss</span> <span class="o">*</span> <span class="n">pts</span><span class="p">,</span>
+                     <span class="n">tp</span><span class="o">=</span><span class="n">bid</span> <span class="o">-</span> <span class="n">take_profit</span> <span class="o">*</span> <span class="n">pts</span><span class="p">,</span>
+                     <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Simple bot Sell Trade&quot;</span>
+                     <span class="p">)</span> <span class="c1"># open a new sell position (trade)</span>
+
+<span class="n">tester_config</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;bot_name&quot;</span><span class="p">:</span> <span class="s2">&quot;RSI Strategy Bot&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;symbols&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;EURUSD&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;timeframe&quot;</span><span class="p">:</span> <span class="n">timeframe</span><span class="p">,</span>
+        <span class="s2">&quot;start_date&quot;</span><span class="p">:</span> <span class="s2">&quot;01.01.2026&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;end_date&quot;</span><span class="p">:</span> <span class="s2">&quot;01.06.2026&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;modelling&quot;</span> <span class="p">:</span> <span class="s2">&quot;1 minute ohlc&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;deposit&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="s2">&quot;leverage&quot;</span><span class="p">:</span> <span class="s2">&quot;1:100&quot;</span>
+<span class="p">}</span>
+
+<span class="k">if</span> <span class="s2">&quot;--backtesting&quot;</span> <span class="ow">in</span> <span class="n">script_argument</span><span class="p">:</span>
+
+    <span class="n">stats</span> <span class="o">=</span> <span class="n">run_backtesting</span><span class="p">(</span>
+        <span class="n">main_function</span><span class="o">=</span><span class="n">main</span><span class="p">,</span>
+        <span class="n">tester_config</span><span class="o">=</span><span class="n">tester_config</span><span class="p">,</span>
+        <span class="n">virtual_mt5</span><span class="o">=</span><span class="n">mt5</span><span class="p">,</span>
+        <span class="n">logging_level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
+    <span class="p">)</span>
+
+<span class="k">else</span><span class="p">:</span>
+    <span class="c1"># run the script on the market (realtime)</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
 
 
 
