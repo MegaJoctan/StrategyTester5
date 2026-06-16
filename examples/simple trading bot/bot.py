@@ -16,43 +16,29 @@ else:
 
 # ---------------------- inputs/global variables ----------------------------
 
-SYMBOLS = [
-    "EURUSD",
-    "GBPUSD",
-    "USDCAD"
-]
-
+symbol = "EURUSD"
 timeframe = mt5.TIMEFRAME_H1 # This should be an integer so you should convert timeframe in string into integer
 MAGIC_NUMBER = 1001
 
 # ---------------------------------------------------------
 
-m_trade_objects = {
-    symbol: CTrade(
-        terminal=mt5,
-        symbol=symbol,
-        magic_number=MAGIC_NUMBER,
-        deviation_points=100
-    ) for symbol in SYMBOLS
-}
+m_trade = CTrade(terminal=mt5, symbol=symbol, magic_number=MAGIC_NUMBER, deviation_points=100)
 
-def pos_exists(magic: int, pos_type: int, symbol: str) -> bool:
+def pos_exists(magic: int, pos_type: int) -> bool:
     """Checks if position exists"""
 
     positions_found = mt5.positions_get()
     if positions_found:
         for position in positions_found:
-            if position.type == pos_type and position.magic == magic and position.symbol == symbol:
+            if position.type == pos_type and position.magic == magic:
                 return True
 
     return False
 
-def main(
-        symbol: str,
-        m_trade: CTrade,
-        stop_loss: float=500,
-        take_profit: float=700
-    ):
+
+def main(stop_loss: float=500,
+         take_profit: float=700
+         ):
 
     symbol_info = mt5.symbol_info(symbol) # Symbols information
     if symbol_info is None:
@@ -63,6 +49,7 @@ def main(
     lot_size = symbol_info.volume_min # use the minimum volume (lot size)
 
     ticks = mt5.symbol_info_tick(symbol)
+
     if ticks is None:
         return
 
@@ -71,7 +58,7 @@ def main(
 
     # print(f"ask: {ask}, bid: {bid}, pts: {pts}")
 
-    if not pos_exists(symbol=symbol, magic=MAGIC_NUMBER, pos_type=mt5.POSITION_TYPE_BUY): # if a buy position doesn't exist
+    if not pos_exists(magic=MAGIC_NUMBER, pos_type=mt5.POSITION_TYPE_BUY): # if a buy position doesn't exist
         m_trade.buy(volume=lot_size,
                     price=ask,
                     sl=ask-stop_loss * pts,
@@ -79,17 +66,17 @@ def main(
                     comment="Simple bot Buy Trade"
                     ) # open a new buy position (trade)
 
-    if not pos_exists(symbol=symbol, magic=MAGIC_NUMBER, pos_type=mt5.POSITION_TYPE_SELL):
+    if not pos_exists(magic=MAGIC_NUMBER, pos_type=mt5.POSITION_TYPE_SELL): # if a sell position doesn't exist
         m_trade.sell(volume=lot_size,
                      price=bid,
                      sl=bid + stop_loss * pts,
                      tp=bid - take_profit * pts,
                      comment="Simple bot Sell Trade"
-                     )
+                     ) # open a new sell position (trade)
 
 tester_config = {
         "bot_name": "RSI Strategy Bot",
-        "symbols": SYMBOLS, # ALL INSTRUMENTS SHOULD BE PLACED HERE
+        "symbols": ["EURUSD"],
         "timeframe": timeframe,
         "start_date": "01.01.2026",
         "end_date": "01.06.2026",
@@ -98,18 +85,10 @@ tester_config = {
         "leverage": "1:100"
 }
 
-
-def multicurrency_execute():
-
-    # call the main function on every instrument iteratively
-    for s in SYMBOLS:
-        m_trade = m_trade_objects[s]
-        main(symbol=s, m_trade=m_trade, stop_loss=500, take_profit=700)
-
 if "--backtesting" in script_argument:
 
     stats = run_backtesting(
-        main_function=multicurrency_execute,
+        main_function=main,
         tester_config=tester_config,
         virtual_mt5=mt5,
         logging_level=logging.DEBUG
