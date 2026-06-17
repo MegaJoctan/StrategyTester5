@@ -278,4 +278,20 @@ This time, when you run the script using the same command, backtesting will take
 
 More examples and Python files used in this article are found [here.](https://github.com/MegaJoctan/StrategyTester5).
 
-👉 Learn how to [backtest your Python bots in MetaTrader5](https://omegajoctan.gumroad.com/l/strategytester5-professional)
+## Free vs Profession Edition
+
+For accurate backtests in the MetaTrader 5 platform using Python, upgrade to the .
+[StrategyTester5 Professional Edition](https://pro.strategytester5.com) ↗
+
+| Feature                              | Free | Professional |
+|--------------------------------------|------|--------------|
+| Accurate MT5 Backtesting             | ✅    | ✅            |
+| Optimization Mode                    | ✅    | ✅            |
+| Backtest Speed                       | Fast | Electric ⚡   |
+| Interactive equity & balance curves | ✅    | ✅            |
+| [Visual Trade Replay in MT5](https://youtu.be/mVoX7fKjMQU?si=458iLGcxpLccEOti)↗     | ❌    | ✅            |
+| Real-Time Trade Annotations on Chart | ❌    | ✅            |
+| Detailed Trade History Analysis      | ❌    | ✅            |
+| Advanced Performance Metrics         | ❌    | ✅            |
+| Tick-Level Backtesting               | ❌    | ✅            |
+| Priority Support & Updates           | ❌    | ✅            |
