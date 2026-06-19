@@ -1,9 +1,4 @@
-## What's New!
-<p>
-  <a href="https://youtu.be/dofuWK_25J8">
-    <img src="https://github.com/user-attachments/assets/5c4268a3-acd0-4946-8f1b-98e9c377a88e" width="1000">
-  </a>
-</p>
+
 
 ## What is StrategyTester5?
 
@@ -15,6 +10,12 @@ It extends the native [MetaTrader 5 Python API](https://pypi.org/project/metatra
 
 !["banner"](https://raw.githubusercontent.com/MegaJoctan/StrategyTester5/main/docs/images/banner.png)
 <!-- !["mt5"](images/terminal.png "mt5-terminal") -->
+## What's New!
+<p>
+  <a href="https://youtu.be/dofuWK_25J8">
+    <img src="https://github.com/user-attachments/assets/5c4268a3-acd0-4946-8f1b-98e9c377a88e" width="1000">
+  </a>
+</p>
 
 ## Why StrategyTester5?
 
