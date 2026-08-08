@@ -872,7 +872,7 @@ class StrategyTester:
                 "\n📈 Visualize your backtesting progress on MetaTrader 5 charts.\n"
                 "See entries, exits, SL/TP levels and trade history directly in MT5.\n"
                 "Professional Edition:\n"
-                "https://omegajoctan.gumroad.com/l/strategytester5-professional"
+                "https://pro.strategytester5.com"
             )
 
         else:
