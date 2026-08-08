@@ -41,9 +41,9 @@ theme:
 nav:
   - Home: index.md
   - Documentation:
-      - Installation: installation.md
-      - Quick Start | backtest your trading bots: quickstart.md
       - Overview: documentation/index.md
+      - Installation: documentation/installation.md
+      - Quick Start | backtest your trading bots: documentation/quickstart.md
       - Working With Indicators: documentation/working_with_indicators.md
       - RSI Trading Bot Example: documentation/rsi_strategy.md
   - Tutorials: tutorials.md
